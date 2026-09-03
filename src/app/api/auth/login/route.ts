@@ -29,6 +29,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid company, email, or password.' }, { status: 401 });
     }
 
+    if (membership.status === 'SUSPENDED' || membership.organization.status === 'SUSPENDED' || membership.organization.status === 'CANCELLED') {
+      return NextResponse.json({ error: 'This workspace or account is currently unavailable.' }, { status: 403 });
+    }
+
     const token = await createSession({
       userId: user.id,
       organizationId: membership.organizationId,
