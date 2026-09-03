@@ -41,6 +41,8 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
   function openField(item: Workspace) {
     if (item === 'learning') return router.push('/workspace/learning');
     if (item === 'people') return router.push('/workspace/people');
+    if (item === 'credentials') return router.push('/workspace/credentials');
+    if (item === 'documents') return router.push('/workspace/documents');
     setWorkspace(item);
     setMessage(`${workspaceCopy[item].label} activated.`);
   }
@@ -97,8 +99,8 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
         <section className="action-dock" aria-label="Quick actions">
           <button onClick={() => router.push('/workspace/learning')}>Assign training</button>
           <button onClick={() => router.push('/workspace/people')}>+ Add person</button>
-          <button onClick={() => setMessage(`Generate report opened for ${organizationName}.`)}>Generate report</button>
-          <button onClick={() => setMessage(`Command opened for ${organizationName}.`)}>⌘ Command</button>
+          <button onClick={() => router.push('/workspace/documents')}>Add document</button>
+          <button onClick={() => router.push('/workspace/credentials')}>Verify records</button>
         </section>
 
         <section className="metrics" aria-label="Organization metrics">
