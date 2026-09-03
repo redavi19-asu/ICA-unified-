@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  OVERDUE
+}
+
+model Organization {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberships     Membership[]
+  courses         Course[]
+  enrollments     Enrollment[]
+  credentials     Credential[]
+  documents       Document[]
+  acknowledgments Acknowledgment[]
+  activities      Activity[]
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberships     Membership[]
+  enrollments     Enrollment[]
+  credentials     Credential[]
+  acknowledgments Acknowledgment[]
+  activities      Activity[]       @relation("ActivityActor")
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  role           Role         @default(MEMBER)
+  userId         String
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+}
+
+model Course {
+  id             String       @id @default(cuid())
+  organizationId String
+  title          String
+  description    String?
+  required       Boolean      @default(false)
+  durationMin    Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enrollments    Enrollment[]
+
+  @@index([organizationId])
+}
+
+model Enrollment {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  courseId       String
+  status         EnrollmentStatus @default(NOT_STARTED)
+  progress       Int              @default(0)
+  dueAt          DateTime?
+  completedAt    DateTime?
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([organizationId, status])
+}
+
+model Credential {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  issuedAt       DateTime?
+  expiresAt      DateTime?
+  status         String       @default("active")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, expiresAt])
+}
+
+model Document {
+  id              String           @id @default(cuid())
+  organizationId  String
+  title           String
+  version         String           @default("1.0")
+  requiresAck     Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  acknowledgments Acknowledgment[]
+
+  @@index([organizationId])
+}
+
+model Acknowledgment {
+  id             String       @id @default(cuid())
+  organizationId String
+  documentId     String
+  userId         String
+  acknowledgedAt DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  document       Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@index([organizationId, acknowledgedAt])
+}
+
+model Activity {
+  id             String        @id @default(cuid())
+  organizationId String
+  actorId        String?
+  type           String
+  message        String
+  createdAt      DateTime      @default(now())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          User?         @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+}
