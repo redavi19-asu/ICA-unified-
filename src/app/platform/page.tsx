@@ -13,6 +13,8 @@ export default async function PlatformPage() {
     prisma.course.count(),
   ]);
 
+  const canControl = admin.role === 'SUPER_ADMIN' || admin.role === 'PLATFORM_ADMIN';
+
   return (
     <main style={{minHeight:'100vh',background:'#090a0c',color:'#f2efe8',padding:'clamp(24px,5vw,70px)'}}>
       <header style={{display:'flex',justifyContent:'space-between',gap:24,borderBottom:'1px solid #2d3035',paddingBottom:28,alignItems:'flex-end'}}>
@@ -34,20 +36,27 @@ export default async function PlatformPage() {
         <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>CUSTOMER ORGANIZATIONS</p>
         <div style={{borderTop:'1px solid #2d3035'}}>
           {organizations.map((organization) => (
-            <article key={organization.id} style={{display:'grid',gridTemplateColumns:'minmax(220px,1.4fr) repeat(4,minmax(90px,.5fr))',gap:16,alignItems:'center',padding:'20px 0',borderBottom:'1px solid #25282d'}}>
-              <div><strong style={{fontSize:17}}>{organization.name}</strong><span style={{display:'block',fontSize:12,color:'#7f858a',marginTop:5}}>{organization.slug} · {organization.plan}</span></div>
-              <div><small style={{color:'#747a80'}}>STATUS</small><strong style={{display:'block',marginTop:5}}>{organization.status}</strong></div>
+            <article key={organization.id} style={{display:'grid',gridTemplateColumns:'minmax(220px,1.35fr) repeat(3,minmax(90px,.45fr)) minmax(170px,.75fr)',gap:16,alignItems:'center',padding:'20px 0',borderBottom:'1px solid #25282d'}}>
+              <div><strong style={{fontSize:17}}>{organization.name}</strong><span style={{display:'block',fontSize:12,color:'#7f858a',marginTop:5}}>{organization.slug} · {organization.plan} · {organization.status}</span></div>
               <div><small style={{color:'#747a80'}}>PEOPLE</small><strong style={{display:'block',fontSize:24}}>{organization._count.memberships}</strong></div>
               <div><small style={{color:'#747a80'}}>COURSES</small><strong style={{display:'block',fontSize:24}}>{organization._count.courses}</strong></div>
               <div><small style={{color:'#747a80'}}>CREDENTIALS</small><strong style={{display:'block',fontSize:24}}>{organization._count.credentials}</strong></div>
+              <div>
+                {canControl ? <form action={`/api/platform/organizations/${organization.id}`} method="post" style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                  {organization.status === 'SUSPENDED' ? <button name="status" value="ACTIVE" style={actionStyle}>ACTIVATE</button> : <button name="status" value="SUSPENDED" style={actionStyle}>SUSPEND</button>}
+                  {organization.status === 'TRIAL' && <button name="status" value="ACTIVE" style={actionStyle}>APPROVE</button>}
+                </form> : <small style={{color:'#747a80'}}>READ ONLY</small>}
+              </div>
             </article>
           ))}
         </div>
       </section>
-      <form action="/api/platform/logout" method="post" style={{marginTop:34}}><button style={{background:'transparent',border:'1px solid #464a50',color:'#ddd9d1',padding:'11px 15px',cursor:'pointer'}}>SIGN OUT OF PLATFORM</button></form>
+      <form action="/api/platform/logout" method="post" style={{marginTop:34}}><button style={actionStyle}>SIGN OUT OF PLATFORM</button></form>
     </main>
   );
 }
+
+const actionStyle = {background:'transparent',border:'1px solid #464a50',color:'#ddd9d1',padding:'9px 11px',cursor:'pointer',fontSize:10,letterSpacing:'.08em'} as const;
 
 function Metric({label,value}:{label:string;value:number}){
   return <div style={{borderTop:'1px solid #34373d',padding:'18px 2px'}}><span style={{fontSize:10,letterSpacing:'.14em',color:'#747a80'}}>{label}</span><strong style={{display:'block',fontSize:42,letterSpacing:'-.05em',marginTop:7}}>{value}</strong></div>;
