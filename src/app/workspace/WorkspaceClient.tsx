@@ -9,12 +9,7 @@ type Props = {
   userName: string;
   role: string;
   organizationName: string;
-  stats: {
-    members: number;
-    courses: number;
-    credentials: number;
-    documents: number;
-  };
+  stats: { members: number; courses: number; credentials: number; documents: number };
 };
 
 const workspaceCopy: Record<Workspace, { score: number; label: string; description: string }> = {
@@ -43,6 +38,15 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
     router.refresh();
   }
 
+  function openField(item: Workspace) {
+    if (item === 'people') {
+      router.push('/workspace/people');
+      return;
+    }
+    setWorkspace(item);
+    setMessage(`${workspaceCopy[item].label} activated.`);
+  }
+
   const nodes = [
     { key: 'learning' as Workspace, title: `LEARNING / ${String(stats.courses).padStart(2, '0')}`, detail: `${stats.courses} courses`, className: 'node node-learning' },
     { key: 'people' as Workspace, title: `PEOPLE / ${String(stats.members).padStart(2, '0')}`, detail: `${stats.members} active profiles`, className: 'node node-people' },
@@ -55,7 +59,7 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
       <aside className="edge-rail" aria-label="Workspace navigation">
         <div className="brand-mark">IU</div>
         {(['pulse', 'learning', 'people', 'credentials', 'documents'] as Workspace[]).map((item, index) => (
-          <button key={item} className={workspace === item ? 'rail-control active' : 'rail-control'} onClick={() => { setWorkspace(item); setMessage(`${workspaceCopy[item].label} activated.`); }} aria-label={workspaceCopy[item].label}>
+          <button key={item} className={workspace === item ? 'rail-control active' : 'rail-control'} onClick={() => openField(item)} aria-label={workspaceCopy[item].label}>
             {['◉', '△', '◎', '◇', '▤'][index]}
           </button>
         ))}
@@ -80,7 +84,7 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
             <div className="ring ring-one" /><div className="ring ring-two" />
             <div className="core-score"><span>{active.label}</span><strong>{active.score}</strong><small>% aligned</small><i className="core-dot" /></div>
             {nodes.map((node) => (
-              <button key={node.key} className={`${node.className}${workspace === node.key ? ' selected' : ''}`} onClick={() => { setWorkspace(node.key); setMessage(`${node.title}: ${node.detail}.`); }}>
+              <button key={node.key} className={`${node.className}${workspace === node.key ? ' selected' : ''}`} onClick={() => openField(node.key)}>
                 <b>{node.title}</b><span>{node.detail}</span>
               </button>
             ))}
@@ -93,7 +97,10 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
         </div>
 
         <section className="action-dock" aria-label="Quick actions">
-          {['Assign training', '+ Add person', 'Generate report', '⌘ Command'].map((action) => <button key={action} onClick={() => setMessage(`${action} opened for ${organizationName}.`)}>{action}</button>)}
+          <button onClick={() => setMessage(`Assign training opened for ${organizationName}.`)}>Assign training</button>
+          <button onClick={() => router.push('/workspace/people')}>+ Add person</button>
+          <button onClick={() => setMessage(`Generate report opened for ${organizationName}.`)}>Generate report</button>
+          <button onClick={() => setMessage(`Command opened for ${organizationName}.`)}>⌘ Command</button>
         </section>
 
         <section className="metrics" aria-label="Organization metrics">
