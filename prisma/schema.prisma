@@ -7,74 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  OWNER
-  ADMIN
-  MANAGER
-  MEMBER
-}
-
-enum PlatformRole {
-  SUPER_ADMIN
-  PLATFORM_ADMIN
-  SUPPORT
-}
-
-enum OrganizationStatus {
-  TRIAL
-  ACTIVE
-  SUSPENDED
-  CANCELLED
-}
-
-enum EnrollmentStatus {
-  NOT_STARTED
-  IN_PROGRESS
-  COMPLETE
-  OVERDUE
-}
-
-enum MemberStatus {
-  INVITED
-  ONBOARDING
-  ACTIVE
-  SUSPENDED
-}
-
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REVOKED
-  EXPIRED
-}
-
-enum LessonKind {
-  TEXT
-  VIDEO
-  DOCUMENT
-  QUIZ
-}
-
 model PlatformAdmin {
-  id           String       @id @default(cuid())
-  email        String       @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   name         String
   passwordHash String
-  role         PlatformRole @default(PLATFORM_ADMIN)
-  active       Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  role         String   @default("PLATFORM_ADMIN")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Organization {
-  id              String             @id @default(cuid())
+  id              String           @id @default(cuid())
   name            String
-  slug            String             @unique
-  status          OrganizationStatus @default(TRIAL)
-  plan            String             @default("trial")
+  slug            String           @unique
+  status          String           @default("TRIAL")
+  plan            String           @default("trial")
   trialEndsAt     DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   memberships     Membership[]
   invitations     Invitation[]
   courses         Course[]
@@ -107,8 +59,8 @@ model User {
 
 model Membership {
   id             String       @id @default(cuid())
-  role           Role         @default(MEMBER)
-  status         MemberStatus @default(ACTIVE)
+  role           String       @default("MEMBER")
+  status         String       @default("ACTIVE")
   jobTitle       String?
   joinedAt       DateTime     @default(now())
   userId         String
@@ -122,20 +74,20 @@ model Membership {
 }
 
 model Invitation {
-  id             String           @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   email          String
   name           String
   jobTitle       String?
-  role           Role             @default(MEMBER)
-  status         InvitationStatus @default(PENDING)
-  tokenHash      String           @unique
+  role           String       @default("MEMBER")
+  status         String       @default("PENDING")
+  tokenHash      String       @unique
   expiresAt      DateTime
-  createdAt      DateTime         @default(now())
+  createdAt      DateTime     @default(now())
   acceptedAt     DateTime?
   invitedById    String?
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitedBy      User?            @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: SetNull)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User?        @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
   @@index([email, status])
@@ -168,7 +120,7 @@ model Lesson {
   courseId       String
   order          Int
   title          String
-  kind           LessonKind       @default(TEXT)
+  kind           String           @default("TEXT")
   content        String
   mediaUrl       String?
   createdAt      DateTime         @default(now())
@@ -196,19 +148,19 @@ model QuizQuestion {
 }
 
 model Enrollment {
-  id             String           @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   userId         String
   courseId       String
-  status         EnrollmentStatus @default(NOT_STARTED)
-  progress       Int              @default(0)
+  status         String       @default("NOT_STARTED")
+  progress       Int          @default(0)
   score          Int?
-  attempts       Int              @default(0)
+  attempts       Int          @default(0)
   dueAt          DateTime?
   completedAt    DateTime?
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course         Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   credential     Credential?
 
   @@unique([userId, courseId])
@@ -291,14 +243,14 @@ model Acknowledgment {
 }
 
 model Activity {
-  id             String        @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   actorId        String?
   type           String
   message        String
-  createdAt      DateTime      @default(now())
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  actor          User?         @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          User?        @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])
 }
