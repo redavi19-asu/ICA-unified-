@@ -1,9 +1,15 @@
+import { redirect } from 'next/navigation';
 import WorkspaceClient from './WorkspaceClient';
 import { requireSession } from '../../lib/auth';
 import { prisma } from '../../lib/prisma';
 
 export default async function WorkspacePage() {
   const { membership } = await requireSession();
+
+  if (membership.role === 'MEMBER') {
+    redirect('/my');
+  }
+
   const organizationId = membership.organizationId;
 
   const [members, courses, credentials, documents] = await Promise.all([
