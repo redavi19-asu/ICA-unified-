@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
 
 const COOKIE_NAME = 'ica_unified_platform_session';
+const PLATFORM_ROLES = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT'] as const;
+
+export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
 function getSecret() {
   const value = process.env.PLATFORM_AUTH_SECRET || process.env.AUTH_SECRET;
@@ -13,13 +16,25 @@ function getSecret() {
   return new TextEncoder().encode(value || 'ica-unified-platform-development-secret');
 }
 
+function isPlatformRole(value: unknown): value is PlatformRole {
+  return typeof value === 'string' && (PLATFORM_ROLES as readonly string[]).includes(value);
+}
+
 export type PlatformSession = {
   platformAdminId: string;
-  role: 'SUPER_ADMIN' | 'PLATFORM_ADMIN' | 'SUPPORT';
+  role: PlatformRole;
 };
 
-export async function createPlatformSession(payload: PlatformSession) {
-  return new SignJWT(payload)
+type PlatformSessionInput = Omit<PlatformSession, 'role'> & { role: string };
+
+export async function createPlatformSession(payload: PlatformSessionInput) {
+  if (!isPlatformRole(payload.role)) {
+    throw new Error('Invalid platform role for session.');
+  }
+
+  const safePayload: PlatformSession = { ...payload, role: payload.role };
+
+  return new SignJWT(safePayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('8h')
@@ -29,15 +44,20 @@ export async function createPlatformSession(payload: PlatformSession) {
 export async function readPlatformSession(): Promise<PlatformSession | null> {
   const token = cookies().get(COOKIE_NAME)?.value;
   if (!token) return null;
+
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    return payload as PlatformSession;
+    if (typeof payload.platformAdminId !== 'string' || !isPlatformRole(payload.role)) {
+      return null;
+    }
+
+    return { platformAdminId: payload.platformAdminId, role: payload.role };
   } catch {
     return null;
   }
 }
 
-export async function requirePlatformAdmin(allowed: PlatformSession['role'][] = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT']) {
+export async function requirePlatformAdmin(allowed: PlatformRole[] = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT']) {
   const session = await readPlatformSession();
   if (!session || !allowed.includes(session.role)) redirect('/platform/login');
 
