@@ -19,7 +19,7 @@ type PendingInvite = {
   id: string;
   name: string;
   email: string;
-  role: Exclude<Role, 'OWNER'>;
+  role: Role;
   jobTitle: string | null;
   expiresAt: string;
 };
@@ -87,7 +87,7 @@ export default function PeopleClient({
       id: `temp-${Date.now()}`,
       name: payload.name,
       email: payload.email,
-      role: payload.role as PendingInvite['role'],
+      role: payload.role as Role,
       jobTitle: payload.jobTitle || null,
       expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
     }, ...current]);
