@@ -58,6 +58,7 @@ export default function LoginPage() {
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <p className={styles.note}>Your company workspace is isolated from every other organization on the platform.</p>
+        <a href="/register" style={{display:'inline-block',marginTop:18,color:'inherit',fontSize:12,letterSpacing:'.08em'}}>CREATE A NEW COMPANY WORKSPACE →</a>
       </section>
     </main>
   );
