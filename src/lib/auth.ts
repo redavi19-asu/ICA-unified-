@@ -10,7 +10,11 @@ const APP_ROLES = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 function getSecret() {
-  return new TextEncoder().encode(process.env.AUTH_SECRET || devSecret);
+  const configuredSecret = process.env.AUTH_SECRET;
+  if (!configuredSecret && process.env.NODE_ENV === 'production') {
+    throw new Error('AUTH_SECRET must be configured in production.');
+  }
+  return new TextEncoder().encode(configuredSecret || devSecret);
 }
 
 function isAppRole(value: unknown): value is AppRole {
