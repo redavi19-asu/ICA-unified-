@@ -30,13 +30,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This invitation has expired.' }, { status: 400 });
   }
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+  const existingUser = await prisma.user.findUnique({ where: { email: invitation.email } });
+  if (existingUser) {
+    const passwordMatches = await bcrypt.compare(parsed.data.password, existingUser.passwordHash);
+    if (!passwordMatches) {
+      return NextResponse.json({ error: 'Use your existing ICA Unified password to accept this invitation.' }, { status: 401 });
+    }
+  }
+
+  const passwordHash = existingUser ? null : await bcrypt.hash(parsed.data.password, 12);
 
   const result = await prisma.$transaction(async (tx) => {
-    let user = await tx.user.findUnique({ where: { email: invitation.email } });
+    let user = existingUser;
     if (!user) {
       user = await tx.user.create({
-        data: { email: invitation.email, name: invitation.name, passwordHash },
+        data: { email: invitation.email, name: invitation.name, passwordHash: passwordHash! },
       });
     }
 
