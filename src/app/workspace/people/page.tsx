@@ -2,6 +2,17 @@ import PeopleClient from './PeopleClient';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 
+type Role = 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
+type MemberStatus = 'ONBOARDING' | 'ACTIVE' | 'SUSPENDED';
+
+function normalizeRole(value: string): Role {
+  return value === 'OWNER' || value === 'ADMIN' || value === 'MANAGER' || value === 'MEMBER' ? value : 'MEMBER';
+}
+
+function normalizeStatus(value: string): MemberStatus {
+  return value === 'ONBOARDING' || value === 'ACTIVE' || value === 'SUSPENDED' ? value : 'ACTIVE';
+}
+
 export default async function PeoplePage() {
   const { membership } = await requireSession();
   const organizationId = membership.organizationId;
@@ -22,21 +33,21 @@ export default async function PeoplePage() {
   return (
     <PeopleClient
       organizationName={membership.organization.name}
-      currentRole={membership.role}
+      currentRole={normalizeRole(membership.role)}
       people={memberships.map((item) => ({
         id: item.id,
         name: item.user.name,
         email: item.user.email,
         jobTitle: item.jobTitle,
-        role: item.role,
-        status: item.status,
+        role: normalizeRole(item.role),
+        status: normalizeStatus(item.status),
         joinedAt: item.joinedAt.toISOString(),
       }))}
       invitations={invitations.map((item) => ({
         id: item.id,
         name: item.name,
         email: item.email,
-        role: item.role,
+        role: normalizeRole(item.role),
         jobTitle: item.jobTitle,
         expiresAt: item.expiresAt.toISOString(),
       }))}
