@@ -106,7 +106,7 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
             <article className={styles.credential} key={item.id}>
               <div><strong>{item.name}</strong><span>{item.status.toUpperCase()}</span></div>
               <small>{item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleDateString()}` : 'No expiration'}</small>
-              {item.code && <code>{item.code}</code>}
+              {item.code && <><code>{item.code}</code><button onClick={() => router.push(`/verify/${item.code}`)}>VERIFY RECORD →</button></>}
             </article>
           ))}
         </div>
