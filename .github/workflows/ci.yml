@@ -12,14 +12,14 @@ jobs:
     env:
       DATABASE_URL: file:./ci.db
       AUTH_SECRET: ci-only-secret-for-build-validation
+      PLATFORM_AUTH_SECRET: ci-only-platform-secret-for-build-validation
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
       - name: Install dependencies
         run: npm install
       - name: Generate Prisma client
