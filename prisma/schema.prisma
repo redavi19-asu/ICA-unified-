@@ -21,6 +21,20 @@ enum EnrollmentStatus {
   OVERDUE
 }
 
+enum MemberStatus {
+  INVITED
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
 model Organization {
   id              String           @id @default(cuid())
   name            String
@@ -28,6 +42,7 @@ model Organization {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   memberships     Membership[]
+  invitations     Invitation[]
   courses         Course[]
   enrollments     Enrollment[]
   credentials     Credential[]
@@ -48,11 +63,15 @@ model User {
   credentials     Credential[]
   acknowledgments Acknowledgment[]
   activities      Activity[]       @relation("ActivityActor")
+  sentInvitations Invitation[]     @relation("InvitationSender")
 }
 
 model Membership {
   id             String       @id @default(cuid())
   role           Role         @default(MEMBER)
+  status         MemberStatus @default(ACTIVE)
+  jobTitle       String?
+  joinedAt       DateTime     @default(now())
   userId         String
   organizationId String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -60,6 +79,27 @@ model Membership {
 
   @@unique([userId, organizationId])
   @@index([organizationId, role])
+  @@index([organizationId, status])
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  email          String
+  name           String
+  jobTitle       String?
+  role           Role             @default(MEMBER)
+  status         InvitationStatus @default(PENDING)
+  tokenHash      String           @unique
+  expiresAt      DateTime
+  createdAt      DateTime         @default(now())
+  acceptedAt     DateTime?
+  invitedById    String?
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User?            @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status])
+  @@index([email, status])
 }
 
 model Course {
