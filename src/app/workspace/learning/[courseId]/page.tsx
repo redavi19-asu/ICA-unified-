@@ -3,6 +3,13 @@ import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import CourseClient from './CourseClient';
 
+const lessonKinds = ['TEXT', 'VIDEO', 'DOCUMENT', 'QUIZ'] as const;
+type LessonKind = (typeof lessonKinds)[number];
+
+function normalizeLessonKind(value: string): LessonKind {
+  return lessonKinds.includes(value as LessonKind) ? (value as LessonKind) : 'TEXT';
+}
+
 export default async function CoursePage({ params }: { params: { courseId: string } }) {
   const { membership } = await requireSession();
   const organizationId = membership.organizationId;
@@ -50,7 +57,7 @@ export default async function CoursePage({ params }: { params: { courseId: strin
           id: lesson.id,
           order: lesson.order,
           title: lesson.title,
-          kind: lesson.kind,
+          kind: normalizeLessonKind(lesson.kind),
           content: lesson.content,
           mediaUrl: lesson.mediaUrl,
           completed: lesson.progress.length > 0,
