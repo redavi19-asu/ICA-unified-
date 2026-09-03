@@ -101,6 +101,7 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
           <button onClick={() => router.push('/workspace/people')}>+ Add person</button>
           <button onClick={() => router.push('/workspace/documents')}>Add document</button>
           <button onClick={() => router.push('/workspace/credentials')}>Verify records</button>
+          <button onClick={() => router.push('/workspace/reports')}>Generate report</button>
         </section>
 
         <section className="metrics" aria-label="Organization metrics">
