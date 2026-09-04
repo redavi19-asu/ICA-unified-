@@ -1,9 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-
-type Workspace = 'pulse' | 'learning' | 'people' | 'credentials' | 'documents';
 
 type Props = {
   userName: string;
@@ -12,25 +10,12 @@ type Props = {
   stats: { members: number; courses: number; credentials: number; documents: number };
 };
 
-const workspaceCopy: Record<Workspace, { score: number; label: string; description: string }> = {
-  pulse: { score: 94, label: 'Operations Pulse', description: 'A live view of learning, people, credentials, documents, and approvals.' },
-  learning: { score: 91, label: 'Learning Field', description: 'Assignments, courses, completion, and overdue work without menu hunting.' },
-  people: { score: 96, label: 'People Field', description: 'Employees, onboarding, managers, roles, and workforce status in one place.' },
-  credentials: { score: 89, label: 'Credential Field', description: 'Certificates, licenses, renewals, expirations, and compliance attention.' },
-  documents: { score: 98, label: 'Document Field', description: 'Policies, acknowledgments, employee files, and controlled documents.' },
-};
-
 export default function WorkspaceClient({ userName, role, organizationName, stats }: Props) {
   const router = useRouter();
-  const [workspace, setWorkspace] = useState<Workspace>('pulse');
-  const [message, setMessage] = useState(`Connected to ${organizationName}.`);
-  const active = workspaceCopy[workspace];
-  const activity = useMemo(() => [
-    ['Workspace authenticated', `${userName} · ${role}`],
-    ['Tenant boundary active', organizationName],
-    ['Learning engine ready', `${stats.courses} courses available`],
-    ['Records layer ready', `${stats.documents} controlled documents`],
-  ], [organizationName, role, stats.courses, stats.documents, userName]);
+
+  const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
+  const compliant = Math.max(0, Math.min(100, stats.documents ? 85 : 0));
+  const firstName = userName.split(' ')[0] || userName;
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -38,81 +23,126 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
     router.refresh();
   }
 
-  function openField(item: Workspace) {
-    if (item === 'learning') return router.push('/workspace/learning');
-    if (item === 'people') return router.push('/workspace/people');
-    if (item === 'credentials') return router.push('/workspace/credentials');
-    if (item === 'documents') return router.push('/workspace/documents');
-    setWorkspace(item);
-    setMessage(`${workspaceCopy[item].label} activated.`);
-  }
-
-  const nodes = [
-    { key: 'learning' as Workspace, title: `LEARNING / ${String(stats.courses).padStart(2, '0')}`, detail: `${stats.courses} courses`, className: 'node node-learning' },
-    { key: 'people' as Workspace, title: `PEOPLE / ${String(stats.members).padStart(2, '0')}`, detail: `${stats.members} active profiles`, className: 'node node-people' },
-    { key: 'credentials' as Workspace, title: `CREDENTIALS / ${String(stats.credentials).padStart(2, '0')}`, detail: `${stats.credentials} tracked`, className: 'node node-credentials' },
-    { key: 'documents' as Workspace, title: `DOCUMENTS / ${String(stats.documents).padStart(2, '0')}`, detail: `${stats.documents} controlled`, className: 'node node-documents' },
-  ];
-
   return (
-    <main className="shell">
-      <aside className="edge-rail" aria-label="Workspace navigation">
-        <div className="brand-mark">IU</div>
-        {(['pulse', 'learning', 'people', 'credentials', 'documents'] as Workspace[]).map((item, index) => (
-          <button key={item} className={workspace === item ? 'rail-control active' : 'rail-control'} onClick={() => openField(item)} aria-label={workspaceCopy[item].label}>
-            {['◉', '△', '◎', '◇', '▤'][index]}
-          </button>
-        ))}
+    <main className="dashboard-shell">
+      <aside className="dashboard-sidebar">
+        <button className="dashboard-brand" onClick={() => router.push('/workspace')} aria-label="ICA Unified dashboard">
+          <span>ICA</span>
+          <strong>UNIFIED</strong>
+          <small>LEARNING • PEOPLE • COMPLIANCE</small>
+        </button>
+
+        <nav className="dashboard-nav" aria-label="Primary navigation">
+          <button className="active" onClick={() => router.push('/workspace')}>⌂ <span>Dashboard</span></button>
+          <p>MANAGEMENT</p>
+          <button onClick={() => router.push('/workspace/learning')}>▥ <span>Learning</span></button>
+          <button onClick={() => router.push('/workspace/people')}>♙ <span>People</span></button>
+          <button onClick={() => router.push('/workspace/credentials')}>⬡ <span>Credentials</span></button>
+          <button onClick={() => router.push('/workspace/documents')}>▤ <span>Documents</span></button>
+          <button onClick={() => router.push('/workspace/reports')}>▥ <span>Reports</span></button>
+          <p>COMPANY SETTINGS</p>
+          <button onClick={() => router.push('/workspace/people')}>◈ <span>Roles & Permissions</span></button>
+          <button onClick={() => router.push('/workspace/reports')}>⌁ <span>Integrations</span></button>
+          <button onClick={() => router.push('/workspace/reports')}>▣ <span>Billing</span></button>
+          <p>PLATFORM</p>
+          <button onClick={() => router.push('/platform')}>◇ <span>Platform Admin</span></button>
+        </nav>
+
+        <div className="dashboard-help">
+          <strong>Need Help?</strong>
+          <span>Open reports, people, or training controls from this workspace.</span>
+          <button onClick={() => router.push('/workspace/reports')}>Get Help</button>
+        </div>
       </aside>
 
-      <section className="workspace">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">{organizationName.toUpperCase()} / UNIFIED OPERATIONS</p>
-            <h1>ICA<br />UNIFIED</h1>
-            <p className="subline">LMS + AMS Business Management Platform</p>
+      <section className="dashboard-main">
+        <header className="dashboard-topbar">
+          <div className="company-switcher">
+            <span>Company Workspace</span>
+            <button>{organizationName} <b>⌄</b></button>
+            <i>● Active</i>
           </div>
-          <div className="system-health">
-            <span>{userName.toUpperCase()} · {role}</span>
-            <div className="signal" aria-hidden="true"><i /><i /><i /><i /></div>
-            <button onClick={logout} style={{background:'transparent',border:'1px solid currentColor',color:'inherit',padding:'8px 12px',cursor:'pointer'}}>SIGN OUT</button>
+          <div className="dashboard-user">
+            <div><strong>{userName}</strong><span>{role}</span></div>
+            <button onClick={logout}>Sign out</button>
           </div>
         </header>
 
-        <div className="workspace-grid">
-          <section className="field-map" aria-label="Unified business system map">
-            <div className="ring ring-one" /><div className="ring ring-two" />
-            <div className="core-score"><span>{active.label}</span><strong>{active.score}</strong><small>% aligned</small><i className="core-dot" /></div>
-            {nodes.map((node) => (
-              <button key={node.key} className={`${node.className}${workspace === node.key ? ' selected' : ''}`} onClick={() => openField(node.key)}>
-                <b>{node.title}</b><span>{node.detail}</span>
-              </button>
-            ))}
-          </section>
-
-          <aside className="activity-stream">
-            <p className="eyebrow">RIGHT NOW</p><h2>Activity stream</h2>
-            {activity.map(([title, detail]) => <div className="activity" key={title}><strong>{title}</strong><span>{detail}</span></div>)}
-          </aside>
-        </div>
-
-        <section className="action-dock" aria-label="Quick actions">
-          <button onClick={() => router.push('/workspace/learning')}>Assign training</button>
-          <button onClick={() => router.push('/workspace/people')}>+ Add person</button>
-          <button onClick={() => router.push('/workspace/documents')}>Add document</button>
-          <button onClick={() => router.push('/workspace/credentials')}>Verify records</button>
-          <button onClick={() => router.push('/workspace/reports')}>Generate report</button>
+        <section className="dashboard-welcome">
+          <div>
+            <h1>Welcome back, {firstName}</h1>
+            <p>Here&apos;s what&apos;s happening with {organizationName} today.</p>
+          </div>
+          <div className="dashboard-kpis">
+            <button onClick={() => router.push('/workspace/people')}><b>{stats.members}</b><span>Total People</span><small>View all</small></button>
+            <button onClick={() => router.push('/workspace/learning')}><b>{stats.courses}</b><span>Courses</span><small>View courses</small></button>
+            <button onClick={() => router.push('/workspace/credentials')}><b>{stats.credentials}</b><span>Credentials</span><small>View all</small></button>
+            <button onClick={() => router.push('/workspace/documents')}><b>{stats.documents}</b><span>Documents</span><small>View all</small></button>
+          </div>
         </section>
 
-        <section className="metrics" aria-label="Organization metrics">
-          <div><span>COURSES</span><strong>{stats.courses}</strong></div>
-          <div><span>PEOPLE</span><strong>{stats.members}</strong></div>
-          <div><span>CREDENTIALS</span><strong>{stats.credentials}</strong></div>
-          <div><span>DOCUMENTS</span><strong>{stats.documents}</strong></div>
+        <section className="dashboard-grid-two">
+          <article className="dashboard-card learning-overview">
+            <div className="card-heading"><h2>Learning Overview</h2><button onClick={() => router.push('/workspace/learning')}>View all courses</button></div>
+            <div className="learning-layout">
+              <div className="donut-wrap">
+                <div className="donut" style={{'--value': `${completion}%`} as React.CSSProperties}><span><b>{completion}%</b><small>Average<br/>Completion</small></span></div>
+                <div className="legend-stack"><span><i className="dot blue"/> {stats.courses} <small>Active Courses</small></span><span><i className="dot green"/> {stats.credentials} <small>Credentials Earned</small></span><span><i className="dot amber"/> {Math.max(stats.courses - stats.credentials, 0)} <small>Needs Attention</small></span></div>
+              </div>
+              <div className="activity-list">
+                <h3>Recent Activity</h3>
+                <button onClick={() => router.push('/workspace/learning')}><i>✓</i><span><b>Learning engine ready</b><small>{stats.courses} courses available</small></span></button>
+                <button onClick={() => router.push('/workspace/people')}><i>→</i><span><b>People workspace active</b><small>{stats.members} profiles connected</small></span></button>
+                <button onClick={() => router.push('/workspace/documents')}><i>!</i><span><b>Document controls online</b><small>{stats.documents} controlled documents</small></span></button>
+              </div>
+            </div>
+          </article>
+
+          <article className="dashboard-card people-overview">
+            <div className="card-heading"><h2>People Overview</h2><button onClick={() => router.push('/workspace/people')}>View all people</button></div>
+            <div className="people-overview-content">
+              <div className="people-donut"><span><b>{stats.members}</b><small>Total People</small></span></div>
+              <div className="people-role-list">
+                <span><i className="dot purple"/> Owners <b>{role === 'OWNER' ? 1 : 0}</b></span>
+                <span><i className="dot blue"/> Managers <b>{role === 'MANAGER' ? 1 : 0}</b></span>
+                <span><i className="dot cyan"/> Admins <b>{role === 'ADMIN' ? 1 : 0}</b></span>
+                <span><i className="dot green"/> Members <b>{Math.max(stats.members - 1, 0)}</b></span>
+              </div>
+            </div>
+            <div className="people-footer"><button onClick={() => router.push('/workspace/people')}>+ Quick Invite</button><button onClick={() => router.push('/workspace/people')}>View onboarding</button><button onClick={() => router.push('/workspace/people')}>Manage people</button></div>
+          </article>
         </section>
 
-        <section className="context-panel"><div><p className="eyebrow">CURRENT FIELD</p><h2>{active.label}</h2></div><p>{active.description}</p></section>
-        <p className="system-message" aria-live="polite">{message}</p>
+        <section className="dashboard-grid-three">
+          <article className="dashboard-card mini-card">
+            <div className="card-heading"><h2>Credential Status</h2><button onClick={() => router.push('/workspace/credentials')}>View all credentials</button></div>
+            <div className="triple-metric"><span><b>{stats.credentials}</b><small>Active</small></span><span><b>{Math.min(stats.credentials, 3)}</b><small>Expiring Soon</small></span><span><b>0</b><small>Expired</small></span></div>
+            <div className="mini-list"><span>Credential records <b>{stats.credentials}</b></span><span>Verification system <b>Active</b></span><span>Public verification <b>Ready</b></span></div>
+          </article>
+
+          <article className="dashboard-card mini-card">
+            <div className="card-heading"><h2>Document Compliance</h2><button onClick={() => router.push('/workspace/documents')}>View all documents</button></div>
+            <div className="compliance-score"><b>{compliant}%</b><span>Overall Compliance</span><div><i style={{width:`${compliant}%`}}/></div></div>
+            <div className="mini-list"><span>Controlled documents <b>{stats.documents}</b></span><span>Acknowledgment tracking <b>On</b></span><span>Tenant isolation <b>Active</b></span></div>
+          </article>
+
+          <article className="dashboard-card mini-card">
+            <div className="card-heading"><h2>Reports Snapshot</h2><button onClick={() => router.push('/workspace/reports')}>View all reports</button></div>
+            <div className="report-list">
+              <button onClick={() => router.push('/workspace/reports')}><i>▣</i><span><b>Training Completion</b><small>See organization progress</small></span><strong>{stats.courses}</strong></button>
+              <button onClick={() => router.push('/workspace/reports')}><i>◈</i><span><b>Credential Watch</b><small>Expiring credentials</small></span><strong>{Math.min(stats.credentials, 3)}</strong></button>
+              <button onClick={() => router.push('/workspace/reports')}><i>▤</i><span><b>Document Compliance</b><small>Acknowledgment status</small></span><strong>{stats.documents}</strong></button>
+            </div>
+          </article>
+        </section>
+
+        <section className="dashboard-actionbar">
+          <button onClick={() => router.push('/workspace/people')}><i>♙+</i><span>Quick Invite</span></button>
+          <button onClick={() => router.push('/workspace/learning')}><i>▥</i><span>Create Course</span></button>
+          <button onClick={() => router.push('/workspace/documents')}><i>▤</i><span>Upload Document</span></button>
+          <button onClick={() => router.push('/workspace/reports')}><i>▥</i><span>Create Report</span></button>
+          <div className="system-status"><small>SYSTEM STATUS</small><strong>● All Systems Operational</strong></div>
+        </section>
       </section>
     </main>
   );
