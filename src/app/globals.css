@@ -67,3 +67,27 @@
 .dashboard-guide-banner>div{display:grid;gap:3px}.dashboard-guide-banner small{color:#5eb8ff;font-size:7px;font-weight:900;letter-spacing:.15em}.dashboard-guide-banner strong{font-size:12px;color:#edf7ff}.dashboard-guide-banner span{font-size:9px;color:#89a0b0}
 .dashboard-guide-banner>button{border:1px solid #389ee0;background:#127fc7;color:white;border-radius:7px;padding:10px 12px;font-size:8px;font-weight:900;letter-spacing:.08em;white-space:nowrap;cursor:pointer}
 @media(max-width:760px){.dashboard-guide-banner{align-items:flex-start;flex-direction:column}.dashboard-guide-banner>button{width:100%}}
+
+.workspace-mobile-dock{display:none}
+.workspace-tour-overlay{position:fixed;inset:0;z-index:1200;background:rgba(2,8,14,.72);backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px}
+.workspace-tour-card{width:min(470px,100%);border:1px solid #3677a7;background:linear-gradient(155deg,#0b1c29,#07121c);border-radius:15px;padding:25px;box-shadow:0 30px 100px rgba(0,0,0,.55)}
+.workspace-tour-card>small{color:#5eb8ff;font-size:8px;font-weight:900;letter-spacing:.15em}
+.workspace-tour-card h2{margin:10px 0 8px;font-size:28px;letter-spacing:-.04em}
+.workspace-tour-card p{margin:0;color:#9bafbd;line-height:1.7;font-size:13px}
+.workspace-tour-card>div{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}
+.workspace-tour-card button{border-radius:7px;padding:10px 14px;font-size:9px;font-weight:900;cursor:pointer}
+.workspace-tour-card .skip{border:1px solid #30495d;background:transparent;color:#91a4b2}
+.workspace-tour-card .next{border:1px solid #178cff;background:#178cff;color:#fff}
+
+@media(max-width:760px){
+  .workspace-mobile-dock{display:block;position:sticky;top:0;z-index:1100;background:rgba(5,14,22,.97);backdrop-filter:blur(14px);border-bottom:1px solid #21435c;box-shadow:0 8px 24px rgba(0,0,0,.24)}
+  .workspace-mobile-brand{display:flex;align-items:center;justify-content:space-between;padding:9px 13px 7px}
+  .workspace-mobile-brand strong{font-size:10px;letter-spacing:.14em;color:#edf7ff}
+  .workspace-mobile-brand button{width:28px;height:28px;border-radius:50%;border:1px solid #3676a4;background:#0a2030;color:#9ed8ff;font-weight:900}
+  .workspace-mobile-dock nav{display:flex;overflow-x:auto;gap:4px;padding:0 10px 8px;scrollbar-width:none}
+  .workspace-mobile-dock nav::-webkit-scrollbar{display:none}
+  .workspace-mobile-dock nav button{flex:0 0 auto;border:1px solid transparent;background:transparent;color:#8098a9;border-radius:7px;padding:8px 10px;font-size:9px;font-weight:800;white-space:nowrap}
+  .workspace-mobile-dock nav button.active{border-color:#2c77aa;background:#0d2a3e;color:#eaf7ff}
+  .workspace-mobile-dock nav button.platform{border-color:#6f5e28;color:#ffe49a}
+  .dashboard-sidebar{display:none!important}
+}
