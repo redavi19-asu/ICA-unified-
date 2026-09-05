@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import ICAAssist from './ICAAssist';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -22,53 +21,6 @@ type Props = {
 
 export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats, workflowStats }: Props) {
   const router = useRouter();
-  const [tipStep, setTipStep] = useState<number | null>(null);
-
-  useEffect(() => {
-    const seenThisSession = window.sessionStorage.getItem('ica_dashboard_tour_seen_this_session');
-    if (!seenThisSession) setTipStep(0);
-  }, []);
-
-  const tourSteps = useMemo(() => {
-    const steps = [
-      {
-        title: 'Your command dashboard',
-        body: 'This page gives you the quick view: people, learning, credentials, documents, and association workflows.',
-      },
-      {
-        title: 'Workflow Studio',
-        body: 'Use Workflows when you are creating a membership program, event, webinar, registration, CEU setup, or another multi-step business process.',
-      },
-      {
-        title: 'Tools',
-        body: 'Owners and admins use Tools for imports, migrations, website connections, APIs, domains, and organization-level setup.',
-      },
-    ];
-
-    if (platformRole) {
-      steps.push({
-        title: platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control',
-        body: 'This is your platform-level support area for company health, diagnostics, analytics, and account controls.',
-      });
-    }
-
-    return steps;
-  }, [platformRole]);
-
-  function closeTour() {
-    window.sessionStorage.setItem('ica_dashboard_tour_seen_this_session', '1');
-    setTipStep(null);
-  }
-
-  function nextTip() {
-    if (tipStep === null) return;
-    if (tipStep >= tourSteps.length - 1) {
-      closeTour();
-      return;
-    }
-    setTipStep(tipStep + 1);
-  }
-
   const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
   const compliant = Math.max(0, Math.min(100, stats.documents ? 85 : 0));
   const firstName = userName.split(' ')[0] || userName;
@@ -133,20 +85,10 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
             <i>● Active</i>
           </div>
           <div className="dashboard-user">
-            <button className="dashboard-tips-button" onClick={() => setTipStep(0)}>? Tips</button>
             <div><strong>{userName}</strong><span>{role}</span></div>
             <button onClick={logout}>Sign out</button>
           </div>
         </header>
-
-        <section className="dashboard-guide-banner">
-          <div>
-            <small>NEW HERE?</small>
-            <strong>Need a quick tour of ICA Unified?</strong>
-            <span>See where memberships, events, learning, tools, and platform controls live.</span>
-          </div>
-          <button onClick={() => setTipStep(0)}>START QUICK TOUR →</button>
-        </section>
 
         <section className="dashboard-welcome">
           <div>
@@ -244,21 +186,6 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
         </section>
       </section>
 
-      <ICAAssist />
-
-      {tipStep !== null && tourSteps[tipStep] && (
-        <div className="ica-tour-overlay" role="dialog" aria-modal="true" aria-label="ICA Unified quick tips">
-          <div className="ica-tour-card">
-            <div className="ica-tour-count">QUICK TIP {tipStep + 1} OF {tourSteps.length}</div>
-            <h2>{tourSteps[tipStep].title}</h2>
-            <p>{tourSteps[tipStep].body}</p>
-            <div className="ica-tour-actions">
-              <button className="ica-tour-skip" onClick={closeTour}>Skip</button>
-              <button className="ica-tour-next" onClick={nextTip}>{tipStep === tourSteps.length - 1 ? 'Got it' : 'Next →'}</button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
