@@ -29,7 +29,7 @@ const SCRIPT_ID = 'ica-turnstile-script';
 export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAEpl_r2LJcL18Dn5';
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
