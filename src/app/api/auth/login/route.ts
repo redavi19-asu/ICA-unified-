@@ -3,16 +3,23 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
+import { verifyTurnstile } from '../../../../lib/turnstile';
 
 const loginSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
   password: z.string().min(8),
   organizationSlug: z.string().min(2).transform((value) => value.toLowerCase()),
+  turnstileToken: z.string().optional(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = loginSchema.parse(await request.json());
+
+    const challenge = await verifyTurnstile(body.turnstileToken, request);
+    if (!challenge.success) {
+      return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: body.email },
