@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import Script from 'next/script';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
@@ -11,7 +12,7 @@ declare global {
         'expired-callback'?: () => void;
         'error-callback'?: () => void;
         theme?: 'light' | 'dark' | 'auto';
-        size?: 'normal' | 'compact' | 'flexible';
+        size?: 'normal' | 'compact';
       }) => string;
       remove: (widgetId: string) => void;
     };
@@ -24,68 +25,64 @@ type Props = {
   theme?: 'light' | 'dark' | 'auto';
 };
 
-const SCRIPT_ID = 'ica-turnstile-script';
+const SITE_KEY = '0x4AAAAAAEpl_r2LJcL18Dn5';
 
 export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAEpl_r2LJcL18Dn5';
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
-  useEffect(() => {
-    if (!siteKey || !containerRef.current) return;
+  const renderWidget = useCallback(() => {
+    if (!containerRef.current || !window.turnstile) return;
 
-    let cancelled = false;
-
-    const render = () => {
-      if (cancelled || !containerRef.current || !window.turnstile) return;
-
-      if (widgetIdRef.current) {
-        try { window.turnstile.remove(widgetIdRef.current); } catch {}
-        widgetIdRef.current = null;
-      }
-
-      containerRef.current.innerHTML = '';
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        callback: (token) => onToken(token),
-        'expired-callback': () => onToken(''),
-        'error-callback': () => onToken(''),
-        theme,
-        size: 'flexible',
-      });
-    };
-
-    if (window.turnstile) {
-      render();
-    } else {
-      let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
-      if (!script) {
-        script = document.createElement('script');
-        script.id = SCRIPT_ID;
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
-      }
-      script.addEventListener('load', render, { once: true });
+    if (widgetIdRef.current) {
+      try { window.turnstile.remove(widgetIdRef.current); } catch {}
+      widgetIdRef.current = null;
     }
 
+    containerRef.current.innerHTML = '';
+    onToken('');
+    setStatus('ready');
+
+    try {
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: SITE_KEY,
+        callback: (token) => onToken(token),
+        'expired-callback': () => onToken(''),
+        'error-callback': () => {
+          onToken('');
+          setStatus('error');
+        },
+        theme,
+        size: 'normal',
+      });
+    } catch {
+      setStatus('error');
+    }
+  }, [onToken, theme]);
+
+  useEffect(() => {
+    if (window.turnstile) renderWidget();
+
     return () => {
-      cancelled = true;
       if (widgetIdRef.current && window.turnstile) {
         try { window.turnstile.remove(widgetIdRef.current); } catch {}
         widgetIdRef.current = null;
       }
     };
-  }, [siteKey, onToken, resetKey, theme]);
+  }, [renderWidget, resetKey]);
 
-  if (!siteKey) {
-    return (
-      <div style={{fontSize:10,color:'#738797',padding:'8px 0'}}>
-        Security challenge will activate when the Turnstile site key is configured.
-      </div>
-    );
-  }
-
-  return <div ref={containerRef} style={{minHeight:65,width:'100%'}} aria-label="Cloudflare Turnstile security check" />;
+  return (
+    <div style={{width:'100%',margin:'4px 0 2px'}}>
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onReady={renderWidget}
+        onError={() => setStatus('error')}
+      />
+      <div ref={containerRef} style={{minHeight:65,width:'100%'}} aria-label="Cloudflare Turnstile security verification" />
+      {status === 'loading' && <p style={{fontSize:10,opacity:.6,margin:'4px 0'}}>Loading security verification…</p>}
+      {status === 'error' && <p role="alert" style={{fontSize:11,color:'#e58f8f',margin:'4px 0'}}>Security verification could not load. Refresh and try again.</p>}
+    </div>
+  );
 }
