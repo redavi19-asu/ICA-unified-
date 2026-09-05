@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -10,65 +10,8 @@ type Props = {
   stats: { members: number; courses: number; credentials: number; documents: number };
 };
 
-type Appearance = 'COMMAND' | 'EXECUTIVE';
-
-type AppearanceState = {
-  orgDefault: Appearance;
-  userOverride: Appearance | null;
-  effective: Appearance;
-  canManageOrganization: boolean;
-};
-
 export default function WorkspaceClient({ userName, role, organizationName, stats }: Props) {
   const router = useRouter();
-  const [appearance, setAppearance] = useState<Appearance>('COMMAND');
-  const [appearanceState, setAppearanceState] = useState<AppearanceState>({
-    orgDefault: 'COMMAND',
-    userOverride: null,
-    effective: 'COMMAND',
-    canManageOrganization: role === 'OWNER' || role === 'ADMIN',
-  });
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
-  const [appearanceBusy, setAppearanceBusy] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    fetch('/api/preferences/appearance')
-      .then((response) => response.ok ? response.json() : null)
-      .then((data: AppearanceState | null) => {
-        if (!active || !data) return;
-        setAppearanceState(data);
-        setAppearance(data.effective);
-      })
-      .catch(() => {
-        // Keep Command as the safe fallback if preference loading is unavailable.
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  async function updateAppearance(scope: 'organization' | 'user', nextAppearance: Appearance | null) {
-    setAppearanceBusy(true);
-
-    try {
-      const response = await fetch('/api/preferences/appearance', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope, appearance: nextAppearance }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) return;
-
-      setAppearanceState(data);
-      setAppearance(data.effective);
-    } finally {
-      setAppearanceBusy(false);
-    }
-  }
 
   const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
   const compliant = Math.max(0, Math.min(100, stats.documents ? 85 : 0));
@@ -81,7 +24,7 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
   }
 
   return (
-    <main className="dashboard-shell" data-workspace-appearance={appearance.toLowerCase()}>
+    <main className="dashboard-shell">
       <aside className="dashboard-sidebar">
         <button className="dashboard-brand" onClick={() => router.push('/workspace')} aria-label="ICA Unified dashboard">
           <span>ICA</span>
@@ -120,85 +63,9 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
             <i>● Active</i>
           </div>
           <div className="dashboard-user">
-            <button
-              className="appearance-trigger"
-              type="button"
-              onClick={() => setAppearanceOpen((open) => !open)}
-              aria-expanded={appearanceOpen}
-            >
-              <span>Appearance</span>
-              <strong>{appearance === 'EXECUTIVE' ? 'Executive' : 'Command'}</strong>
-            </button>
             <div><strong>{userName}</strong><span>{role}</span></div>
             <button onClick={logout}>Sign out</button>
           </div>
-
-          {appearanceOpen && (
-            <aside className="appearance-panel" aria-label="Dashboard appearance">
-              <div className="appearance-panel-head">
-                <div>
-                  <small>DASHBOARD APPEARANCE</small>
-                  <h3>Choose how ICA Unified feels.</h3>
-                </div>
-                <button type="button" onClick={() => setAppearanceOpen(false)}>×</button>
-              </div>
-
-              <div className="appearance-choice-grid">
-                <button
-                  type="button"
-                  className={appearance === 'COMMAND' ? 'selected' : ''}
-                  disabled={appearanceBusy}
-                  onClick={() => updateAppearance('user', 'COMMAND')}
-                >
-                  <strong>Command</strong>
-                  <span>Live operational color, status indicators, charts, and command-center energy.</span>
-                </button>
-                <button
-                  type="button"
-                  className={appearance === 'EXECUTIVE' ? 'selected' : ''}
-                  disabled={appearanceBusy}
-                  onClick={() => updateAppearance('user', 'EXECUTIVE')}
-                >
-                  <strong>Executive</strong>
-                  <span>Bold black, white, charcoal, and warm-neutral business presentation.</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className="appearance-default"
-                disabled={appearanceBusy || appearanceState.userOverride === null}
-                onClick={() => updateAppearance('user', null)}
-              >
-                Use company default — {appearanceState.orgDefault === 'EXECUTIVE' ? 'Executive' : 'Command'}
-              </button>
-
-              {appearanceState.canManageOrganization && (
-                <div className="appearance-company">
-                  <small>ORGANIZATION DEFAULT</small>
-                  <p>Owners and admins set the starting appearance for everyone in this company. Each user can still choose a personal view.</p>
-                  <div>
-                    <button
-                      type="button"
-                      disabled={appearanceBusy}
-                      className={appearanceState.orgDefault === 'COMMAND' ? 'selected' : ''}
-                      onClick={() => updateAppearance('organization', 'COMMAND')}
-                    >
-                      Command
-                    </button>
-                    <button
-                      type="button"
-                      disabled={appearanceBusy}
-                      className={appearanceState.orgDefault === 'EXECUTIVE' ? 'selected' : ''}
-                      onClick={() => updateAppearance('organization', 'EXECUTIVE')}
-                    >
-                      Executive
-                    </button>
-                  </div>
-                </div>
-              )}
-            </aside>
-          )}
         </header>
 
         <section className="dashboard-welcome">
