@@ -62,3 +62,8 @@
 .ica-assist-panel form button{border:0;background:#178cff;color:#fff;border-radius:8px;padding:0 14px;font-size:9px;font-weight:900;cursor:pointer}.ica-assist-panel form button:disabled{opacity:.45}
 .ica-assist-panel footer{padding:8px 11px 10px;color:#637b8b;font-size:7px;text-align:center}
 @media(max-width:760px){.ica-assist-launcher{right:14px;bottom:14px}.ica-assist-panel{right:14px;bottom:65px;height:min(570px,calc(100vh - 92px))}}
+
+.dashboard-guide-banner{margin:14px 0 4px;border:1px solid #2f709e;background:linear-gradient(90deg,rgba(19,112,178,.18),rgba(10,28,42,.72));border-radius:10px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;gap:18px}
+.dashboard-guide-banner>div{display:grid;gap:3px}.dashboard-guide-banner small{color:#5eb8ff;font-size:7px;font-weight:900;letter-spacing:.15em}.dashboard-guide-banner strong{font-size:12px;color:#edf7ff}.dashboard-guide-banner span{font-size:9px;color:#89a0b0}
+.dashboard-guide-banner>button{border:1px solid #389ee0;background:#127fc7;color:white;border-radius:7px;padding:10px 12px;font-size:8px;font-weight:900;letter-spacing:.08em;white-space:nowrap;cursor:pointer}
+@media(max-width:760px){.dashboard-guide-banner{align-items:flex-start;flex-direction:column}.dashboard-guide-banner>button{width:100%}}
