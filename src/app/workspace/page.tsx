@@ -12,11 +12,15 @@ export default async function WorkspacePage() {
 
   const organizationId = membership.organizationId;
 
-  const [members, courses, credentials, documents] = await Promise.all([
+  const [members, courses, credentials, documents, platformAdmin] = await Promise.all([
     prisma.membership.count({ where: { organizationId } }),
     prisma.course.count({ where: { organizationId } }),
     prisma.credential.count({ where: { organizationId } }),
     prisma.document.count({ where: { organizationId } }),
+    prisma.platformAdmin.findUnique({
+      where: { email: membership.user.email.toLowerCase() },
+      select: { role: true, active: true },
+    }),
   ]);
 
   return (
@@ -24,6 +28,7 @@ export default async function WorkspacePage() {
       userName={membership.user.name}
       role={membership.role}
       organizationName={membership.organization.name}
+      platformRole={platformAdmin?.active ? platformAdmin.role : null}
       stats={{ members, courses, credentials, documents }}
     />
   );
