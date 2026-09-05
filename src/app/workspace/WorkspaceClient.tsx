@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import ICAAssist from './ICAAssist';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -233,6 +234,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <div className="system-status"><small>SYSTEM STATUS</small><strong>● All Systems Operational</strong></div>
         </section>
       </section>
+
+      <ICAAssist />
 
       {tipStep !== null && tourSteps[tipStep] && (
         <div className="ica-tour-overlay" role="dialog" aria-modal="true" aria-label="ICA Unified quick tips">
