@@ -9,9 +9,17 @@ type Props = {
   organizationName: string;
   platformRole: string | null;
   stats: { members: number; courses: number; credentials: number; documents: number };
+  workflowStats: {
+    total: number;
+    membershipPrograms: number;
+    activeEvents: number;
+    draftWorkflows: number;
+    upcomingEvents: number;
+    ceuConfiguredEvents: number;
+  };
 };
 
-export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats }: Props) {
+export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats, workflowStats }: Props) {
   const router = useRouter();
 
   const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
@@ -96,6 +104,25 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           </div>
         </section>
 
+        <section className="workflow-summary-panel">
+          <div className="workflow-summary-head">
+            <div>
+              <small>ASSOCIATION OPERATIONS</small>
+              <h2>Membership + Event Workflows</h2>
+              <p>See what the organization has configured without digging through separate modules.</p>
+            </div>
+            <button onClick={() => router.push('/workspace/workflows')}>OPEN WORKFLOW STUDIO →</button>
+          </div>
+          <div className="workflow-summary-grid">
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.membershipPrograms}</b><span>Membership Programs</span><small>Configured tiers & applications</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.activeEvents}</b><span>Active Events / Webinars</span><small>Published registration workflows</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.upcomingEvents}</b><span>Upcoming Events</span><small>Future-dated workflows</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.draftWorkflows}</b><span>Draft Workflows</span><small>Not published yet</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.ceuConfiguredEvents}</b><span>CEU-Configured Events</span><small>Events with credit values</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.total}</b><span>Total Workflows</span><small>Membership + event workflows</small></button>
+          </div>
+        </section>
+
         <section className="dashboard-grid-two">
           <article className="dashboard-card learning-overview">
             <div className="card-heading"><h2>Learning Overview</h2><button onClick={() => router.push('/workspace/learning')}>View all courses</button></div>
@@ -155,7 +182,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/people')}><i>♙+</i><span>Quick Invite</span></button>
           <button onClick={() => router.push('/workspace/learning')}><i>▥</i><span>Create Course</span></button>
           <button onClick={() => router.push('/workspace/documents')}><i>▤</i><span>Upload Document</span></button>
-          <button onClick={() => router.push('/workspace/reports')}><i>▥</i><span>Create Report</span></button>
+          <button onClick={() => router.push('/workspace/workflows')}><i>↯</i><span>New Workflow</span></button>
           <div className="system-status"><small>SYSTEM STATUS</small><strong>● All Systems Operational</strong></div>
         </section>
       </section>
