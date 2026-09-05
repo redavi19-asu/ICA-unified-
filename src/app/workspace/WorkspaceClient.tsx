@@ -25,8 +25,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
   const [tipStep, setTipStep] = useState<number | null>(null);
 
   useEffect(() => {
-    const seen = window.localStorage.getItem('ica_dashboard_tour_seen');
-    if (!seen) setTipStep(0);
+    const seenThisSession = window.sessionStorage.getItem('ica_dashboard_tour_seen_this_session');
+    if (!seenThisSession) setTipStep(0);
   }, []);
 
   const tourSteps = useMemo(() => {
@@ -56,7 +56,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
   }, [platformRole]);
 
   function closeTour() {
-    window.localStorage.setItem('ica_dashboard_tour_seen', '1');
+    window.sessionStorage.setItem('ica_dashboard_tour_seen_this_session', '1');
     setTipStep(null);
   }
 
@@ -138,6 +138,15 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
             <button onClick={logout}>Sign out</button>
           </div>
         </header>
+
+        <section className="dashboard-guide-banner">
+          <div>
+            <small>NEW HERE?</small>
+            <strong>Need a quick tour of ICA Unified?</strong>
+            <span>See where memberships, events, learning, tools, and platform controls live.</span>
+          </div>
+          <button onClick={() => setTipStep(0)}>START QUICK TOUR →</button>
+        </section>
 
         <section className="dashboard-welcome">
           <div>
