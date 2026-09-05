@@ -40,7 +40,7 @@ export async function createSession(payload: SessionInput) {
   return new SignJWT(safePayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('8h')
+    .setExpirationTime('30d')
     .sign(getSecret());
 }
 
@@ -94,6 +94,6 @@ export const sessionCookie = {
     sameSite: 'lax' as const,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 8,
+    maxAge: 60 * 60 * 24 * 30,
   },
 };
