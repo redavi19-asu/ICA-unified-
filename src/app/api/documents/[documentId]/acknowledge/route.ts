@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { requireSession } from '../../../../../lib/auth';
 import { prisma } from '../../../../../lib/prisma';
 
-export async function POST(_request: Request, { params }: { params: { documentId: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ documentId: string }> }) {
+  const params = await props.params;
   const { membership } = await requireSession();
 
   const document = await prisma.document.findFirst({

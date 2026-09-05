@@ -10,7 +10,8 @@ function normalizeLessonKind(value: string): LessonKind {
   return lessonKinds.includes(value as LessonKind) ? (value as LessonKind) : 'TEXT';
 }
 
-export default async function CoursePage({ params }: { params: { courseId: string } }) {
+export default async function CoursePage(props: { params: Promise<{ courseId: string }> }) {
+  const params = await props.params;
   const { membership } = await requireSession();
   const organizationId = membership.organizationId;
 

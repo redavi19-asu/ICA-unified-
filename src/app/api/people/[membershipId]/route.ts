@@ -9,7 +9,8 @@ const updateSchema = z.object({
   jobTitle: z.string().trim().max(100).nullable().optional(),
 });
 
-export async function PATCH(request: Request, { params }: { params: { membershipId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ membershipId: string }> }) {
+  const params = await props.params;
   const { membership: actor } = await requireSession();
   if (!['OWNER', 'ADMIN'].includes(actor.role)) {
     return NextResponse.json({ error: 'You do not have permission to manage people.' }, { status: 403 });

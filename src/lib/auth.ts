@@ -45,7 +45,7 @@ export async function createSession(payload: SessionInput) {
 }
 
 export async function readSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
 
   try {

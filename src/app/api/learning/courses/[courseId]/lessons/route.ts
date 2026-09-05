@@ -13,7 +13,8 @@ const schema = z.object({
   correctAnswer: z.string().trim().nullable().optional(),
 });
 
-export async function POST(request: Request, { params }: { params: { courseId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ courseId: string }> }) {
+  const params = await props.params;
   const { membership } = await requireSession();
   if (!['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) {
     return NextResponse.json({ error: 'You do not have permission to edit courses.' }, { status: 403 });

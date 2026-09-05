@@ -42,7 +42,7 @@ export async function createPlatformSession(payload: PlatformSessionInput) {
 }
 
 export async function readPlatformSession(): Promise<PlatformSession | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
 
   try {

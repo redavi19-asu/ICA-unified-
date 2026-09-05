@@ -7,7 +7,8 @@ const bodySchema = z.object({
   status: z.enum(['TRIAL', 'ACTIVE', 'SUSPENDED', 'CANCELLED']),
 });
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await readPlatformSession();
   if (!session || !['SUPER_ADMIN', 'PLATFORM_ADMIN'].includes(session.role)) {
     return NextResponse.json({ error: 'Platform administrator access required.' }, { status: 403 });

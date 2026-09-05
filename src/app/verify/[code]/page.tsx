@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '../../../lib/prisma';
 
-export default async function VerifyCredentialPage({ params }: { params: { code: string } }) {
+export default async function VerifyCredentialPage(props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const credential = await prisma.credential.findUnique({
     where: { code: params.code },
     include: {

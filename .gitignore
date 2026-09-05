@@ -26,3 +26,6 @@ pnpm-debug.log*
 # Temporary/runtime files
 .tmp/
 tmp/
+
+.open-next/
+.wrangler/

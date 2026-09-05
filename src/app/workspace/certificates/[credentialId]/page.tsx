@@ -3,7 +3,8 @@ import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import styles from '../../learning/learning.module.css';
 
-export default async function CertificatePage({ params }: { params: { credentialId: string } }) {
+export default async function CertificatePage(props: { params: Promise<{ credentialId: string }> }) {
+  const params = await props.params;
   const { membership } = await requireSession();
 
   const credential = await prisma.credential.findFirst({
