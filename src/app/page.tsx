@@ -1,4 +1,5 @@
 import styles from './landing.module.css';
+import SystemStatusGlobe from './SystemStatusGlobe';
 
 const modules = [
   ['AMS', 'People, membership, roles, documents, compliance, administration, and reporting in one operational layer.'],
@@ -75,26 +76,7 @@ export default function Home() {
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
         </div>
 
-        <div className={styles.systemCard} aria-label="ICA Unified system map">
-          <div className={styles.systemTop}>
-            <span>ICA UNIFIED</span>
-            <i>CONNECTED</i>
-          </div>
-          <div className={styles.core}>
-            <small>ONE SHARED PLATFORM</small>
-            <strong>AMS + LMS</strong>
-            <span>BUSINESS DATA CORE</span>
-          </div>
-          <div className={styles.nodes}>
-            <span>PEOPLE</span>
-            <span>LEARNING</span>
-            <span>CREDENTIALS</span>
-            <span>DOCUMENTS</span>
-            <span>COMPLIANCE</span>
-            <span>REPORTING</span>
-          </div>
-          <div className={styles.systemBottom}>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</div>
-        </div>
+        <SystemStatusGlobe />
       </section>
 
       <section className={styles.mantra}>
