@@ -7,10 +7,11 @@ type Props = {
   userName: string;
   role: string;
   organizationName: string;
+  platformRole: string | null;
   stats: { members: number; courses: number; credentials: number; documents: number };
 };
 
-export default function WorkspaceClient({ userName, role, organizationName, stats }: Props) {
+export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats }: Props) {
   const router = useRouter();
 
   const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
@@ -48,7 +49,17 @@ export default function WorkspaceClient({ userName, role, organizationName, stat
           <button onClick={() => router.push('/workspace/reports')}>⌁ <span>Integrations</span></button>
           <button onClick={() => router.push('/workspace/reports')}>▣ <span>Billing</span></button>
           <p>PLATFORM</p>
-          <button onClick={() => router.push('/platform')}>◇ <span>Platform Admin</span></button>
+          {platformRole ? (
+            <button className="super-admin-nav-button" onClick={() => router.push('/platform')}>
+              ⚡
+              <span>
+                <strong>{platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control'}</strong>
+                <small>{platformRole === 'SUPER_ADMIN' ? 'FULL PLATFORM PRIVILEGES' : platformRole.replaceAll('_', ' ')}</small>
+              </span>
+            </button>
+          ) : (
+            <button onClick={() => router.push('/platform')}>◇ <span>Platform Admin</span></button>
+          )}
         </nav>
 
         <div className="dashboard-help">
