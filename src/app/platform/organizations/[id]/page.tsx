@@ -22,6 +22,7 @@ export default async function OrganizationDiagnosticsPage(props:{params:Promise<
   if (!organization) notFound();
 
   const [
+    memberships,
     membershipCount,
     activeMemberships,
     suspendedMemberships,
@@ -34,6 +35,11 @@ export default async function OrganizationDiagnosticsPage(props:{params:Promise<
     crossTenantCredentials,
     crossTenantDocuments,
   ] = await Promise.all([
+    prisma.membership.findMany({
+      where:{ organizationId:id },
+      include:{ user:true },
+      orderBy:{ joinedAt:'asc' },
+    }),
     prisma.membership.count({ where:{ organizationId:id } }),
     prisma.membership.count({ where:{ organizationId:id, status:'ACTIVE' } }),
     prisma.membership.count({ where:{ organizationId:id, status:'SUSPENDED' } }),
@@ -100,6 +106,37 @@ export default async function OrganizationDiagnosticsPage(props:{params:Promise<
             <strong style={{display:'block',fontSize:34,marginTop:7}}>{value}</strong>
           </div>
         ))}
+      </section>
+
+      <section style={{marginTop:40}}>
+        <p style={{fontSize:10,letterSpacing:'.18em',color:'#777f86'}}>SECURITY & ACCESS</p>
+        <div style={{borderTop:'1px solid #2d3035'}}>
+          {memberships.map((membership) => (
+            <article key={membership.id} style={{display:'grid',gridTemplateColumns:'minmax(220px,1fr) 120px minmax(300px,1.2fr)',gap:18,alignItems:'center',padding:'16px 0',borderBottom:'1px solid #25282d'}}>
+              <div>
+                <strong style={{display:'block'}}>{membership.user.name}</strong>
+                <span style={{display:'block',fontSize:12,color:'#7f858a',marginTop:4}}>{membership.user.email}</span>
+              </div>
+              <div>
+                <small style={{display:'block',color:'#747a80'}}>ROLE</small>
+                <strong style={{fontSize:12}}>{membership.role}</strong>
+              </div>
+              <form action={`/api/platform/organizations/${organization.id}/users/${membership.userId}/password`} method="post" style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+                <input
+                  name="newPassword"
+                  type="password"
+                  minLength={12}
+                  required
+                  placeholder="New temporary password"
+                  autoComplete="new-password"
+                  style={{flex:'1 1 210px',background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'10px 11px'}}
+                />
+                <button style={{background:'transparent',border:'1px solid #2a8bc1',color:'#bfe8ff',padding:'10px 12px',cursor:'pointer',fontSize:10,letterSpacing:'.08em'}}>RESET PASSWORD</button>
+              </form>
+            </article>
+          ))}
+        </div>
+        <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:12}}>Passwords are never displayed. Super Admin can only replace a password with a new temporary one.</p>
       </section>
 
       <section style={{marginTop:40,display:'grid',gridTemplateColumns:'minmax(0,1.25fr) minmax(280px,.75fr)',gap:28}}>
