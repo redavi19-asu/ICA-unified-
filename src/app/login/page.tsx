@@ -58,7 +58,13 @@ export default function LoginPage() {
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <p className={styles.note}>Your company workspace is isolated from every other organization on the platform.</p>
-        <a href="/register" style={{display:'inline-block',marginTop:18,color:'inherit',fontSize:12,letterSpacing:'.08em'}}>CREATE A NEW COMPANY WORKSPACE →</a>
+        <span
+          aria-disabled="true"
+          title="New company registration is temporarily unavailable."
+          style={{display:'inline-block',marginTop:18,color:'inherit',fontSize:12,letterSpacing:'.08em',opacity:.38,cursor:'not-allowed',pointerEvents:'none'}}
+        >
+          CREATE A NEW COMPANY WORKSPACE — COMING SOON
+        </span>
       </section>
     </main>
   );
