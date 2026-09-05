@@ -2,11 +2,14 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import TurnstileWidget from '../../TurnstileWidget';
 
 export default function PlatformLoginPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -16,12 +19,14 @@ export default function PlatformLoginPage() {
     const response = await fetch('/api/platform/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: form.get('email'), password: form.get('password') }),
+      body: JSON.stringify({ email: form.get('email'), password: form.get('password'), turnstileToken }),
     });
     const data = await response.json();
     if (!response.ok) {
       setError(data.error || 'Unable to sign in.');
       setLoading(false);
+      setTurnstileToken('');
+      setTurnstileReset((value) => value + 1);
       return;
     }
     router.push('/platform');
