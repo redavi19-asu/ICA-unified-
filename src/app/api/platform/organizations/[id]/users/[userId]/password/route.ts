@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { prisma } from '../../../../../../../lib/prisma';
-import { readPlatformSession } from '../../../../../../../lib/platform-auth';
+import { prisma } from '../../../../../../../../lib/prisma';
+import { readPlatformSession } from '../../../../../../../../lib/platform-auth';
 
 const schema = z.object({
   newPassword: z.string().min(12),
