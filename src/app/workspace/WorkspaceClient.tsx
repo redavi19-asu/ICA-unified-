@@ -41,6 +41,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/credentials')}>⬡ <span>Credentials</span></button>
           <button onClick={() => router.push('/workspace/documents')}>▤ <span>Documents</span></button>
           <button onClick={() => router.push('/workspace/reports')}>▥ <span>Reports</span></button>
+          <button className="workflow-nav-button" onClick={() => router.push('/workspace/workflows')}>↯ <span>Workflows</span></button>
           <p>COMPANY SETTINGS</p>
           <button onClick={() => router.push('/workspace/people')}>◈ <span>Roles & Permissions</span></button>
           {(role === 'OWNER' || role === 'ADMIN') && (
