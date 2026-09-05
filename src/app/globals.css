@@ -13,3 +13,6 @@
 .super-admin-nav-button>span{display:grid!important;gap:2px!important;text-align:left!important}
 .super-admin-nav-button strong{font-size:12px!important;letter-spacing:.03em!important;color:#fff3b2!important}
 .super-admin-nav-button small{font-size:7px!important;letter-spacing:.14em!important;color:#9fcfff!important;font-weight:900!important}
+
+.workflow-nav-button{border:1px solid rgba(53,169,255,.48)!important;background:linear-gradient(90deg,rgba(23,140,255,.16),rgba(23,140,255,.05))!important;color:#eef8ff!important;font-weight:850!important}
+.workflow-nav-button:hover{border-color:#5eb8ff!important;background:linear-gradient(90deg,rgba(23,140,255,.24),rgba(23,140,255,.08))!important}
