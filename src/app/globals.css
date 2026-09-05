@@ -7,3 +7,9 @@
 
 .tools-nav-button{border:1px solid #2b6f9f!important;background:linear-gradient(90deg,rgba(18,119,190,.18),rgba(18,119,190,.06))!important;color:#e9f6ff!important;font-weight:900!important}
 .tools-nav-button:hover{border-color:#55baff!important;background:linear-gradient(90deg,rgba(28,157,255,.25),rgba(28,157,255,.08))!important}
+
+.super-admin-nav-button{border:1px solid rgba(244,196,74,.72)!important;background:linear-gradient(135deg,rgba(244,196,74,.18),rgba(35,137,255,.12))!important;color:#fff8d8!important;box-shadow:0 0 0 1px rgba(244,196,74,.06),0 10px 30px rgba(0,0,0,.18)!important}
+.super-admin-nav-button:hover{border-color:#ffd86b!important;background:linear-gradient(135deg,rgba(244,196,74,.26),rgba(35,137,255,.18))!important;transform:translateY(-1px)}
+.super-admin-nav-button>span{display:grid!important;gap:2px!important;text-align:left!important}
+.super-admin-nav-button strong{font-size:12px!important;letter-spacing:.03em!important;color:#fff3b2!important}
+.super-admin-nav-button small{font-size:7px!important;letter-spacing:.14em!important;color:#9fcfff!important;font-weight:900!important}
