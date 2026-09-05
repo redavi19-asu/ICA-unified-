@@ -1,5 +1,6 @@
 import { requirePlatformAdmin } from '../../lib/platform-auth';
 import { prisma } from '../../lib/prisma';
+import Link from 'next/link';
 
 export default async function PlatformPage() {
   const admin = await requirePlatformAdmin();
@@ -30,6 +31,10 @@ export default async function PlatformPage() {
         <Metric label="USERS" value={userCount}/>
         <Metric label="COURSES" value={courseCount}/>
         <Metric label="TRIALS" value={organizations.filter((o) => o.status === 'TRIAL').length}/>
+        <div style={{borderTop:'1px solid #34373d',padding:'18px 2px'}}>
+          <span style={{fontSize:10,letterSpacing:'.14em',color:'#747a80'}}>PLATFORM HEALTH</span>
+          <strong style={{display:'flex',alignItems:'center',gap:8,fontSize:16,marginTop:15,color:'#55e69a'}}><i style={{width:8,height:8,borderRadius:'50%',background:'#55e69a',boxShadow:'0 0 12px rgba(85,230,154,.9)'}}/> D1 CONNECTED</strong>
+        </div>
       </section>
 
       <section style={{marginTop:42}}>
@@ -41,7 +46,8 @@ export default async function PlatformPage() {
               <div><small style={{color:'#747a80'}}>PEOPLE</small><strong style={{display:'block',fontSize:24}}>{organization._count.memberships}</strong></div>
               <div><small style={{color:'#747a80'}}>COURSES</small><strong style={{display:'block',fontSize:24}}>{organization._count.courses}</strong></div>
               <div><small style={{color:'#747a80'}}>CREDENTIALS</small><strong style={{display:'block',fontSize:24}}>{organization._count.credentials}</strong></div>
-              <div>
+              <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                <Link href={`/platform/organizations/${organization.id}`} style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>DIAGNOSE</Link>
                 {canControl ? <form action={`/api/platform/organizations/${organization.id}`} method="post" style={{display:'flex',gap:7,flexWrap:'wrap'}}>
                   {organization.status === 'SUSPENDED' ? <button name="status" value="ACTIVE" style={actionStyle}>ACTIVATE</button> : <button name="status" value="SUSPENDED" style={actionStyle}>SUSPEND</button>}
                   {organization.status === 'TRIAL' && <button name="status" value="ACTIVE" style={actionStyle}>APPROVE</button>}
