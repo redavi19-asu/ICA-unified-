@@ -33,3 +33,15 @@
 @media(max-width:1100px){.workflow-summary-grid{grid-template-columns:repeat(3,1fr)}.workflow-summary-grid button{border-bottom:1px solid #173148}.workflow-summary-grid button:nth-child(3n){border-right:0}}
 @media(max-width:760px){.workflow-summary-head{display:block;padding:18px}.workflow-summary-head>button{margin-top:14px}.workflow-summary-grid{grid-template-columns:1fr 1fr}.workflow-summary-grid button:nth-child(3n){border-right:1px solid #173148}.workflow-summary-grid button:nth-child(2n){border-right:0}}
 @media(max-width:480px){.workflow-summary-grid{grid-template-columns:1fr}.workflow-summary-grid button{border-right:0!important}}
+
+.dashboard-tips-button{border:1px solid #31516a!important;background:#0b1b29!important;color:#9fd6fb!important;border-radius:999px!important;padding:8px 11px!important;font-size:9px!important;font-weight:900!important;letter-spacing:.08em!important}
+.dashboard-tips-button:hover{border-color:#5eb8ff!important;color:#fff!important}
+.ica-tour-overlay{position:fixed;inset:0;z-index:1000;background:rgba(2,8,14,.68);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px}
+.ica-tour-card{width:min(480px,100%);border:1px solid #2e6b98;background:linear-gradient(155deg,#0b1b29,#07121d);border-radius:14px;padding:26px;box-shadow:0 30px 100px rgba(0,0,0,.5),0 0 45px rgba(34,151,232,.10)}
+.ica-tour-count{font-size:8px;font-weight:900;letter-spacing:.16em;color:#5eb8ff}
+.ica-tour-card h2{margin:10px 0 8px;font-size:28px;letter-spacing:-.04em;color:#f2f8fd}
+.ica-tour-card p{margin:0;color:#9badba;line-height:1.7;font-size:13px}
+.ica-tour-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}
+.ica-tour-actions button{border-radius:7px;padding:10px 14px;cursor:pointer;font-size:9px;font-weight:900;letter-spacing:.08em}
+.ica-tour-skip{border:1px solid #31475a;background:transparent;color:#889cab}
+.ica-tour-next{border:1px solid #178cff;background:#178cff;color:#fff}
