@@ -23,7 +23,10 @@ export default async function PlatformPage() {
           <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>ICA UNIFIED / PLATFORM LAYER</p>
           <h1 style={{fontSize:'clamp(52px,8vw,110px)',lineHeight:.78,letterSpacing:'-.07em',margin:'14px 0 0'}}>CONTROL<br/>PLANE</h1>
         </div>
-        <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role}</div>
+        <div style={{display:'grid',gap:10,justifyItems:'end'}}>
+          <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
+          <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role}</div>
+        </div>
       </header>
 
       <section style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginTop:28}}>
@@ -68,7 +71,10 @@ export default async function PlatformPage() {
         <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:10}}>Your existing password is never displayed. Changing it requires the current password.</p>
       </section>
 
-      <form action="/api/platform/logout" method="post" style={{marginTop:34}}><button style={actionStyle}>SIGN OUT OF PLATFORM</button></form>
+      <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:34}}>
+        <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
+        <form action="/api/platform/logout" method="post"><button style={actionStyle}>SIGN OUT OF PLATFORM</button></form>
+      </div>
     </main>
   );
 }
