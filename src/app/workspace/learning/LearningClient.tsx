@@ -67,8 +67,8 @@ export default function LearningClient({ organizationName, currentRole, courses 
           <h1>LEARNING<br />ENGINE</h1>
           <p className={styles.intro}>Courses, assignments, progress, quizzes, live training, media, and credentials live in one continuous path.</p>
         </div>
-        {canBuild && <div className={styles.headerActions}>
-          <a className={styles.secondaryLink} href="/workspace/learning/reports">TRAINING REPORTS</a>
+        {canBuild && <div className={styles.courseAction}>
+          <a href="/workspace/learning/reports">TRAINING REPORTS</a>
           <button className={styles.primary} onClick={() => setShowBuilder((v) => !v)}>{showBuilder ? 'CLOSE BUILDER' : '+ BUILD COURSE'}</button>
         </div>}
       </header>
