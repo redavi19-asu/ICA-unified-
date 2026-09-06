@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import styles from '../learning.module.css';
+import reportStyles from './reports.module.css';
 
 function formatDate(value: Date | null) {
   if (!value) return '—';
@@ -60,19 +61,19 @@ export default async function LearningReportsPage() {
         <div><span>EXPIRING 60D</span><strong>{credentials.length}</strong></div>
       </section>
 
-      <section className={styles.reportSummary}>
+      <section className={reportStyles.reportSummary}>
         <div><span>ACTIVE / IN PROGRESS</span><strong>{active}</strong></div>
         <div><span>BELOW PASSING SCORE</span><strong>{failed}</strong></div>
         <div><span>COMPLETION RATE</span><strong>{enrollments.length ? Math.round((complete / enrollments.length) * 100) : 0}%</strong></div>
       </section>
 
-      <section className={styles.reportSection}>
-        <div className={styles.reportHeading}>
+      <section className={reportStyles.reportSection}>
+        <div className={reportStyles.reportHeading}>
           <div><p className={styles.eyebrow}>ASSIGNMENT HEALTH</p><h2>Everyone. Every course. One view.</h2></div>
           <p>Overdue rows are flagged automatically from each assignment due date.</p>
         </div>
-        <div className={styles.reportTableWrap}>
-          <table className={styles.reportTable}>
+        <div className={reportStyles.reportTableWrap}>
+          <table className={reportStyles.reportTable}>
             <thead><tr><th>Person</th><th>Course</th><th>Status</th><th>Progress</th><th>Score</th><th>Due</th><th>Credential</th></tr></thead>
             <tbody>
               {enrollments.map((item) => {
@@ -81,7 +82,7 @@ export default async function LearningReportsPage() {
                   <tr key={item.id} data-alert={isOverdue ? 'true' : 'false'}>
                     <td><strong>{item.user.name}</strong><small>{item.user.email}</small></td>
                     <td><a href={`/workspace/learning/${item.course.id}`}>{item.course.title}</a>{item.course.required && <small>REQUIRED</small>}</td>
-                    <td><span className={styles.statusPill}>{isOverdue ? 'OVERDUE' : item.status.replaceAll('_', ' ')}</span></td>
+                    <td><span className={reportStyles.statusPill}>{isOverdue ? 'OVERDUE' : item.status.replaceAll('_', ' ')}</span></td>
                     <td>{item.progress}%</td>
                     <td>{item.score === null ? '—' : `${item.score}%`}</td>
                     <td>{formatDate(item.dueAt)}</td>
@@ -95,12 +96,12 @@ export default async function LearningReportsPage() {
         </div>
       </section>
 
-      <section className={styles.reportSection}>
-        <div className={styles.reportHeading}>
+      <section className={reportStyles.reportSection}>
+        <div className={reportStyles.reportHeading}>
           <div><p className={styles.eyebrow}>CERTIFICATE WATCH</p><h2>Expiring in the next 60 days.</h2></div>
           <p>Use this list to schedule refresher training before a credential lapses.</p>
         </div>
-        <div className={styles.expiryGrid}>
+        <div className={reportStyles.expiryGrid}>
           {credentials.map((credential) => (
             <article key={credential.id}>
               <span>{formatDate(credential.expiresAt)}</span>
