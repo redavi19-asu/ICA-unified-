@@ -5,7 +5,7 @@ import { prisma } from '../../../../../../lib/prisma';
 
 const schema = z.object({
   title: z.string().trim().min(2).max(140),
-  kind: z.enum(['TEXT', 'VIDEO', 'DOCUMENT', 'QUIZ']),
+  kind: z.enum(['TEXT', 'VIDEO', 'DOCUMENT', 'QUIZ', 'LIVE']),
   content: z.string().trim().min(1).max(12000),
   mediaUrl: z.string().trim().url().nullable().optional().or(z.literal('')),
   question: z.string().trim().nullable().optional(),
@@ -30,6 +30,10 @@ export async function POST(request: Request, props: { params: Promise<{ courseId
     if (!parsed.data.question || parsed.data.options.length < 2 || !parsed.data.correctAnswer || !parsed.data.options.includes(parsed.data.correctAnswer)) {
       return NextResponse.json({ error: 'Quiz lessons need a question, at least two choices, and a matching correct answer.' }, { status: 400 });
     }
+  }
+
+  if (parsed.data.kind === 'LIVE' && !parsed.data.mediaUrl) {
+    return NextResponse.json({ error: 'Live instructor sessions need a Zoom, Teams, Meet, or other meeting URL.' }, { status: 400 });
   }
 
   const last = await prisma.lesson.findFirst({ where: { courseId: course.id }, orderBy: { order: 'desc' } });
