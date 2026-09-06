@@ -16,7 +16,7 @@ Current navigation and behavior:
 - Workflows: Workflow Studio. Use this for membership programs and events/webinars.
 - Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, confirmation email, and draft/publish status.
 - Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, Zoom/meeting/external link, CEU/credit value, certificate rule, confirmation email, and draft/publish status.
-- Learning: courses, lessons, training and education.
+- Learning: full course workflow with course creation, text lessons, embedded YouTube/Vimeo/direct-video lessons, document/resource lessons, live instructor sessions using Zoom/Teams/Meet links, quizzes, assignments, due dates, completion progress, passing scores, and credentials/certificates tied to the same organization record. Owners/Admins/Managers can manage courses and assign them to people.
 - People: member/user records and organization membership.
 - Credentials: credentials/certificates and verification records.
 - Documents: controlled documents and acknowledgments.
@@ -26,7 +26,7 @@ Current navigation and behavior:
 
 Help style:
 1. Give the shortest useful answer first.
-2. Give exact ICA navigation steps, e.g. "Workflows → Event / Webinar".
+2. Give exact ICA navigation steps, e.g. "Learning → open course → Manage Course".
 3. Do not invent buttons, screens, billing features, invoice features, Stripe features, Zoom API automation, or functionality that is not listed above.
 4. If the user asks for something ICA does not yet implement, say that clearly, then explain the closest current workflow and what would need to be added.
 5. Prefer 3-6 numbered steps, not long essays.
@@ -45,8 +45,12 @@ function fallbackAnswer(question: string) {
     return 'Go to Workflows → Membership Program. Set the membership name, price and billing cadence, qualification requirements, application/approval rules, member benefits, renewal reminder window, and confirmation email. Save as a draft or publish it.';
   }
 
+  if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz') || q.includes('zoom') || q.includes('teams') || q.includes('meet')) {
+    return 'Go to Learning. Owners, admins, and managers can choose Build Course, create the course shell, then open the course and choose Manage Course. Add text, video, document, live instructor, or quiz lessons. Video lessons can embed YouTube, Vimeo, or direct video links; live lessons can use Zoom, Teams, or Meet links. Use Assignment Control to select people and set a due date.';
+  }
+
   if (q.includes('ceu') || q.includes('credit') || q.includes('certificate')) {
-    return 'For an event or webinar, go to Workflows → Event / Webinar and enter the CEU / credit value plus the certificate rule. ICA will keep those education rules with that workflow. Use Credentials for credential records and Learning for course content.';
+    return 'For an event or webinar, go to Workflows → Event / Webinar and enter the CEU / credit value plus the certificate rule. For course training, use Learning for lessons, quizzes, progress, assignments, passing scores, and completion credentials. Use Credentials for credential records and verification.';
   }
 
   if (q.includes('import') || q.includes('migration') || q.includes('csv') || q.includes('excel')) {
@@ -57,7 +61,7 @@ function fallbackAnswer(question: string) {
     return 'ICA Unified does not have the registration-invoice flow wired yet, so I do not want to point you to a button that does not exist. The event price and registration setup live under Workflows → Event / Webinar. Billing/invoicing automation is a feature that still needs to be connected.';
   }
 
-  return 'I can help with ICA Unified navigation and setup. Try asking about memberships, events/webinars, registrations, CEUs, credentials, people, learning, documents, reports, imports, website integration, or platform administration.';
+  return 'I can help with ICA Unified navigation and setup. Try asking about memberships, events/webinars, registrations, learning courses, video lessons, live training, quizzes, credentials, people, documents, reports, imports, website integration, or platform administration.';
 }
 
 export async function POST(request: Request) {
