@@ -65,9 +65,12 @@ export default function LearningClient({ organizationName, currentRole, courses 
           <a className={styles.back} href="/workspace">← WORKSPACE</a>
           <p className={styles.eyebrow}>{organizationName.toUpperCase()} / LEARNING FIELD</p>
           <h1>LEARNING<br />ENGINE</h1>
-          <p className={styles.intro}>Courses, assignments, progress, quizzes, and credentials live in one continuous path.</p>
+          <p className={styles.intro}>Courses, assignments, progress, quizzes, live training, media, and credentials live in one continuous path.</p>
         </div>
-        {canBuild && <button className={styles.primary} onClick={() => setShowBuilder((v) => !v)}>{showBuilder ? 'CLOSE BUILDER' : '+ BUILD COURSE'}</button>}
+        {canBuild && <div className={styles.headerActions}>
+          <a className={styles.secondaryLink} href="/workspace/learning/reports">TRAINING REPORTS</a>
+          <button className={styles.primary} onClick={() => setShowBuilder((v) => !v)}>{showBuilder ? 'CLOSE BUILDER' : '+ BUILD COURSE'}</button>
+        </div>}
       </header>
 
       <section className={styles.metrics}>
@@ -79,7 +82,7 @@ export default function LearningClient({ organizationName, currentRole, courses 
 
       {showBuilder && canBuild && (
         <section className={styles.builder}>
-          <div><p className={styles.eyebrow}>COURSE SEED</p><h2>Start with the outcome.</h2><p>Create the course shell here, then add text, video, document, and quiz lessons inside it.</p></div>
+          <div><p className={styles.eyebrow}>COURSE SEED</p><h2>Start with the outcome.</h2><p>Create the course shell here, then add text, embedded video, live sessions, documents, and quiz lessons inside it.</p></div>
           <form onSubmit={createCourse} className={styles.form}>
             <input name="title" required minLength={3} placeholder="Course title" />
             <textarea name="description" placeholder="What should employees know or be able to do?" rows={3} />
