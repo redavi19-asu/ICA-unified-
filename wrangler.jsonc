@@ -8,19 +8,22 @@
 		"global_fetch_strictly_public"
 	],
 	"d1_databases": [
-  {
-    "binding": "DB",
-    "database_name": "ica-unified",
-    "database_id": "b792de23-6792-48ab-a68a-c1ebf611ba05"
-  }
-],
+		{
+			"binding": "DB",
+			"database_name": "ica-unified",
+			"database_id": "b792de23-6792-48ab-a68a-c1ebf611ba05"
+		}
+	],
 	"r2_buckets": [
 		{
 			"binding": "ICA_UNIFIED_STORAGE",
 			"bucket_name": "ica-unified-storage"
 		}
 	],
-"assets": {
+	"stream": {
+		"binding": "STREAM"
+	},
+	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
