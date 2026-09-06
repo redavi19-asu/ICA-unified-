@@ -3,7 +3,7 @@ import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import CourseClient from './CourseClient';
 
-const lessonKinds = ['TEXT', 'VIDEO', 'DOCUMENT', 'QUIZ'] as const;
+const lessonKinds = ['TEXT', 'VIDEO', 'DOCUMENT', 'QUIZ', 'LIVE'] as const;
 type LessonKind = (typeof lessonKinds)[number];
 
 function normalizeLessonKind(value: string): LessonKind {
