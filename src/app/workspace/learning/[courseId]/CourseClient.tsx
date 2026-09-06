@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../learning.module.css';
 
@@ -72,6 +72,8 @@ export default function CourseClient({ organizationName, currentRole, course, en
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [message, setMessage] = useState(enrollment ? `Progress ${enrollment.progress}% · ${enrollment.status.replaceAll('_', ' ')}` : 'This course is not assigned to you yet.');
   const [showAdmin, setShowAdmin] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(currentRole);
   const lesson = useMemo(() => course.lessons.find((item) => item.id === activeId) || course.lessons[0], [activeId, course.lessons]);
   const videoSource = useMemo(() => lesson?.kind === 'VIDEO' ? getVideoSource(lesson.mediaUrl) : null, [lesson]);
@@ -100,6 +102,33 @@ export default function CourseClient({ organizationName, currentRole, course, en
     if (response.ok && data.passed) router.refresh();
   }
 
+  async function uploadCourseFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMessage(`Uploading ${file.name} to private course storage...`);
+    const payload = new FormData();
+    payload.append('file', file);
+    payload.append('courseId', course.id);
+
+    try {
+      const response = await fetch('/api/storage/upload', { method: 'POST', body: payload });
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.error || 'Unable to upload course file.');
+        return;
+      }
+      setMediaUrl(data.url);
+      setMessage(`${data.name} uploaded securely. Add the lesson to attach it.`);
+    } catch {
+      setMessage('Unable to upload course file.');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  }
+
   async function addLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -111,7 +140,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
         title: form.get('title'),
         kind: form.get('kind'),
         content: form.get('content'),
-        mediaUrl: form.get('mediaUrl') || null,
+        mediaUrl: mediaUrl || null,
         question: form.get('question') || null,
         options,
         correctAnswer: form.get('correctAnswer') || null,
@@ -121,6 +150,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
     if (!response.ok) return setMessage(data.error || 'Unable to add lesson.');
     setMessage('Lesson added.');
     event.currentTarget.reset();
+    setMediaUrl('');
     router.refresh();
   }
 
@@ -219,12 +249,17 @@ export default function CourseClient({ organizationName, currentRole, course, en
       {showAdmin && canManage && <section className={styles.adminGrid}>
         <div className={styles.adminPanel}>
           <p className={styles.eyebrow}>COURSE BUILDER</p><h3>Add a lesson</h3>
-          <p className={styles.adminHint}>Build text lessons, embed training videos, attach documents, schedule live Zoom/Teams/Meet sessions, or create knowledge checks.</p>
+          <p className={styles.adminHint}>Build text lessons, attach private course files from R2, embed training videos, schedule live Zoom/Teams/Meet sessions, or create knowledge checks.</p>
           <form className={styles.form} onSubmit={addLesson}>
             <input name="title" required placeholder="Lesson title" />
             <select name="kind" defaultValue="TEXT"><option value="TEXT">Text lesson</option><option value="VIDEO">Video lesson</option><option value="DOCUMENT">Document / resource</option><option value="LIVE">Live instructor session</option><option value="QUIZ">Quiz</option></select>
             <textarea name="content" required rows={5} placeholder="Lesson instructions, learning objective, or quiz directions" />
-            <input name="mediaUrl" placeholder="Video, document, Zoom, Teams, or Meet URL" />
+            <input name="mediaUrl" value={mediaUrl} onChange={(event) => setMediaUrl(event.target.value)} placeholder="Video, document, Zoom, Teams, or Meet URL" />
+            <label className={styles.uploadBox}>
+              <span>{uploading ? 'UPLOADING TO PRIVATE STORAGE...' : 'UPLOAD PDF / POWERPOINT / IMAGE / COURSE FILE'}</span>
+              <input type="file" disabled={uploading} onChange={uploadCourseFile} accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp,.gif,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*" />
+              <small>Files are stored privately under this company and course. Video will use the separate Stream service.</small>
+            </label>
             <input name="question" placeholder="Quiz question (for quiz lessons)" />
             <input name="option1" placeholder="Option 1" /><input name="option2" placeholder="Option 2" /><input name="option3" placeholder="Option 3" /><input name="option4" placeholder="Option 4" />
             <input name="correctAnswer" placeholder="Correct answer exactly as written above" />
