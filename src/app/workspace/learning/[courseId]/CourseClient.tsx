@@ -3,6 +3,8 @@
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../learning.module.css';
+import StreamVideoPlayer from './StreamVideoPlayer';
+import StreamVideoUploader from './StreamVideoUploader';
 
 type LessonKind = 'TEXT' | 'VIDEO' | 'DOCUMENT' | 'QUIZ' | 'LIVE';
 
@@ -40,7 +42,7 @@ type Enrollment = null | {
 type Member = { id: string; name: string; email: string; role: string };
 
 function getVideoSource(url: string | null) {
-  if (!url) return null;
+  if (!url || url.startsWith('stream:')) return null;
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.replace('www.', '');
@@ -77,6 +79,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
   const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(currentRole);
   const lesson = useMemo(() => course.lessons.find((item) => item.id === activeId) || course.lessons[0], [activeId, course.lessons]);
   const videoSource = useMemo(() => lesson?.kind === 'VIDEO' ? getVideoSource(lesson.mediaUrl) : null, [lesson]);
+  const isStreamVideo = lesson?.kind === 'VIDEO' && Boolean(lesson.mediaUrl?.startsWith('stream:'));
 
   async function completeLesson() {
     if (!lesson) return;
@@ -211,6 +214,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
             <p className={styles.eyebrow}>LESSON {String(lesson.order).padStart(2, '0')} / {lesson.kind}</p>
             <h2>{lesson.title}</h2>
 
+            {isStreamVideo && <StreamVideoPlayer lessonId={lesson.id} title={lesson.title} />}
             {lesson.kind === 'VIDEO' && videoSource?.type === 'embed' && (
               <div className={styles.mediaFrame}><iframe src={videoSource.url} title={lesson.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div>
             )}
@@ -227,7 +231,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
 
             <div className={styles.lessonCopy}>{lesson.content}</div>
 
-            {lesson.mediaUrl && lesson.kind !== 'LIVE' && (
+            {lesson.mediaUrl && lesson.kind !== 'LIVE' && !lesson.mediaUrl.startsWith('stream:') && (
               <a className={styles.mediaLink} href={lesson.mediaUrl} target="_blank" rel="noreferrer">{lesson.kind === 'VIDEO' ? 'OPEN VIDEO IN NEW TAB' : 'OPEN COURSE RESOURCE'} ↗</a>
             )}
 
@@ -249,16 +253,17 @@ export default function CourseClient({ organizationName, currentRole, course, en
       {showAdmin && canManage && <section className={styles.adminGrid}>
         <div className={styles.adminPanel}>
           <p className={styles.eyebrow}>COURSE BUILDER</p><h3>Add a lesson</h3>
-          <p className={styles.adminHint}>Build text lessons, attach private course files from R2, embed training videos, schedule live Zoom/Teams/Meet sessions, or create knowledge checks.</p>
+          <p className={styles.adminHint}>Build text lessons, attach private course files from R2, upload training video directly to Cloudflare Stream, embed external video, schedule live Zoom/Teams/Meet sessions, or create knowledge checks.</p>
           <form className={styles.form} onSubmit={addLesson}>
             <input name="title" required placeholder="Lesson title" />
             <select name="kind" defaultValue="TEXT"><option value="TEXT">Text lesson</option><option value="VIDEO">Video lesson</option><option value="DOCUMENT">Document / resource</option><option value="LIVE">Live instructor session</option><option value="QUIZ">Quiz</option></select>
             <textarea name="content" required rows={5} placeholder="Lesson instructions, learning objective, or quiz directions" />
             <input name="mediaUrl" value={mediaUrl} onChange={(event) => setMediaUrl(event.target.value)} placeholder="Video, document, Zoom, Teams, or Meet URL" />
+            <StreamVideoUploader courseId={course.id} onUploaded={setMediaUrl} onMessage={setMessage} />
             <label className={styles.uploadBox}>
               <span>{uploading ? 'UPLOADING TO PRIVATE STORAGE...' : 'UPLOAD PDF / POWERPOINT / IMAGE / COURSE FILE'}</span>
               <input type="file" disabled={uploading} onChange={uploadCourseFile} accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp,.gif,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*" />
-              <small>Files are stored privately under this company and course. Video will use the separate Stream service.</small>
+              <small>Files are stored privately under this company and course in R2. Video uses the separate Cloudflare Stream path above.</small>
             </label>
             <input name="question" placeholder="Quiz question (for quiz lessons)" />
             <input name="option1" placeholder="Option 1" /><input name="option2" placeholder="Option 2" /><input name="option3" placeholder="Option 3" /><input name="option4" placeholder="Option 4" />
