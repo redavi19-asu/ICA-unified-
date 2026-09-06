@@ -57,7 +57,7 @@ export default function StreamVideoPlayer({ lessonId, title }: { lessonId: strin
   }
 
   return (
-    <div className={styles.streamNotice} data-state={state}>
+    <div className={styles.liveSession} data-state={state}>
       <span>CLOUDFLARE STREAM</span>
       <strong>{state === 'disabled' ? 'VIDEO HOSTING READY TO ACTIVATE' : state === 'processing' ? 'VIDEO PROCESSING' : 'VIDEO STATUS'}</strong>
       <p>{message}</p>
