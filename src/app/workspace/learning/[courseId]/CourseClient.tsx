@@ -4,11 +4,13 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../learning.module.css';
 
+type LessonKind = 'TEXT' | 'VIDEO' | 'DOCUMENT' | 'QUIZ' | 'LIVE';
+
 type Lesson = {
   id: string;
   order: number;
   title: string;
-  kind: 'TEXT' | 'VIDEO' | 'DOCUMENT' | 'QUIZ';
+  kind: LessonKind;
   content: string;
   mediaUrl: string | null;
   completed: boolean;
@@ -37,6 +39,33 @@ type Enrollment = null | {
 
 type Member = { id: string; name: string; email: string; role: string };
 
+function getVideoSource(url: string | null) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace('www.', '');
+    if (host === 'youtu.be') return { type: 'embed' as const, url: `https://www.youtube.com/embed/${parsed.pathname.slice(1)}` };
+    if (host.includes('youtube.com')) {
+      const id = parsed.searchParams.get('v');
+      if (id) return { type: 'embed' as const, url: `https://www.youtube.com/embed/${id}` };
+      if (parsed.pathname.startsWith('/embed/')) return { type: 'embed' as const, url };
+    }
+    if (host.includes('vimeo.com')) {
+      const id = parsed.pathname.split('/').filter(Boolean).pop();
+      if (id) return { type: 'embed' as const, url: `https://player.vimeo.com/video/${id}` };
+    }
+    if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) return { type: 'video' as const, url };
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function formatDueDate(value: string | null) {
+  if (!value) return 'No due date';
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
+}
+
 export default function CourseClient({ organizationName, currentRole, course, enrollment, members }: { organizationName: string; currentRole: string; course: Course; enrollment: Enrollment; members: Member[] }) {
   const router = useRouter();
   const [activeId, setActiveId] = useState(course.lessons.find((l) => !l.completed)?.id || course.lessons[0]?.id || '');
@@ -45,6 +74,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
   const [showAdmin, setShowAdmin] = useState(false);
   const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(currentRole);
   const lesson = useMemo(() => course.lessons.find((item) => item.id === activeId) || course.lessons[0], [activeId, course.lessons]);
+  const videoSource = useMemo(() => lesson?.kind === 'VIDEO' ? getVideoSource(lesson.mediaUrl) : null, [lesson]);
 
   async function completeLesson() {
     if (!lesson) return;
@@ -130,6 +160,12 @@ export default function CourseClient({ organizationName, currentRole, course, en
         <div><span>MY PROGRESS</span><strong>{enrollment?.progress ?? 0}%</strong></div>
       </section>
 
+      {enrollment && <section className={styles.courseStatus}>
+        <div><span>STATUS</span><strong>{enrollment.status.replaceAll('_', ' ')}</strong></div>
+        <div><span>DUE</span><strong>{formatDueDate(enrollment.dueAt)}</strong></div>
+        <div><span>CERTIFICATE</span><strong>{course.certificateValidDays ? `${course.certificateValidDays} days` : 'No expiration'}</strong></div>
+      </section>}
+
       <section className={styles.lessonLayout}>
         <aside className={styles.lessonRail}>
           {course.lessons.map((item) => (
@@ -144,8 +180,27 @@ export default function CourseClient({ organizationName, currentRole, course, en
           {lesson ? <>
             <p className={styles.eyebrow}>LESSON {String(lesson.order).padStart(2, '0')} / {lesson.kind}</p>
             <h2>{lesson.title}</h2>
+
+            {lesson.kind === 'VIDEO' && videoSource?.type === 'embed' && (
+              <div className={styles.mediaFrame}><iframe src={videoSource.url} title={lesson.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div>
+            )}
+            {lesson.kind === 'VIDEO' && videoSource?.type === 'video' && (
+              <div className={styles.mediaFrame}><video controls preload="metadata" src={videoSource.url}>Your browser does not support embedded video.</video></div>
+            )}
+            {lesson.kind === 'LIVE' && lesson.mediaUrl && (
+              <div className={styles.liveSession}>
+                <span>LIVE INSTRUCTOR SESSION</span>
+                <strong>Join the scheduled class when your instructor is ready.</strong>
+                <a href={lesson.mediaUrl} target="_blank" rel="noreferrer">JOIN ZOOM / TEAMS / MEET ↗</a>
+              </div>
+            )}
+
             <div className={styles.lessonCopy}>{lesson.content}</div>
-            {lesson.mediaUrl && <a className={styles.mediaLink} href={lesson.mediaUrl} target="_blank" rel="noreferrer">OPEN COURSE RESOURCE ↗</a>}
+
+            {lesson.mediaUrl && lesson.kind !== 'LIVE' && (
+              <a className={styles.mediaLink} href={lesson.mediaUrl} target="_blank" rel="noreferrer">{lesson.kind === 'VIDEO' ? 'OPEN VIDEO IN NEW TAB' : 'OPEN COURSE RESOURCE'} ↗</a>
+            )}
+
             {lesson.kind === 'QUIZ' ? (
               <div className={styles.quiz}>
                 {lesson.questions.map((question, index) => (
@@ -156,7 +211,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
                 ))}
                 <button className={styles.primary} onClick={submitQuiz}>SUBMIT KNOWLEDGE CHECK →</button>
               </div>
-            ) : <div className={styles.toolbar}><button className={styles.primary} onClick={completeLesson}>{lesson.completed ? 'RECORD AGAIN' : 'MARK COMPLETE'} →</button></div>}
+            ) : <div className={styles.toolbar}><button className={styles.primary} onClick={completeLesson}>{lesson.completed ? 'RECORD AGAIN' : lesson.kind === 'LIVE' ? 'MARK ATTENDED' : 'MARK COMPLETE'} →</button></div>}
           </> : <p>No lessons have been added yet.</p>}
         </article>
       </section>
@@ -164,11 +219,12 @@ export default function CourseClient({ organizationName, currentRole, course, en
       {showAdmin && canManage && <section className={styles.adminGrid}>
         <div className={styles.adminPanel}>
           <p className={styles.eyebrow}>COURSE BUILDER</p><h3>Add a lesson</h3>
+          <p className={styles.adminHint}>Build text lessons, embed training videos, attach documents, schedule live Zoom/Teams/Meet sessions, or create knowledge checks.</p>
           <form className={styles.form} onSubmit={addLesson}>
             <input name="title" required placeholder="Lesson title" />
-            <select name="kind" defaultValue="TEXT"><option value="TEXT">Text lesson</option><option value="VIDEO">Video / external media</option><option value="DOCUMENT">Document / resource</option><option value="QUIZ">Quiz</option></select>
-            <textarea name="content" required rows={5} placeholder="Lesson content or quiz instructions" />
-            <input name="mediaUrl" placeholder="Optional video/document URL" />
+            <select name="kind" defaultValue="TEXT"><option value="TEXT">Text lesson</option><option value="VIDEO">Video lesson</option><option value="DOCUMENT">Document / resource</option><option value="LIVE">Live instructor session</option><option value="QUIZ">Quiz</option></select>
+            <textarea name="content" required rows={5} placeholder="Lesson instructions, learning objective, or quiz directions" />
+            <input name="mediaUrl" placeholder="Video, document, Zoom, Teams, or Meet URL" />
             <input name="question" placeholder="Quiz question (for quiz lessons)" />
             <input name="option1" placeholder="Option 1" /><input name="option2" placeholder="Option 2" /><input name="option3" placeholder="Option 3" /><input name="option4" placeholder="Option 4" />
             <input name="correctAnswer" placeholder="Correct answer exactly as written above" />
@@ -177,6 +233,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
         </div>
         <div className={styles.adminPanel}>
           <p className={styles.eyebrow}>ASSIGNMENT CONTROL</p><h3>Send this course</h3>
+          <p className={styles.adminHint}>Assign required training to selected people and set a due date. Completion and credentials stay tied to the same organization record.</p>
           <form className={styles.form} onSubmit={assignCourse}>
             <div className={styles.memberChecks}>{members.map((member) => <label key={member.id}><input name="userId" value={member.id} type="checkbox" /> <span><strong>{member.name}</strong><br />{member.email} · {member.role}</span></label>)}</div>
             <label>Due date <input name="dueAt" type="date" /></label>
