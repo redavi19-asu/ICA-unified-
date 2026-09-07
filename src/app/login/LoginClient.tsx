@@ -57,14 +57,14 @@ export default function LoginClient() {
         <p className={styles.kicker}>SECURE ORGANIZATION ACCESS</p>
         <h2>Enter your workspace.</h2>
         <form onSubmit={submit}>
-          <label>Company ID<input name="organizationSlug" autoComplete="organization" placeholder="your-company" required /></label>
+          <label>Company ID <span style={{opacity:.55}}>(optional for ICA Master)</span><input name="organizationSlug" autoComplete="organization" placeholder="your-company" /></label>
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="dark" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
-        <p className={styles.note}>Your company workspace is isolated from every other organization on the platform.</p>
+        <p className={styles.note}>Your company workspace is isolated from every other organization on the platform. ICA Master owners can sign in with the Master email and password without a Company ID.</p>
         <span
           aria-disabled="true"
           title="New company registration is temporarily unavailable."
