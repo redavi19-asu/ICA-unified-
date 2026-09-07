@@ -79,6 +79,12 @@ export default function PlatformLoginPage() {
 
         {error && <p style={{color:'#e58f8f'}}>{error}</p>}
         <p style={{fontSize:12,color:'#73787d',marginTop:24}}>This entrance is separate from every customer organization workspace.</p>
+        <a
+          href="https://icomputeranything.com/master"
+          style={{display:'inline-block',marginTop:14,color:'#b9d7ff',fontSize:12,textDecoration:'none'}}
+        >
+          ICA Master Owner → Open Super Platform
+        </a>
       </section>
     </main>
   );
