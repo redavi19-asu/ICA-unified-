@@ -89,7 +89,7 @@ export async function authenticateIcaMasterOwner(
       LIMIT 1`
     )
     .bind(email.trim().toLowerCase())
-    .first<IcaMasterRow>();
+    .first() as IcaMasterRow | null;
 
   if (!row || row.role !== 'owner' || row.status !== 'active') return null;
 
