@@ -12,6 +12,11 @@
 			"binding": "DB",
 			"database_name": "ica-unified",
 			"database_id": "b792de23-6792-48ab-a68a-c1ebf611ba05"
+		},
+		{
+			"binding": "ICA_DB",
+			"database_name": "ica-saas-db",
+			"database_id": "888f63b8-f1bb-4419-b806-6b306579c632"
 		}
 	],
 	"r2_buckets": [
