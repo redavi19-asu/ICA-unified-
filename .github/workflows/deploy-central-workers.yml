@@ -1,0 +1,60 @@
+name: Deploy ICA Central Workers
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-central-workers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ICA Unified
+        uses: actions/checkout@v4
+        with:
+          path: ica-unified
+
+      - name: Checkout Dispatch OS
+        uses: actions/checkout@v4
+        with:
+          repository: redavi19-asu/icomputer-dispatch-platform
+          ref: main
+          path: dispatchos
+
+      - name: Checkout ICA Master
+        uses: actions/checkout@v4
+        with:
+          repository: redavi19-asu/icomuteranythingV3
+          ref: main
+          path: ica-master
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Deploy Dispatch OS Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@latest deploy --config dispatchos/cloudflare/wrangler.toml
+
+      - name: Deploy ICA Master Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@latest deploy --config ica-master/platform-worker/wrangler.jsonc
