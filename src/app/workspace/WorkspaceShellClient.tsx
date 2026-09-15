@@ -14,6 +14,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
   const pathname = usePathname();
   const router = useRouter();
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   const items = useMemo(() => {
     const base = [
@@ -71,6 +72,16 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
   useEffect(() => {
     const seen = window.sessionStorage.getItem('ica_workspace_tour_seen');
     if (!seen) setTourStep(0);
+
+    const savedTheme = window.localStorage.getItem('ica_workspace_theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') setTheme(savedTheme);
+
+    const onThemeChange = (event: Event) => {
+      const next = (event as CustomEvent<'light' | 'dark'>).detail;
+      if (next === 'light' || next === 'dark') setTheme(next);
+    };
+    window.addEventListener('ica-workspace-theme', onThemeChange);
+    return () => window.removeEventListener('ica-workspace-theme', onThemeChange);
   }, []);
 
   function closeTour() {
@@ -85,7 +96,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
   }
 
   return (
-    <>
+    <div className={`workspace-theme-root workspace-theme-${theme}`}>
       <div className="workspace-mobile-dock" aria-label="ICA Unified navigation">
         <div className="workspace-mobile-brand">
           <strong>ICA UNIFIED</strong>
@@ -133,6 +144,6 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
