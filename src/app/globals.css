@@ -100,3 +100,62 @@
   .workspace-mobile-dock nav button.platform{border-color:#6f5e28;color:#ffe49a}
   .dashboard-sidebar{display:none!important}
 }
+
+
+/* ICA Unified workspace theme system */
+.workspace-theme-root{min-height:100vh}
+.workspace-theme-light{
+  --ws-bg:#f8fbfd;--ws-panel:#ffffff;--ws-panel-soft:#f3f8fb;--ws-text:#10202f;--ws-muted:#6c8191;
+  --ws-line:#d9e5ed;--ws-blue:#3b82f6;--ws-teal:#14b8a6;--ws-purple:#8b5cf6;--ws-amber:#f59e0b;--ws-green:#22c55e;
+  background:radial-gradient(circle at 8% 6%,rgba(59,130,246,.08),transparent 24%),radial-gradient(circle at 91% 18%,rgba(20,184,166,.06),transparent 22%),#f8fbfd;color:#10202f
+}
+.workspace-theme-light .workspace-mobile-dock{background:rgba(255,255,255,.94);border-bottom-color:#d7e5ed;box-shadow:0 8px 24px rgba(37,73,99,.07)}
+.workspace-theme-light .workspace-mobile-brand strong{color:#173247}.workspace-theme-light .workspace-mobile-brand button{border-color:#bdd9e9;background:#eff8fd;color:#147fd1}
+.workspace-theme-light .workspace-mobile-dock nav button{color:#647c8d}.workspace-theme-light .workspace-mobile-dock nav button.active{border-color:#9bc7e4;background:#edf7fd;color:#147fd1}.workspace-theme-light .workspace-mobile-dock nav button.platform{border-color:#ecd289;color:#a66c05}
+
+.workspace-theme-light .dashboard-shell{background:transparent;color:#10202f}
+.workspace-theme-light .dashboard-sidebar{border-right-color:#d9e5ed;background:linear-gradient(180deg,#ffffff,#f4f9fc)}
+.workspace-theme-light .dashboard-brand{color:#10202f}.workspace-theme-light .dashboard-brand strong{color:#147fd1}.workspace-theme-light .dashboard-brand small{color:#70889a}
+.workspace-theme-light .dashboard-nav p{color:#8ba0af}.workspace-theme-light .dashboard-nav button{color:#526b7d}.workspace-theme-light .dashboard-nav button:hover,.workspace-theme-light .dashboard-nav button.active{background:linear-gradient(90deg,rgba(59,130,246,.10),rgba(20,184,166,.03));color:#173247;border-left-color:#3b82f6}
+.workspace-theme-light .dashboard-help{border-color:#d9e5ed;background:#fff;box-shadow:0 10px 28px rgba(31,69,96,.05)}.workspace-theme-light .dashboard-help span{color:#71889a}
+.workspace-theme-light .dashboard-main{background:transparent}.workspace-theme-light .dashboard-topbar{border-bottom-color:#d9e5ed}
+.workspace-theme-light .company-switcher>span{color:#70889a}.workspace-theme-light .company-switcher button{border-color:#d1e0e9;background:#fff;color:#173247;box-shadow:0 7px 20px rgba(31,69,96,.04)}
+.workspace-theme-light .dashboard-user span{color:#72889a}.workspace-theme-light .dashboard-user button{border-color:#cfe0ea;background:#fff;color:#496579}
+.workspace-theme-light .dashboard-welcome p{color:#71889a}.workspace-theme-light .dashboard-kpis button{color:#173247}
+.workspace-theme-light .dashboard-kpis button:before{border-color:#bcd9ea;background:radial-gradient(circle,rgba(59,130,246,.12),transparent 67%);box-shadow:none}
+.workspace-theme-light .dashboard-kpis span{color:#61798b}.workspace-theme-light .dashboard-kpis small{color:#147fd1}
+
+.workspace-theme-light .dashboard-card{border-color:#d8e5ed;background:#fff;box-shadow:0 12px 34px rgba(31,69,96,.06)}
+.workspace-theme-light .card-heading h2{color:#173247}.workspace-theme-light .card-heading button{color:#147fd1}
+.workspace-theme-light .donut{background:conic-gradient(#3b82f6 var(--value),#e7f0f5 0);box-shadow:none}.workspace-theme-light .donut:before,.workspace-theme-light .people-donut:before{background:#fff;border-color:#dce8ef}
+.workspace-theme-light .donut small,.workspace-theme-light .people-donut small{color:#71889a}.workspace-theme-light .legend-stack small{color:#71889a}
+.workspace-theme-light .activity-list{border-left-color:#dce8ef}.workspace-theme-light .activity-list h3{color:#173247}.workspace-theme-light .activity-list button{border-bottom-color:#e2ebf1;color:#173247}.workspace-theme-light .activity-list button i{background:#eaf7fd;color:#0ea5e9}.workspace-theme-light .activity-list button small{color:#71889a}
+.workspace-theme-light .people-role-list span{color:#50687a}.workspace-theme-light .people-footer{border-top-color:#dce8ef}.workspace-theme-light .people-footer button{border-right-color:#dce8ef;color:#147fd1}
+.workspace-theme-light .triple-metric{border-bottom-color:#dce8ef}.workspace-theme-light .triple-metric small{color:#71889a}
+.workspace-theme-light .mini-list span{border-bottom-color:#e1eaf0;color:#526a7c}.workspace-theme-light .compliance-score>span{color:#71889a}.workspace-theme-light .compliance-score>div{background:#e8f0f4}
+.workspace-theme-light .report-list button{border-bottom-color:#e0eaf0;color:#173247}.workspace-theme-light .report-list button i{background:#eef7fc}.workspace-theme-light .report-list button small{color:#71889a}.workspace-theme-light .report-list button strong{color:#173247}
+.workspace-theme-light .dashboard-actionbar{border-color:#d7e4ec;background:rgba(255,255,255,.94);box-shadow:0 14px 38px rgba(31,69,96,.10)}
+.workspace-theme-light .dashboard-actionbar>button{border-color:#dbe7ee;background:#f9fcfd;color:#173247}.workspace-theme-light .system-status{border-color:#d8e5ed}
+
+.workspace-theme-light .workflow-summary-panel{border-color:#d5e3ec;background:#fff;box-shadow:0 16px 40px rgba(31,69,96,.06)}
+.workspace-theme-light .workflow-summary-head{border-bottom-color:#dce8ef}.workspace-theme-light .workflow-summary-head small{color:#147fd1}.workspace-theme-light .workflow-summary-head h2{color:#173247}.workspace-theme-light .workflow-summary-head p{color:#71889a}.workspace-theme-light .workflow-summary-head>button{border-color:#b8d7e9;background:#f1f9fd;color:#147fd1}
+.workspace-theme-light .workflow-summary-grid button{border-right-color:#e0e9ef;color:#173247}.workspace-theme-light .workflow-summary-grid button:hover{background:#f5fafc}.workspace-theme-light .workflow-summary-grid b{color:#173247}.workspace-theme-light .workflow-summary-grid small{color:#71889a}
+.workspace-theme-light .workflow-summary-grid button:nth-child(1){border-top:3px solid #14b8a6}.workspace-theme-light .workflow-summary-grid button:nth-child(2){border-top:3px solid #3b82f6}.workspace-theme-light .workflow-summary-grid button:nth-child(3){border-top:3px solid #8b5cf6}.workspace-theme-light .workflow-summary-grid button:nth-child(4){border-top:3px solid #f59e0b}.workspace-theme-light .workflow-summary-grid button:nth-child(5){border-top:3px solid #22c55e}.workspace-theme-light .workflow-summary-grid button:nth-child(6){border-top:3px solid #f97316}
+
+.workspace-theme-light .people-shell{color:#10202f}.workspace-theme-light .people-header{border-bottom-color:#d9e5ed}.workspace-theme-light .people-intro{color:#667d8f}.workspace-theme-light .people-back{color:#147fd1}.workspace-theme-light .people-invite-trigger,.workspace-theme-light .people-invite-form button{border-color:#147fd1;background:#147fd1;color:#fff;border-radius:8px}
+.workspace-theme-light .people-pulse{border-bottom-color:#d9e5ed}.workspace-theme-light .people-pulse div{border-right-color:#e1eaf0}.workspace-theme-light .people-pulse span{color:#71889a}.workspace-theme-light .people-pulse div:nth-child(1){border-top:3px solid #14b8a6}.workspace-theme-light .people-pulse div:nth-child(2){border-top:3px solid #3b82f6}.workspace-theme-light .people-pulse div:nth-child(3){border-top:3px solid #8b5cf6}.workspace-theme-light .people-pulse div:nth-child(4){border-top:3px solid #f59e0b}
+.workspace-theme-light .people-invite-panel{border-color:#d7e5ed;background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(31,69,96,.06)}.workspace-theme-light .people-invite-panel p{color:#71889a}
+.workspace-theme-light .people-invite-form input,.workspace-theme-light .people-invite-form select,.workspace-theme-light .people-row select{border-color:#d6e4ec;background:#fff;color:#173247;border-radius:8px}
+.workspace-theme-light .people-invite-link{border-top-color:#dce8ef}.workspace-theme-light .people-invite-link span{color:#71889a}.workspace-theme-light .people-invite-link code{color:#147fd1}
+.workspace-theme-light .people-list{border-top-color:#d9e5ed}.workspace-theme-light .people-list-head{color:#71889a}.workspace-theme-light .people-row{border-top-color:#e0e9ef}.workspace-theme-light .people-glyph{border-color:#bfd8e7;background:#edf8fc;color:#147fd1}.workspace-theme-light .people-identity span{color:#71889a}.workspace-theme-light .people-chip{border-color:#d2e1ea;background:#fff;border-radius:999px}.workspace-theme-light .people-pending{border-top-color:#d9e5ed}.workspace-theme-light .people-pending>div{border-bottom-color:#e0e9ef}.workspace-theme-light .people-pending span{color:#71889a}
+
+.workspace-theme-light .tools-nav-button{border-color:#b9d7e9!important;background:#f0f8fd!important;color:#147fd1!important}.workspace-theme-light .workflow-nav-button{border-color:#c6dded!important;background:#f4f9fc!important;color:#2f6ed7!important}
+.workspace-theme-light .super-admin-nav-button{border-color:#ecd587!important;background:linear-gradient(135deg,#fff9e7,#f4f9ff)!important;color:#805c08!important;box-shadow:none!important}.workspace-theme-light .super-admin-nav-button strong{color:#805c08!important}.workspace-theme-light .super-admin-nav-button small{color:#2f6ed7!important}
+
+.workspace-theme-light .workspace-tour-overlay,.workspace-theme-light .ica-tour-overlay{background:rgba(20,41,57,.34)}
+.workspace-theme-light .workspace-tour-card,.workspace-theme-light .ica-tour-card{border-color:#bfdbea;background:#fff;color:#10202f;box-shadow:0 30px 90px rgba(31,69,96,.18)}
+.workspace-theme-light .workspace-tour-card>small,.workspace-theme-light .ica-tour-count{color:#147fd1}.workspace-theme-light .workspace-tour-card p,.workspace-theme-light .ica-tour-card p{color:#667d8f}.workspace-theme-light .workspace-tour-card .skip,.workspace-theme-light .ica-tour-skip{border-color:#d2e1ea;color:#60798b;background:#fff}
+.workspace-theme-light .ica-assist-launcher{border-color:#b8d8ea;background:#fff;color:#173247;box-shadow:0 16px 45px rgba(31,69,96,.15)}.workspace-theme-light .ica-assist-launcher span{color:#147fd1}
+.workspace-theme-light .ica-assist-panel{border-color:#bfd9e9;background:#fff;color:#10202f;box-shadow:0 28px 80px rgba(31,69,96,.20)}.workspace-theme-light .ica-assist-panel header{border-bottom-color:#dce8ef;background:#f7fbfd}.workspace-theme-light .ica-assist-panel header strong{color:#173247}.workspace-theme-light .ica-assist-panel header button{color:#71889a}.workspace-theme-light .ica-assist-answer{border-color:#d9e5ed;background:#f5fafc}.workspace-theme-light .ica-assist-user{border-color:#a9cee6;background:#eaf6fd}.workspace-theme-light .ica-assist-answer p,.workspace-theme-light .ica-assist-user p{color:#435e71}.workspace-theme-light .ica-assist-panel form{border-top-color:#dce8ef;background:#f8fbfd}.workspace-theme-light .ica-assist-panel input{border-color:#d2e1ea;background:#fff;color:#173247}
+
+@media(max-width:760px){.workspace-theme-light .workspace-mobile-dock{background:rgba(255,255,255,.97)}}
