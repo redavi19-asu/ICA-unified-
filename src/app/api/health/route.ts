@@ -4,7 +4,6 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 export async function GET() {
   let applicationDatabaseReady = false;
   let centralDatabaseReady = false;
-  let centralUserCount: number | null = null;
 
   try {
     const { env } = getCloudflareContext();
@@ -12,10 +11,7 @@ export async function GET() {
 
     try {
       if (bindings.DB) {
-        const row = await bindings.DB
-          .prepare('SELECT 1 AS ok')
-          .first();
-
+        const row = await bindings.DB.prepare('SELECT 1 AS ok').first();
         applicationDatabaseReady = Number(row?.ok || 0) === 1;
       }
     } catch (error) {
@@ -24,12 +20,8 @@ export async function GET() {
 
     try {
       if (bindings.ICA_DB) {
-        const row = await bindings.ICA_DB
-          .prepare('SELECT COUNT(*) AS count FROM users')
-          .first();
-
-        centralUserCount = Number(row?.count || 0);
-        centralDatabaseReady = true;
+        const row = await bindings.ICA_DB.prepare('SELECT 1 AS ok').first();
+        centralDatabaseReady = Number(row?.ok || 0) === 1;
       }
     } catch (error) {
       console.error('ICA_UNIFIED_CENTRAL_DB_HEALTH_ERROR', error);
@@ -49,13 +41,11 @@ export async function GET() {
         databaseReady: applicationDatabaseReady,
         centralDatabaseBound: Boolean(bindings.ICA_DB),
         centralDatabaseReady,
-        centralUserCount,
       },
-      { status: healthy ? 200 : 503 }
+      { status: healthy ? 200 : 503 },
     );
   } catch (error) {
     console.error('ICA_UNIFIED_HEALTH_ERROR', error);
-
     return NextResponse.json(
       {
         ok: false,
@@ -64,9 +54,8 @@ export async function GET() {
         databaseReady: false,
         centralDatabaseBound: false,
         centralDatabaseReady: false,
-        centralUserCount,
       },
-      { status: 503 }
+      { status: 503 },
     );
   }
 }

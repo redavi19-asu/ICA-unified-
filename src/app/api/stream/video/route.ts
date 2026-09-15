@@ -46,9 +46,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const details = await stream.video(uid).details();
+    const video = stream.video(uid);
+    const [details, signedToken] = await Promise.all([
+      video.details(),
+      video.generateToken(),
+    ]);
     const preview = typeof details.preview === 'string' ? details.preview : '';
-    const playerUrl = preview ? preview.replace(/\/watch(?:\?.*)?$/, '/iframe') : null;
+    const playerUrl = preview
+      ? preview.replace(uid, signedToken).replace(/\/watch(?:\?.*)?$/, '/iframe')
+      : null;
+    const thumbnail = typeof details.thumbnail === 'string'
+      ? details.thumbnail.replace(uid, signedToken)
+      : null;
 
     return NextResponse.json({
       ok: true,
@@ -56,7 +65,7 @@ export async function GET(request: Request) {
       readyToStream: Boolean(details.readyToStream),
       state: details.status?.state || 'processing',
       playerUrl,
-      thumbnail: details.thumbnail || null,
+      thumbnail,
       duration: typeof details.duration === 'number' ? details.duration : null,
     });
   } catch (error) {

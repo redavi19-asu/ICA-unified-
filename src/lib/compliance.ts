@@ -450,19 +450,16 @@ export async function createEventCheckinToken(organizationId: string, workflowId
   const event = rows[0];
   if (!event) return null;
 
-  let expires = new Date(Date.now() + 48 * 60 * 60 * 1000);
-  try {
-    const config = JSON.parse(event.configJson || '{}') as { startAt?: string };
-    if (config.startAt) {
-      const eventTime = new Date(config.startAt);
-      if (Number.isFinite(eventTime.getTime())) {
-        const afterEvent = new Date(eventTime.getTime() + 18 * 60 * 60 * 1000);
-        if (afterEvent > new Date()) expires = afterEvent;
-      }
-    }
-  } catch {
-    // Default token lifetime is used.
-  }
+  // Self-scan event QR codes are deliberately short-lived so a screenshot
+  // cannot be reused for days. Creating a new code invalidates the prior one.
+  const expires = new Date(Date.now() + 30 * 60 * 1000);
+  await prisma.$executeRawUnsafe(
+    `UPDATE EventCheckinToken
+     SET active = 0
+     WHERE organizationId = ? AND workflowId = ? AND active = 1`,
+    organizationId,
+    workflowId,
+  );
 
   const token = crypto.randomUUID().replaceAll('-', '');
   await prisma.$executeRawUnsafe(

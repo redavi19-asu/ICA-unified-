@@ -79,7 +79,7 @@ export default function ComplianceCenterClient({
     if (!response.ok) return setMessage(data.error || 'Unable to create check-in.');
     const url = `${window.location.origin}/checkin/${data.token}`;
     setCheckins((current) => ({ ...current, [workflowId]: { url, expiresAt: data.expiresAt } }));
-    setMessage('Event check-in QR created.');
+    setMessage('Secure event QR created. It expires in 30 minutes and replaces any older code for this event.');
   }
 
   return (
@@ -160,7 +160,8 @@ export default function ComplianceCenterClient({
                   <div style={{marginTop:18}}>
                     <div style={{background:'#fff',padding:14,width:'fit-content'}}><QRCodeSVG value={checkin.url} size={190} /></div>
                     <code style={{display:'block',color:'var(--ws-muted)',fontSize:10,wordBreak:'break-all',marginTop:12}}>{checkin.url}</code>
-                    <small style={{display:'block',color:'var(--ws-muted)',marginTop:8}}>Valid until {new Date(checkin.expiresAt).toLocaleString()}</small>
+                    <small style={{display:'block',color:'var(--ws-muted)',marginTop:8}}>Valid until {new Date(checkin.expiresAt).toLocaleString()} · Old codes are invalidated when you rotate.</small>
+                    <button onClick={() => createCheckin(item.id)} style={{...ghostButton,marginTop:12}}>ROTATE QR NOW</button>
                   </div>
                 )}
               </article>

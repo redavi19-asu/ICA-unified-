@@ -21,7 +21,7 @@ export async function createMemberQrToken(input: { userId: string; organizationI
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('365d')
+    .setExpirationTime('15m')
     .sign(getQrSecret());
 }
 

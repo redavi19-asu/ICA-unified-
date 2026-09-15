@@ -185,7 +185,18 @@ function MyQrScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getMemberQr(token).then(setData).catch((e) => setError(e instanceof Error ? e.message : 'Unable to load member QR.'));
+    let active = true;
+    async function refreshQr() {
+      try {
+        const next = await getMemberQr(token);
+        if (active) { setData(next); setError(''); }
+      } catch (e) {
+        if (active) setError(e instanceof Error ? e.message : 'Unable to load member QR.');
+      }
+    }
+    refreshQr();
+    const timer = setInterval(refreshQr, 8 * 60 * 1000);
+    return () => { active = false; clearInterval(timer); };
   }, [token]);
 
   return <Shell title="MY ICA QR" onBack={onBack}>
@@ -197,7 +208,7 @@ function MyQrScreen({ token, onBack }: { token: string; onBack: () => void }) {
         <Text style={styles.qrName}>{data.member.name}</Text>
         <Text style={styles.body}>{data.organization.name}</Text>
         <Text style={styles.muted}>{data.member.email}</Text>
-        <Text style={styles.qrHelp}>Hold this screen up for ICA event staff. Your QR is signed and tied to this organization.</Text>
+        <Text style={styles.qrHelp}>Hold this screen up for ICA event staff. For security, this signed QR refreshes automatically and expires quickly.</Text>
       </View>
     ) : null}
   </Shell>;

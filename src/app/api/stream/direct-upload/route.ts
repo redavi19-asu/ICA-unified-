@@ -70,7 +70,7 @@ export async function POST(request: Request) {
         uploadedBy: membership.userId,
       },
       allowedOrigins: origin ? [origin] : [],
-      requireSignedURLs: false,
+      requireSignedURLs: true,
     });
 
     return NextResponse.json({
