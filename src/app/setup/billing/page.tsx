@@ -23,6 +23,7 @@ export default async function BillingSetupPage({
   return (
     <BillingSetupClient
       organizationName={membership.organization.name}
+      companyId={membership.organization.slug.toUpperCase()}
       monthlyPrice={PROFESSIONAL_PRICE_CENTS / 100}
       stripeReady={isStripeCheckoutConfigured()}
       cancelled={params.cancelled === '1'}
