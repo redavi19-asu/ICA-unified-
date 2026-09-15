@@ -40,7 +40,7 @@ export default function RegisterPage() {
   return (
     <main className={styles.shell}>
       <section className={styles.manifesto}>
-        <a href="/login" className={styles.back}>← SIGN IN</a>
+        <a href="/" className={styles.back}>← BACK TO ICA UNIFIED</a>
         <p className={styles.kicker}>ICA UNIFIED / NEW ORGANIZATION</p>
         <h1>Build one<br />place to work.</h1>
         <p>Launch a private company workspace with learning, people, credentials, documents, and operations already connected.</p>
