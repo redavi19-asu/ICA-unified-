@@ -55,6 +55,7 @@ const includedWithProfessional = [
   ['API + Webhooks', 'Organization API keys, standard ICA API endpoints, and signed HTTPS webhooks.'],
   ['Domains + Export', 'Custom-domain ownership verification, member CSV export, and full organization backup export.'],
   ['Product Support', 'Standard support for using and operating existing ICA Unified features.'],
+  ['Mobile Access', 'ICA Unified Mobile for iPhone and iPad is included with Professional when released, using the same organization login and cloud data.'],
 ];
 
 const standardSupport = [
@@ -87,6 +88,7 @@ export default function Home() {
           <a href="#integrations">Integrations</a>
           <a href="#plans">Plans</a>
           <a href="#included">What&apos;s Included</a>
+          <a href="#mobile">Mobile</a>
           <a href="/login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>
@@ -195,6 +197,42 @@ export default function Home() {
               <a href={plan.href} {...(plan.external ? { target: '_blank', rel: 'noreferrer' } : {})}>{plan.cta} →</a>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section id="mobile" className={styles.mobileSection}>
+        <div className={styles.mobileIntro}>
+          <div>
+            <p className={styles.eyebrow}>ICA UNIFIED MOBILE</p>
+            <h2>Built for the people standing at the event.</h2>
+            <p>
+              The desktop workspace runs the organization. ICA Unified Mobile is being built for the staff member
+              checking people in, walking a conference floor, helping a member, or verifying credentials in real time.
+              One iPhone/iPad app. Same organization. Same member record. Same ICA Unified cloud data.
+            </p>
+          </div>
+          <div className={styles.mobileStatusCard}>
+            <span>APP AVAILABILITY</span>
+            <strong>iPhone + iPad</strong>
+            <b>IN DEVELOPMENT</b>
+            <small>One App Store download for both devices.</small>
+          </div>
+        </div>
+
+        <div className={styles.mobileFeatureGrid}>
+          <article><span>01</span><h3>Scan QR</h3><p>Use the device camera to scan ICA event check-in codes and move directly into the attendance workflow.</p></article>
+          <article><span>02</span><h3>Member Lookup</h3><p>Find a member quickly and view their current membership status, role, and organization record.</p></article>
+          <article><span>03</span><h3>Attendance</h3><p>Confirm event attendance against the existing ICA event workflow and preserve the activity in the same organization record.</p></article>
+          <article><span>04</span><h3>CE + Wallet</h3><p>Show earned CE, remaining requirements, credentials, verification status, and attendance certificates from the same ledger.</p></article>
+          <article><span>05</span><h3>Notifications</h3><p>Surface event, credential, renewal, learning, and organization alerts without requiring the full desktop dashboard.</p></article>
+          <article><span>06</span><h3>Same Cloud Account</h3><p>No second member database and no separate mobile account. Mobile, web, and future desktop clients use the same ICA Unified organization data.</p></article>
+        </div>
+
+        <div className={styles.platformAvailability}>
+          <div><span>WEB</span><strong>LIVE</strong></div>
+          <div><span>IPHONE + IPAD</span><strong>IN DEVELOPMENT</strong></div>
+          <div><span>ANDROID</span><strong>PLANNED</strong></div>
+          <div><span>WINDOWS + MAC</span><strong>PLANNED</strong></div>
         </div>
       </section>
 
