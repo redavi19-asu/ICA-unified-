@@ -1,10 +1,18 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from '../account-recovery.module.css';
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<main className={styles.shell}><section className={styles.card}><p className={styles.copy}>Loading secure reset…</p></section></main>}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const params = useSearchParams();
   const token = params.get('token') || '';
   const [message, setMessage] = useState('');
