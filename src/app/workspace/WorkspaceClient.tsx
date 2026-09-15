@@ -46,6 +46,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/learning')}>▥ <span>Learning</span></button>
           <button onClick={() => router.push('/workspace/people')}>♙ <span>People</span></button>
           <button onClick={() => router.push('/workspace/credentials')}>⬡ <span>Credentials</span></button>
+          <button onClick={() => router.push('/workspace/compliance')}>✓ <span>Compliance</span></button>
           <button onClick={() => router.push('/workspace/documents')}>▤ <span>Documents</span></button>
           <button onClick={() => router.push('/workspace/reports')}>▥ <span>Reports</span></button>
           <button className="workflow-nav-button" onClick={() => router.push('/workspace/workflows')}>↯ <span>Workflows</span></button>
@@ -54,8 +55,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           {(role === 'OWNER' || role === 'ADMIN') && (
             <button className="tools-nav-button" onClick={() => router.push('/workspace/tools')}>⚙ <span>Tools</span></button>
           )}
-          <button onClick={() => router.push('/workspace/reports')}>⌁ <span>Integrations</span></button>
-          <button onClick={() => router.push('/workspace/reports')}>▣ <span>Billing</span></button>
+          <button onClick={() => router.push('/workspace/integrations')}>⌁ <span>Integrations</span></button>
+          <button onClick={() => router.push('/workspace/billing')}>▣ <span>Billing</span></button>
           <p>PLATFORM</p>
           {platformRole ? (
             <button className="super-admin-nav-button" onClick={() => router.push('/platform')}>
