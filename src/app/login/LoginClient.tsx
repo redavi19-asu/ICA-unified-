@@ -57,14 +57,14 @@ export default function LoginClient() {
         <p className={styles.kicker}>SECURE ORGANIZATION ACCESS</p>
         <h2>Enter your workspace.</h2>
         <form onSubmit={submit}>
-          <label>Company ID <span style={{opacity:.55}}>(optional for ICA Master)</span><input name="organizationSlug" autoComplete="organization" placeholder="your-company" /></label>
+          <label>ICA Company ID <span style={{opacity:.55}}>(issued by ICA)</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" /></label>
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="dark" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
-        <p className={styles.note}>Your company workspace is isolated from every other organization on the platform. ICA Master owners can sign in with the Master email and password without a Company ID.</p>
+        <p className={styles.note}>Your Company ID is issued automatically when the organization is created. It identifies the correct ICA workspace for sign-in and support. ICA Master owners can sign in without a Company ID.</p>
         <a
           href="/register"
           style={{display:'inline-block',marginTop:20,color:'#171714',fontSize:12,fontWeight:900,letterSpacing:'.08em',textDecoration:'none',borderBottom:'1px solid rgba(23,23,20,.35)',paddingBottom:4}}
