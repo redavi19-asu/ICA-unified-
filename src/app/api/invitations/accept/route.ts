@@ -9,13 +9,13 @@ import { ensureUserSecurityState } from '../../../../lib/security';
 
 const acceptSchema = z.object({
   token: z.string().min(20),
-  password: z.string().min(8).max(128),
+  password: z.string().min(12).max(128),
 });
 
 export async function POST(request: Request) {
   const parsed = acceptSchema.safeParse(await request.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Use a password with at least 8 characters.' }, { status: 400 });
+    return NextResponse.json({ error: 'Use a password with at least 12 characters.' }, { status: 400 });
   }
 
   const tokenHash = createHash('sha256').update(parsed.data.token).digest('hex');

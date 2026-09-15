@@ -109,7 +109,7 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
               {item.code && <><code>{item.code}</code><button onClick={() => router.push(`/verify/${item.code}`)}>VERIFY RECORD →</button></>}
             </article>
           ))}
-          <button onClick={() => router.push('/my/wallet')} style={{width:'100%',marginTop:16,padding:'13px 15px',border:'1px solid #454b50',background:'transparent',color:'inherit',fontWeight:800,letterSpacing:'.08em',cursor:'pointer'}}>OPEN CREDENTIAL + CE WALLET →</button>
+          <button className={styles.walletButton} onClick={() => router.push('/my/wallet')}>OPEN CREDENTIAL + CE WALLET →</button>
         </div>
       </section>
 

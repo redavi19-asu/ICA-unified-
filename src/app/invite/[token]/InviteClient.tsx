@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import styles from './invite.module.css';
 
 export default function InviteClient({ token }: { token: string }) {
   const [password, setPassword] = useState('');
@@ -30,17 +31,17 @@ export default function InviteClient({ token }: { token: string }) {
   }
 
   return (
-    <main className="invite-shell">
-      <section className="invite-panel">
-        <p className="eyebrow">ICA UNIFIED / ACCESS HANDOFF</p>
-        <h1>YOU'RE<br />INVITED.</h1>
-        <p className="invite-lede">One account. One company workspace. Learning, people, credentials, documents, and operations connected.</p>
-        <form onSubmit={submit} className="invite-form">
-          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required /></label>
-          <label>Confirm password<input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={8} required /></label>
+    <main className={styles.shell}>
+      <section className={styles.panel}>
+        <p className={styles.eyebrow}>ICA UNIFIED / ACCESS HANDOFF</p>
+        <h1>YOU&apos;RE<br />INVITED.</h1>
+        <p className={styles.lede}>One account. One company workspace. Learning, people, credentials, documents, and operations connected.</p>
+        <form onSubmit={submit} className={styles.form}>
+          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={12} required autoComplete="new-password" /></label>
+          <label>Confirm password<input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={12} required autoComplete="new-password" /></label>
           <button type="submit" disabled={loading}>{loading ? 'CONNECTING…' : 'ENTER WORKSPACE →'}</button>
         </form>
-        <p className="system-message" aria-live="polite">{message}</p>
+        <p className={styles.message} aria-live="polite">{message}</p>
       </section>
     </main>
   );
