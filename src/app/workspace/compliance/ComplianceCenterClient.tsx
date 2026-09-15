@@ -208,14 +208,14 @@ function Metric({ label, value }: { label: string; value: number }) {
   return <div style={{background:'var(--ws-panel)',padding:20,borderTop:'3px solid var(--ws-teal)'}}><span style={eyebrow}>{label}</span><strong style={{display:'block',fontSize:42,marginTop:8,color:'var(--ws-text)'}}>{String(value).padStart(2,'0')}</strong></div>;
 }
 
-const eyebrow: CSSProperties = {fontSize:10,letterSpacing:'.16em',color:'#7d858a',margin:0};
-const sectionStyle: CSSProperties = {marginTop:56,paddingTop:28,borderTop:'1px solid #303438'};
+const eyebrow: CSSProperties = {fontSize:10,letterSpacing:'.16em',color:'var(--ws-blue)',margin:0};
+const sectionStyle: CSSProperties = {marginTop:56,paddingTop:28,borderTop:'1px solid var(--ws-line)'};
 const sectionHead: CSSProperties = {display:'grid',gridTemplateColumns:'1.25fr .75fr',gap:24,alignItems:'end',marginBottom:24};
-const sectionTitle: CSSProperties = {fontSize:'clamp(30px,4vw,52px)',letterSpacing:'-.04em',margin:'8px 0 0'};
-const sectionCopy: CSSProperties = {color:'#8f969b',lineHeight:1.55,margin:0};
-const metricGrid: CSSProperties = {display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(170px,1fr))',gap:1,background:'#2a2f32',marginTop:28};
-const inputStyle: CSSProperties = {width:'100%',boxSizing:'border-box' as const,background:'#101214',border:'1px solid #343a3e',color:'#f0eee8',padding:'12px 13px',outline:'none'};
-const primaryButton: CSSProperties = {background:'#efede7',color:'#111',border:0,padding:'13px 16px',fontWeight:800,letterSpacing:'.08em',cursor:'pointer'};
-const ghostButton: CSSProperties = {background:'transparent',color:'#d9d7d1',border:'1px solid #363b3f',padding:'10px 13px',fontWeight:700,letterSpacing:'.08em',cursor:'pointer'};
-const rowStyle: CSSProperties = {display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12,padding:'15px 0',borderBottom:'1px solid var(--ws-line)',color:'#a9afb3'};
-const emptyStyle: CSSProperties = {color:'#777f84',padding:'18px 0'};
+const sectionTitle: CSSProperties = {fontSize:'clamp(30px,4vw,52px)',letterSpacing:'-.04em',margin:'8px 0 0',color:'var(--ws-text)'};
+const sectionCopy: CSSProperties = {color:'var(--ws-muted)',lineHeight:1.55,margin:0};
+const metricGrid: CSSProperties = {display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(170px,1fr))',gap:1,background:'var(--ws-line)',marginTop:28,borderRadius:16,overflow:'hidden'};
+const inputStyle: CSSProperties = {width:'100%',boxSizing:'border-box' as const,background:'var(--ws-panel)',border:'1px solid var(--ws-line)',color:'var(--ws-text)',padding:'12px 13px',outline:'none',borderRadius:8};
+const primaryButton: CSSProperties = {background:'var(--ws-blue)',color:'#fff',border:0,padding:'13px 16px',fontWeight:800,letterSpacing:'.08em',cursor:'pointer',borderRadius:8};
+const ghostButton: CSSProperties = {background:'var(--ws-panel)',color:'var(--ws-blue)',border:'1px solid var(--ws-line)',padding:'10px 13px',fontWeight:700,letterSpacing:'.08em',cursor:'pointer',borderRadius:8};
+const rowStyle: CSSProperties = {display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12,padding:'15px 0',borderBottom:'1px solid var(--ws-line)',color:'var(--ws-muted)'};
+const emptyStyle: CSSProperties = {color:'var(--ws-muted)',padding:'18px 0'};
