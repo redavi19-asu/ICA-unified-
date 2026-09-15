@@ -26,10 +26,18 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, checkoutUrl: session.url });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to open Stripe Checkout.';
+    if (message === 'SUBSCRIPTION_ALREADY_EXISTS') {
+      return NextResponse.json(
+        {
+          error: 'This organization already has a Stripe subscription in progress or active. Use Billing to manage the existing subscription.',
+          code: 'SUBSCRIPTION_ALREADY_EXISTS',
+        },
+        { status: 409 },
+      );
+    }
+
     console.error('ICA_STRIPE_CHECKOUT_ERROR', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unable to open Stripe Checkout.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

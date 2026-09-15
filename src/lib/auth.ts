@@ -89,6 +89,15 @@ export async function requireSession() {
   });
 
   if (!membership) redirect('/login');
+
+  if (
+    membership.status === 'SUSPENDED' ||
+    membership.organization.status === 'SUSPENDED' ||
+    membership.organization.status === 'CANCELLED'
+  ) {
+    redirect('/login?unavailable=1');
+  }
+
   return { session, membership };
 }
 

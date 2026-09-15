@@ -82,29 +82,20 @@ export async function POST(request: Request) {
         });
       }
 
-      let organization =
-        body.organizationSlug
-          ? await prisma.organization.findUnique({
-              where: { slug: body.organizationSlug },
-            })
-          : localUser.memberships[0]?.organization || null;
-
-      if (!organization) {
-        organization = await prisma.organization.upsert({
-          where: { slug: 'ica-master' },
-          update: {
-            name: 'ICA Master Workspace',
-            status: 'ACTIVE',
-            plan: 'internal',
-          },
-          create: {
-            name: 'ICA Master Workspace',
-            slug: 'ica-master',
-            status: 'ACTIVE',
-            plan: 'internal',
-          },
-        });
-      }
+      const organization = await prisma.organization.upsert({
+        where: { slug: 'ica-master' },
+        update: {
+          name: 'ICA Master Workspace',
+          status: 'ACTIVE',
+          plan: 'internal',
+        },
+        create: {
+          name: 'ICA Master Workspace',
+          slug: 'ica-master',
+          status: 'ACTIVE',
+          plan: 'internal',
+        },
+      });
 
       membership = await prisma.membership.upsert({
         where: {

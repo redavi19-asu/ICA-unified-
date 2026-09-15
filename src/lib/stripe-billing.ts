@@ -73,6 +73,15 @@ export async function createProfessionalCheckout(input: {
   if (!isStripeCheckoutConfigured()) throw new Error('STRIPE_NOT_CONFIGURED');
 
   const billing = await ensureBillingProfile(input.organizationId);
+  const currentStatus = String(billing?.subscriptionStatus || '').toLowerCase();
+  const terminalStatuses = new Set(['', 'not_connected', 'canceled', 'incomplete_expired']);
+  if (billing?.providerSubscriptionId && !terminalStatuses.has(currentStatus)) {
+    throw new Error('SUBSCRIPTION_ALREADY_EXISTS');
+  }
+  if (isStripeEntitledStatus(currentStatus)) {
+    throw new Error('SUBSCRIPTION_ALREADY_EXISTS');
+  }
+
   const params = new URLSearchParams();
   params.set('mode', 'subscription');
   params.set('line_items[0][price]', priceId);
@@ -92,6 +101,9 @@ export async function createProfessionalCheckout(input: {
 
   const session = await stripeRequest<StripeCheckoutSession>('/v1/checkout/sessions', {
     method: 'POST',
+    headers: {
+      'Idempotency-Key': `ica-professional-checkout-${input.organizationId}`,
+    },
     body: params,
   });
 
