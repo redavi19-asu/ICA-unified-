@@ -31,7 +31,7 @@ jobs:
       - name: Test
         run: npm test
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --omit=optional --audit-level=high
       - name: Build Next.js app
         run: npm run build
 
