@@ -115,8 +115,7 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string, s
     <SafeAreaView style={styles.safe}>
       <View style={styles.loginPage}>
         <Text style={styles.kicker}>I COMPUTER ANYTHING</Text>
-        <Text style={styles.loginTitle}>ICA{'
-'}UNIFIED</Text>
+        <Text style={styles.loginTitle}>ICA{"\n"}UNIFIED</Text>
         <Text style={styles.sub}>Mobile event operations</Text>
         <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="Email" placeholderTextColor="#657887" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} secureTextEntry placeholder="Password" placeholderTextColor="#657887" value={password} onChangeText={setPassword} />
