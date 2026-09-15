@@ -42,9 +42,9 @@ export default async function BillingPage() {
           <p>PRICING FOUNDATION</p>
           <h2>$249 is now the system price.</h2>
           <p className={styles.copy}>
-            ICA already stores the organization plan, monthly price, currency, subscription state,
-            and future processor IDs. When Stripe credentials are connected later, checkout and
-            recurring billing can attach to this existing record instead of changing the data model.
+            ICA Unified uses Stripe for the organization&apos;s $249/month Professional subscription.
+            Trial, active, past-due, and cancellation status are stored against this organization so access
+            follows the company account instead of any single device.
           </p>
           <div className={styles.line}><span>Monthly platform price</span><strong>{price}</strong></div>
           <div className={styles.line}><span>Billing cadence</span><strong>MONTHLY</strong></div>
@@ -74,8 +74,18 @@ export default async function BillingPage() {
             <span><b>✓</b> Trial / active organization state</span>
             <span><b>✓</b> Provider customer/subscription ID fields</span>
             <span><b>✓</b> Separate member-payment architecture</span>
-            <span><b>→</b> Stripe account + API keys activate checkout later</span>
-            <span><b>→</b> Stripe Connect activates member dues/event processing later</span>
+            <span><b>✓</b> Stripe Checkout path + subscription status sync</span>
+            <span><b>→</b> Stripe Connect remains separate for future member dues/event processing</span>
+          </div>
+        </article>
+
+        <article className={styles.wide}>
+          <p>ACCOUNT ACCESS</p>
+          <h2>Subscription + installation controls.</h2>
+          <p className={styles.copy}>Owners and admins can manage the company subscription in Stripe and open the ICA access center for web and desktop clients.</p>
+          <div className={styles.billingActions}>
+            <form action="/api/billing/portal" method="post"><button type="submit">MANAGE SUBSCRIPTION →</button></form>
+            <a href="/downloads">GET ICA UNIFIED APPS →</a>
           </div>
         </article>
       </section>
