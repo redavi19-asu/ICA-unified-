@@ -60,7 +60,7 @@ export default function LoginClient() {
           <label>ICA Company ID <span style={{opacity:.55}}>(issued by ICA)</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" /></label>
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
-          <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="dark" />
+          <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
