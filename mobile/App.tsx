@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -30,11 +30,25 @@ import {
 
 type Screen = 'home' | 'scanner' | 'staffScanner' | 'myqr' | 'members' | 'wallet' | 'notifications';
 
+type MeData = {
+  user: { id: string; name: string; email: string; role: string; status: string; jobTitle?: string | null };
+  organization: { id: string; name: string; slug: string };
+};
+type CheckinResult = { eventName: string; message: string };
+type MemberQrData = { qrValue: string; member: { name: string; email: string }; organization: { name: string } };
+type StaffEvent = { id: string; name: string; startAt?: string; credits?: number; category: string };
+type StaffCheckinResult = { member: { name: string }; message: string };
+type MemberRow = { membershipId: string; name: string; email: string; role: string; status: string; jobTitle?: string | null };
+type WalletData = { summary: { earnedTotal?: number; outstandingTotal?: number }; credentials: Array<{ id: string; name: string; status: string; expiresAt?: string | null }> };
+type NotificationRow = { id: string; message: string; createdAt: string };
+
+
+
 const TOKEN_KEY = 'ica_unified_mobile_token';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
-  const [me, setMe] = useState<any>(null);
+  const [me, setMe] = useState<MeData | null>(null);
   const [booting, setBooting] = useState(true);
   const [screen, setScreen] = useState<Screen>('home');
 
@@ -148,7 +162,7 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string, s
 function ScannerScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [locked, setLocked] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<CheckinResult | null>(null);
   const [error, setError] = useState('');
 
   async function scanned(data: string) {
@@ -181,7 +195,7 @@ function ScannerScreen({ token, onBack }: { token: string; onBack: () => void })
 
 
 function MyQrScreen({ token, onBack }: { token: string; onBack: () => void }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<MemberQrData | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -216,10 +230,10 @@ function MyQrScreen({ token, onBack }: { token: string; onBack: () => void }) {
 
 function StaffCheckinScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [events, setEvents] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any>(null);
+  const [events, setEvents] = useState<StaffEvent[]>([]);
+  const [selected, setSelected] = useState<StaffEvent | null>(null);
   const [locked, setLocked] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<StaffCheckinResult | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -282,7 +296,7 @@ function StaffCheckinScreen({ token, onBack }: { token: string; onBack: () => vo
 
 function MembersScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [query, setQuery] = useState('');
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<MemberRow[]>([]);
   const [error, setError] = useState('');
 
   async function run() {
@@ -299,7 +313,7 @@ function MembersScreen({ token, onBack }: { token: string; onBack: () => void })
 }
 
 function WalletScreen({ token, onBack }: { token: string; onBack: () => void }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<WalletData | null>(null);
   const [error, setError] = useState('');
   useEffect(() => { getWallet(token).then(setData).catch((e) => setError(e.message)); }, [token]);
   return <Shell title="CE + WALLET" onBack={onBack}>
@@ -308,13 +322,13 @@ function WalletScreen({ token, onBack }: { token: string; onBack: () => void }) 
     {data ? <>
       <View style={styles.metrics}><Metric label="CE EARNED" value={Number(data.summary.earnedTotal || 0).toFixed(1)} /><Metric label="STILL NEEDED" value={Number(data.summary.outstandingTotal || 0).toFixed(1)} /></View>
       <Text style={styles.sectionLabel}>CREDENTIALS</Text>
-      {(data.credentials || []).map((item:any) => <View key={item.id} style={styles.listCard}><Text style={styles.cardTitle}>{item.name}</Text><Text style={styles.muted}>{String(item.status).toUpperCase()}{item.expiresAt ? ` · Expires ${new Date(item.expiresAt).toLocaleDateString()}` : ''}</Text></View>)}
+      {(data.credentials || []).map((item) => <View key={item.id} style={styles.listCard}><Text style={styles.cardTitle}>{item.name}</Text><Text style={styles.muted}>{String(item.status).toUpperCase()}{item.expiresAt ? ` · Expires ${new Date(item.expiresAt).toLocaleDateString()}` : ''}</Text></View>)}
     </> : null}
   </Shell>;
 }
 
 function NotificationsScreen({ token, onBack }: { token: string; onBack: () => void }) {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<NotificationRow[]>([]);
   const [error, setError] = useState('');
   useEffect(() => { getNotifications(token).then((d) => setRows(d.notifications || [])).catch((e) => setError(e.message)); }, [token]);
   return <Shell title="NOTIFICATIONS" onBack={onBack}>
@@ -323,10 +337,10 @@ function NotificationsScreen({ token, onBack }: { token: string; onBack: () => v
   </Shell>;
 }
 
-function Shell({ title, onBack, children }: any) {
+function Shell({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
   return <SafeAreaView style={styles.safe}><View style={styles.shell}><Pressable onPress={onBack}><Text style={styles.link}>← EVENT MODE</Text></Pressable><Text style={styles.screenTitle}>{title}</Text><View style={{flex:1}}>{children}</View></View></SafeAreaView>;
 }
-function Action({ title, copy, onPress, primary=false }: any) {
+function Action({ title, copy, onPress, primary=false }: { title: string; copy: string; onPress: () => void; primary?: boolean }) {
   return <Pressable style={[styles.action, primary && styles.actionPrimary]} onPress={onPress}><View><Text style={styles.actionTitle}>{title}</Text><Text style={styles.body}>{copy}</Text></View><Text style={styles.arrow}>→</Text></Pressable>;
 }
 function Metric({label,value}:{label:string;value:string}) {

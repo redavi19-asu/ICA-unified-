@@ -109,7 +109,7 @@ export default function SystemStatusGlobe() {
 
   useEffect(() => {
     let mounted = true;
-    let timer: ReturnType<typeof setInterval> | undefined;
+    const timer = setInterval(checkHealth, 60000);
 
     async function checkHealth() {
       try {
@@ -133,11 +133,10 @@ export default function SystemStatusGlobe() {
     }
 
     checkHealth();
-    timer = setInterval(checkHealth, 60000);
 
     return () => {
       mounted = false;
-      if (timer) clearInterval(timer);
+      clearInterval(timer);
     };
   }, []);
 
