@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './tools.module.css';
 
@@ -74,6 +74,18 @@ export default function ToolsClient({ organizationName, role }: Props) {
   const [commitResult, setCommitResult] = useState<CommitResponse['result'] | null>(null);
   const [message, setMessage] = useState('Choose a CSV export to start a safe member migration.');
   const [working, setWorking] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('ica_workspace_theme');
+    if (saved === 'dark' || saved === 'light') setTheme(saved);
+  }, []);
+
+  function chooseTheme(next: 'light' | 'dark') {
+    setTheme(next);
+    window.localStorage.setItem('ica_workspace_theme', next);
+    window.dispatchEvent(new CustomEvent('ica-workspace-theme', { detail: next }));
+  }
 
   const mappedRows = useMemo<ImportRow[]>(() => {
     if (!headers.length || !records.length) return [];
@@ -229,6 +241,26 @@ export default function ToolsClient({ organizationName, role }: Props) {
           <span>{organizationName} · {role}</span>
         </div>
       </header>
+
+      <section className={styles.appearance}>
+        <div>
+          <p className={styles.kicker}>APPEARANCE</p>
+          <h2>Choose how ICA looks while you work.</h2>
+          <p>Light is the default ICA Unified workspace. Switch to Dark anytime; the choice stays on this device.</p>
+        </div>
+        <div className={styles.themePicker} role="group" aria-label="Workspace theme">
+          <button className={theme === 'light' ? styles.themeActive : ''} onClick={() => chooseTheme('light')}>
+            <span className={styles.lightPreview}><i/><i/><i/></span>
+            <strong>LIGHT</strong>
+            <small>ICA DEFAULT</small>
+          </button>
+          <button className={theme === 'dark' ? styles.themeActive : ''} onClick={() => chooseTheme('dark')}>
+            <span className={styles.darkPreview}><i/><i/><i/></span>
+            <strong>DARK</strong>
+            <small>OPTIONAL</small>
+          </button>
+        </div>
+      </section>
 
       <section className={styles.intro}>
         <div>
