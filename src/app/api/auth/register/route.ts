@@ -1,16 +1,25 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
 
 const schema = z.object({
   organizationName: z.string().min(2).max(100),
-  organizationSlug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/),
   name: z.string().min(2).max(100),
   email: z.string().email().transform((value) => value.toLowerCase()),
   password: z.string().min(8).max(200),
 });
+
+async function issueCompanyId() {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const code = `ica-${randomBytes(3).toString('hex')}`;
+    const existing = await prisma.organization.findUnique({ where: { slug: code } });
+    if (!existing) return code;
+  }
+  throw new Error('Unable to issue a unique ICA Company ID.');
+}
 
 export async function POST(request: Request) {
   let organizationId: string | null = null;
@@ -19,16 +28,7 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
 
-    const existingOrg = await prisma.organization.findUnique({
-      where: { slug: body.organizationSlug },
-    });
-
-    if (existingOrg) {
-      return NextResponse.json(
-        { error: 'That company ID is already in use.' },
-        { status: 409 }
-      );
-    }
+    const companyId = await issueCompanyId();
 
     const existingUser = await prisma.user.findUnique({
       where: { email: body.email },
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const organization = await prisma.organization.create({
       data: {
         name: body.organizationName,
-        slug: body.organizationSlug,
+        slug: companyId,
         status: 'TRIAL',
         plan: 'trial',
         trialEndsAt,
@@ -97,6 +97,7 @@ export async function POST(request: Request) {
       organization: {
         name: organization.name,
         slug: organization.slug,
+        companyId: organization.slug.toUpperCase(),
       },
     });
 
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Check the company name, company ID, email, and password.' },
+        { error: 'Check the company name, email, and password.' },
         { status: 400 }
       );
     }
