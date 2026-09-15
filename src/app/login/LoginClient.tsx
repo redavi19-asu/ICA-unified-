@@ -63,6 +63,7 @@ export default function LoginClient() {
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
+          <a className={styles.forgot} href="/forgot-password">Forgot password?</a>
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <p className={styles.note}>Your Company ID is issued automatically when the organization is created. It identifies the correct ICA workspace for sign-in and support. ICA Master owners can sign in without a Company ID.</p>

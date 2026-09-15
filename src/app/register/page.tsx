@@ -2,12 +2,15 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import TurnstileWidget from '../TurnstileWidget';
 import styles from './register.module.css';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,6 +26,7 @@ export default function RegisterPage() {
         name: form.get('name'),
         email: form.get('email'),
         password: form.get('password'),
+        turnstileToken,
       }),
     });
 
@@ -30,6 +34,14 @@ export default function RegisterPage() {
     if (!response.ok) {
       setError(data.error || 'Unable to create workspace.');
       setLoading(false);
+      setTurnstileToken('');
+      setTurnstileReset((value) => value + 1);
+      return;
+    }
+
+    if (data.verificationRequired) {
+      router.push('/verify-email/pending');
+      router.refresh();
       return;
     }
 
@@ -55,7 +67,8 @@ export default function RegisterPage() {
           <label>Your name<input name="name" placeholder="Jordan Brooks" required minLength={2} /></label>
           <label>Work email<input name="email" type="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" minLength={8} required /></label>
-          <button disabled={loading}>{loading ? 'BUILDING WORKSPACE…' : 'CREATE ICA UNIFIED →'}</button>
+          <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
+          <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'BUILDING WORKSPACE…' : 'CREATE ICA UNIFIED →'}</button>
         </form>
         {error && <p className={styles.error}>{error}</p>}
         <p className={styles.note}>The first account becomes the Organization Owner. ICA automatically issues the company a unique Company ID for future sign-in and support. Additional people are added through secure invitations.</p>

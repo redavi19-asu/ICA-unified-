@@ -26,6 +26,10 @@ jobs:
         run: npx prisma generate
       - name: Validate Prisma schema
         run: npx prisma validate
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
       - name: Build Next.js app
         run: npm run build
 
@@ -39,5 +43,6 @@ jobs:
             echo "Cloudflare deploy skipped: repository secrets are not configured yet."
             exit 0
           fi
+          npx wrangler d1 migrations apply ica-unified --remote
           npx opennextjs-cloudflare build
           npx wrangler deploy

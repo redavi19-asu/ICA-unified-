@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
 import { emitOrganizationEvent } from '../../../../lib/organization-ops';
+import { ensureUserSecurityState } from '../../../../lib/security';
 
 const acceptSchema = z.object({
   token: z.string().min(20),
@@ -100,6 +101,8 @@ export async function POST(request: Request) {
 
     return { user, membership };
   });
+
+  await ensureUserSecurityState(result.user.id, true);
 
   try {
     await emitOrganizationEvent(invitation.organizationId, 'member.activated', {

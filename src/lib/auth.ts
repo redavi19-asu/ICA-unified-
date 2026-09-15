@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
+import { emailVerificationIsEnforced, isUserEmailVerified } from './security';
 
 const COOKIE_NAME = 'ica_unified_session';
 const devSecret = 'ica-unified-development-only-secret-change-me';
@@ -96,6 +97,10 @@ export async function requireSession() {
     membership.organization.status === 'CANCELLED'
   ) {
     redirect('/login?unavailable=1');
+  }
+
+  if (emailVerificationIsEnforced() && !(await isUserEmailVerified(membership.userId))) {
+    redirect('/verify-email/pending');
   }
 
   return { session, membership };

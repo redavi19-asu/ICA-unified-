@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "admin:bootstrap": "tsx prisma/bootstrap-platform-admin.ts"
+    "admin:bootstrap": "tsx prisma/bootstrap-platform-admin.ts",
+    "test": "tsx --test tests/**/*.test.ts",
+    "db:migrate:remote": "wrangler d1 migrations apply ica-unified --remote"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

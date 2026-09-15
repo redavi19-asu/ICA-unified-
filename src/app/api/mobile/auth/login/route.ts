@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../../lib/prisma';
 import { createSession } from '../../../../../lib/auth';
+import { consumeRateLimit, emailVerificationIsEnforced, isUserEmailVerified } from '../../../../../lib/security';
 
 const schema = z.object({
   email: z.string().email().transform((value) => value.trim().toLowerCase()),
@@ -13,6 +14,19 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
+
+    const limit = await consumeRateLimit(request, {
+      scope: 'mobile-login',
+      identity: body.email,
+      limit: 10,
+      windowSeconds: 15 * 60,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many sign-in attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: body.email },
@@ -31,6 +45,10 @@ export async function POST(request: Request) {
 
     if (!user || !membership || !valid) {
       return NextResponse.json({ error: 'Invalid company, email, or password.' }, { status: 401 });
+    }
+
+    if (emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
+      return NextResponse.json({ error: 'Verify your email before signing in.' }, { status: 403 });
     }
 
     if (

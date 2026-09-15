@@ -25,3 +25,5 @@ radial-gradient(circle at 90% 22%,rgba(139,92,246,.07),transparent 25%),
 .back{position:absolute;top:32px;left:clamp(32px,7vw,96px);z-index:2;color:#147fd1;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.14em}
 .back:hover{color:#0f6fae}
 @media(max-width:760px){.back{top:22px;left:22px}}
+.forgot{display:inline-block;margin-top:14px;color:#147fd1;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:.04em}
+.forgot:hover{text-decoration:underline}

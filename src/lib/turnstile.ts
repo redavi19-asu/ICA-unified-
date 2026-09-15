@@ -7,9 +7,11 @@ type TurnstileResponse = {
 export async function verifyTurnstile(token: string | undefined, request: Request) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
 
-  // Keep deployments usable until the Turnstile secret is configured.
   if (!secret) {
-    return { success: true, configured: false };
+    return {
+      success: process.env.NODE_ENV !== 'production',
+      configured: false,
+    };
   }
 
   if (!token) {

@@ -5,6 +5,7 @@ import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
 import { authenticateIcaMasterOwner } from '../../../../lib/ica-master-auth';
 import { verifyTurnstile } from '../../../../lib/turnstile';
+import { consumeRateLimit, emailVerificationIsEnforced, isUserEmailVerified } from '../../../../lib/security';
 
 const loginSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
@@ -19,6 +20,19 @@ const loginSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = loginSchema.parse(await request.json());
+
+    const limit = await consumeRateLimit(request, {
+      scope: 'web-login',
+      identity: body.email,
+      limit: 8,
+      windowSeconds: 15 * 60,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many sign-in attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+      );
+    }
 
     const challenge = await verifyTurnstile(body.turnstileToken, request);
     if (!challenge.success) {
@@ -129,6 +143,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Invalid company, email, or password.' },
         { status: 401 }
+      );
+    }
+
+    if (!masterOwner && emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
+      return NextResponse.json(
+        { error: 'Verify your email before signing in.', code: 'EMAIL_VERIFICATION_REQUIRED' },
+        { status: 403 },
       );
     }
 
