@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import styles from './billing-setup.module.css';
 
@@ -38,7 +39,7 @@ export default function BillingSetupClient({
   return (
     <main className={styles.shell}>
       <div className={styles.glow} />
-      <a href="/" className={styles.brand}>ICA <span>UNIFIED</span></a>
+      <Link href="/" className={styles.brand}>ICA <span>UNIFIED</span></Link>
 
       <section className={styles.wrap}>
         <div className={styles.copyColumn}>

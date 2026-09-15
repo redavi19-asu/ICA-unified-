@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styles from './landing.module.css';
 import SystemStatusGlobe from './SystemStatusGlobe';
 
@@ -122,10 +123,10 @@ export default function Home() {
   return (
     <main className={styles.page}>
       <header className={styles.nav}>
-        <a className={styles.brand} href="/">
+        <Link className={styles.brand} href="/">
           <span>ICA</span>
           <strong>UNIFIED</strong>
-        </a>
+        </Link>
         <nav>
           <a href="#platform">Platform</a>
           <a href="#integrations">Integrations</a>

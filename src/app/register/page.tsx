@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TurnstileWidget from '../TurnstileWidget';
@@ -52,7 +53,7 @@ export default function RegisterPage() {
   return (
     <main className={styles.shell}>
       <section className={styles.manifesto}>
-        <a href="/" className={styles.back}>← BACK TO ICA UNIFIED</a>
+        <Link href="/" className={styles.back}>← BACK TO ICA UNIFIED</Link>
         <p className={styles.kicker}>ICA UNIFIED / NEW ORGANIZATION</p>
         <h1>Build one<br />place to work.</h1>
         <p>Launch a private company workspace with learning, people, credentials, documents, and operations already connected.</p>

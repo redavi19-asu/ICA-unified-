@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
@@ -45,7 +46,7 @@ export default function LoginClient() {
   return (
     <main className={styles.shell}>
       <section className={styles.identity}>
-        <a href="/" className={styles.back}>← BACK TO ICA UNIFIED</a>
+        <Link href="/" className={styles.back}>← BACK TO ICA UNIFIED</Link>
         <p>I COMPUTER ANYTHING / BUSINESS SYSTEMS</p>
         <h1>ICA<br />UNIFIED</h1>
         <div className={styles.line} />

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../learning.module.css';
@@ -175,7 +176,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
     <main className={styles.shell}>
       <header className={styles.header}>
         <div>
-          <a className={styles.back} href="/workspace/learning">← LEARNING ENGINE</a>
+          <Link className={styles.back} href="/workspace/learning">← LEARNING ENGINE</Link>
           <p className={styles.eyebrow}>{organizationName.toUpperCase()} / COURSE</p>
           <h1>{course.title}</h1>
           <p className={styles.intro}>{course.description}</p>

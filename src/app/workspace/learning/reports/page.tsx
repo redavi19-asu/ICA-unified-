@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
@@ -47,7 +48,7 @@ export default async function LearningReportsPage() {
     <main className={styles.shell}>
       <header className={styles.header}>
         <div>
-          <a className={styles.back} href="/workspace/learning">← LEARNING ENGINE</a>
+          <Link className={styles.back} href="/workspace/learning">← LEARNING ENGINE</Link>
           <p className={styles.eyebrow}>{membership.organization.name.toUpperCase()} / LMS REPORTING</p>
           <h1>TRAINING<br />REPORTS</h1>
           <p className={styles.intro}>Company-wide completion, overdue training, failed attempts, and certificates nearing expiration.</p>

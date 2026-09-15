@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../lib/auth';
 import { ensureBillingProfile } from '../../lib/organization-ops';
@@ -27,7 +28,7 @@ export default async function DownloadsPage({
   return (
     <main className={styles.shell}>
       <header className={styles.nav}>
-        <a href="/" className={styles.brand}>ICA <span>UNIFIED</span></a>
+        <Link href="/" className={styles.brand}>ICA <span>UNIFIED</span></Link>
         <div><a href="/workspace">Workspace</a><a href="/workspace/billing">Billing</a><a href="/login">Customer Login</a></div>
       </header>
 
