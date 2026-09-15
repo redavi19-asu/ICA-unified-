@@ -14,3 +14,8 @@
 .notice,.error{margin:15px 0 0;padding:12px;border:1px solid #31516a;background:#081722;font-size:11px;line-height:1.55}.notice{color:#d7bd78}.error{color:#ff8e96;border-color:#6f3540}
 .fine{color:#5e7688;font-size:9px;line-height:1.55;margin-top:13px}
 @media(max-width:900px){.wrap{grid-template-columns:1fr;margin-top:40px}.timeline{grid-template-columns:1fr}.timeline>div{border-right:0;border-bottom:1px solid #1e3a4f}.timeline>div:last-child{border-bottom:0}.trust{grid-template-columns:1fr}}
+
+.companyIdCard{margin-top:24px;border:1px solid #2d6f9e;background:linear-gradient(135deg,#0a1e2d,#08151f);padding:18px 20px;display:grid;gap:7px;max-width:520px}
+.companyIdCard span{font-size:8px;font-weight:900;letter-spacing:.16em;color:#6fc7ff}
+.companyIdCard strong{font-size:30px;letter-spacing:.04em;color:#fff}
+.companyIdCard small{color:#718a9c;font-size:10px;line-height:1.5}
