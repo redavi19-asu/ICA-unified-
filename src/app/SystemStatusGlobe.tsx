@@ -17,7 +17,7 @@ function NodeIcon({ type }: { type: string }) {
 
 
 function RealMapGlobe() {
-  const srcDoc = \`<!doctype html>
+  const srcDoc = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -89,7 +89,7 @@ function RealMapGlobe() {
     map.on('zoomend', resumeSpinSoon);
   </script>
 </body>
-</html>\`;
+</html>`;
 
   return (
     <div className={styles.realGlobeWrap}>
