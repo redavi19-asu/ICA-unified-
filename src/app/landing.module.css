@@ -189,3 +189,26 @@
 .platformStrip span:nth-child(1){border-top:3px solid #0ea5e9}.platformStrip span:nth-child(2){border-top:3px solid #2563eb}.platformStrip span:nth-child(3){border-top:3px solid #475569}.platformStrip span:nth-child(4){border-top:3px solid #8b5cf6}
 
 .heroTrinkets .trinketOne{border-color:#bdeee5;color:#0f8f82;background:#f4fffc}.heroTrinkets .trinketTwo{border-color:#fde2a8;color:#b87506;background:#fffaf0}.heroTrinkets .trinketThree{border-color:#cfe0ff;color:#2f6ed7;background:#f6f9ff}
+
+
+/* Realistic illustrated ICA Earth */
+.earth{position:relative;width:265px;height:265px;border-radius:50%;overflow:hidden;background:
+  radial-gradient(circle at 34% 27%,rgba(255,255,255,.32),transparent 17%),
+  radial-gradient(circle at 44% 40%,#3b9ed8 0%,#1478b7 52%,#0c568c 78%,#073b64 100%);
+  box-shadow:inset -34px -20px 48px rgba(0,32,66,.36),inset 16px 10px 28px rgba(255,255,255,.13),0 0 0 1px rgba(52,144,205,.35),0 0 30px rgba(42,154,218,.26),0 24px 50px rgba(26,82,119,.20);transform:rotate(-7deg)}
+.earthTexture{position:absolute;inset:0;border-radius:50%;background-image:url('/earth-texture.svg');background-size:200% 100%;background-repeat:repeat-x;background-position:0 center;filter:saturate(1.05) contrast(1.04);animation:earthRotate 28s linear infinite}
+.earthClouds{position:absolute;inset:-4%;border-radius:50%;opacity:.42;background:
+  radial-gradient(ellipse at 18% 35%,rgba(255,255,255,.95) 0 7%,transparent 9%),
+  radial-gradient(ellipse at 35% 62%,rgba(255,255,255,.72) 0 8%,transparent 11%),
+  radial-gradient(ellipse at 58% 24%,rgba(255,255,255,.8) 0 6%,transparent 9%),
+  radial-gradient(ellipse at 74% 51%,rgba(255,255,255,.72) 0 7%,transparent 10%),
+  radial-gradient(ellipse at 87% 70%,rgba(255,255,255,.75) 0 6%,transparent 9%);
+  filter:blur(2.2px);animation:cloudDrift 34s linear infinite}
+.earthShade{position:absolute;inset:0;border-radius:50%;background:linear-gradient(90deg,rgba(255,255,255,.16),transparent 26%,transparent 60%,rgba(0,24,51,.38) 88%,rgba(0,18,39,.48));pointer-events:none}
+.earthAtmosphere{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(139,219,255,.35),inset 0 0 18px rgba(132,220,255,.28);pointer-events:none}
+.globeStage .coreLabel{transform:translateY(92px);padding:10px 16px;border-radius:999px;background:rgba(255,255,255,.88);box-shadow:0 8px 24px rgba(29,83,119,.12);border-color:#d7e7ef}
+.globeStage .coreLabel small{display:none}.globeStage .coreLabel strong{font-size:16px;letter-spacing:-.02em}.globeStage .coreLabel span{font-size:7px}
+@keyframes earthRotate{from{background-position:0 center}to{background-position:-200% center}}
+@keyframes cloudDrift{from{transform:translateX(0)}to{transform:translateX(-18px)}}
+@media(max-width:650px){.earth{width:220px;height:220px}.globeStage .coreLabel{transform:translateY(78px)}}
+@media(prefers-reduced-motion:reduce){.earthTexture,.earthClouds{animation:none!important}}
