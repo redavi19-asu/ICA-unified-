@@ -4,8 +4,13 @@ import { ensureBillingProfile, PROFESSIONAL_PRICE_CENTS } from '../../../lib/org
 import { isStripeCheckoutConfigured, isStripeEntitledStatus } from '../../../lib/stripe-billing';
 import BillingSetupClient from './BillingSetupClient';
 
-export default async function BillingSetupPage() {
+export default async function BillingSetupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cancelled?: string; confirm?: string }>;
+}) {
   const { membership } = await requireSession();
+  const params = await searchParams;
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
   if (membership.organization.plan === 'internal' || membership.organization.slug === 'ica-master') {
@@ -20,6 +25,8 @@ export default async function BillingSetupPage() {
       organizationName={membership.organization.name}
       monthlyPrice={PROFESSIONAL_PRICE_CENTS / 100}
       stripeReady={isStripeCheckoutConfigured()}
+      cancelled={params.cancelled === '1'}
+      confirmationFailed={params.confirm === 'failed'}
     />
   );
 }
