@@ -20,7 +20,6 @@ export default function RegisterPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         organizationName: form.get('organizationName'),
-        organizationSlug: String(form.get('organizationSlug') || '').toLowerCase().trim(),
         name: form.get('name'),
         email: form.get('email'),
         password: form.get('password'),
@@ -53,14 +52,13 @@ export default function RegisterPage() {
         <h2>Your company becomes its own tenant.</h2>
         <form onSubmit={submit}>
           <label>Company name<input name="organizationName" placeholder="Northstar Services" required minLength={2} /></label>
-          <label>Company ID<input name="organizationSlug" placeholder="northstar-services" required pattern="[a-z0-9-]+" /></label>
           <label>Your name<input name="name" placeholder="Jordan Brooks" required minLength={2} /></label>
           <label>Work email<input name="email" type="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" minLength={8} required /></label>
           <button disabled={loading}>{loading ? 'BUILDING WORKSPACE…' : 'CREATE ICA UNIFIED →'}</button>
         </form>
         {error && <p className={styles.error}>{error}</p>}
-        <p className={styles.note}>The first account becomes the Organization Owner. Additional people are added through secure invitations.</p>
+        <p className={styles.note}>The first account becomes the Organization Owner. ICA automatically issues the company a unique Company ID for future sign-in and support. Additional people are added through secure invitations.</p>
       </section>
     </main>
   );
