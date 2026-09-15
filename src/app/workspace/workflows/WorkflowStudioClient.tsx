@@ -45,6 +45,7 @@ const initialEvent = {
   ceuCredits: '',
   creditCategory: 'GENERAL',
   certificateRule: 'COMPLETE_EVENT',
+  checkinMode: 'SELF_SCAN',
   confirmationSubject: 'Registration confirmed',
   confirmationMessage: 'You are registered. Your event details and access link are included below.',
   active: false,
@@ -224,6 +225,16 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               <label>Credit category<input value={event.creditCategory} onChange={(e) => setEvent({...event, creditCategory:e.target.value})} placeholder="GENERAL" /></label>
               <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="COMPLETE_EVENT">Issue after completion</option><option value="PASS_QUIZ">Issue after passing quiz</option><option value="ATTENDANCE">Issue after attendance</option><option value="NONE">No certificate</option></select></label>
             </div>
+            <label>Event check-in mode
+              <select value={event.checkinMode} onChange={(e) => setEvent({...event, checkinMode:e.target.value})}>
+                <option value="SELF_SCAN">Member scans event QR</option>
+                <option value="STAFF_SCAN">Staff scans member QR</option>
+                <option value="BOTH">Allow either direction</option>
+              </select>
+            </label>
+            <p className={styles.empty}>
+              SELF_SCAN lets attendees scan the event code. STAFF_SCAN lets event staff choose this event in ICA Mobile and scan each attendee&apos;s personal ICA QR. BOTH supports either flow.
+            </p>
           </section>
 
           <section>
@@ -234,7 +245,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save keeps registration, pricing, access, CE category/value, certificate rule, and confirmation email together.</span>
+            <span>One save keeps registration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together.</span>
             <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
           </div>
         </form>
