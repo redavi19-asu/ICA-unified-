@@ -56,3 +56,54 @@
   .previewRow span:nth-child(3),.previewRow span:nth-child(4),
   .classificationList>div span:nth-child(3),.classificationList>div b{display:none}
 }
+
+/* workspace theme controls */
+.appearance{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center;border:1px solid #d6e4ec;background:#fff;padding:22px 24px;border-radius:16px;margin:24px 0;box-shadow:0 12px 34px rgba(31,69,96,.05)}
+.appearance h2{font-size:28px;letter-spacing:-.035em;margin:8px 0}
+.appearance>div:first-child>p:last-child{color:#6c8191;line-height:1.6;margin:0;max-width:680px}
+.themePicker{display:flex;gap:10px}
+.themePicker>button{width:128px;border:1px solid #d4e2eb;background:#fff;border-radius:12px;padding:11px;display:grid;gap:7px;text-align:left;cursor:pointer;color:#173247}
+.themePicker>button strong{font-size:10px;letter-spacing:.1em}.themePicker>button small{font-size:7px;letter-spacing:.12em;color:#71889a}
+.themeActive{border-color:#7db8de!important;box-shadow:0 0 0 3px rgba(59,130,246,.09)}
+.lightPreview,.darkPreview{height:54px;border-radius:8px;display:grid;grid-template-columns:18px 1fr;grid-template-rows:repeat(2,1fr);gap:4px;padding:6px;border:1px solid #d9e5ed}
+.lightPreview{background:#f7fbfd}.darkPreview{background:#08131d;border-color:#20394c}
+.lightPreview i:first-child,.darkPreview i:first-child{grid-row:1/3}.lightPreview i{background:#fff;border:1px solid #dfe9ef;border-radius:3px}.lightPreview i:first-child{background:#eaf6fd}.darkPreview i{background:#102334;border:1px solid #183a50;border-radius:3px}.darkPreview i:first-child{background:#0a1a27}
+:global(.workspace-theme-dark) .appearance{border-color:#1e3b53;background:linear-gradient(150deg,#0b1b29,#08131e);box-shadow:none}
+:global(.workspace-theme-dark) .appearance h2{color:#edf6ff}
+:global(.workspace-theme-dark) .appearance>div:first-child>p:last-child{color:#8fa2b1}
+:global(.workspace-theme-dark) .themePicker>button{border-color:#29445b;background:#081722;color:#edf6ff}
+:global(.workspace-theme-dark) .themePicker>button small{color:#7c92a3}
+
+/* workspace light theme */
+:global(.workspace-theme-light) .shell{background:transparent;color:#10202f}
+:global(.workspace-theme-light) .header{border-bottom-color:#d9e5ed}
+:global(.workspace-theme-light) .header>button{border-color:#cfe0ea;background:#fff;color:#496579}
+:global(.workspace-theme-light) .header p,:global(.workspace-theme-light) .kicker,:global(.workspace-theme-light) .cardTop span,:global(.workspace-theme-light) .mappingHead>span{color:#147fd1}
+:global(.workspace-theme-light) .header span,:global(.workspace-theme-light) .intro>p,:global(.workspace-theme-light) .grid p,:global(.workspace-theme-light) .importHero p,:global(.workspace-theme-light) .importMessage{color:#6c8191}
+:global(.workspace-theme-light) .grid article,:global(.workspace-theme-light) .importer{border-color:#d7e4ec;background:#fff;box-shadow:0 12px 34px rgba(31,69,96,.06)}
+:global(.workspace-theme-light) .cardTop,:global(.workspace-theme-light) .mappingHead,:global(.workspace-theme-light) .previewPanel{border-color:#e0e9ef}
+:global(.workspace-theme-light) .cardTop b{color:#60798b}
+:global(.workspace-theme-light) .grid button,:global(.workspace-theme-light) .secondaryButton{border-color:#bfd8e8!important;background:#f5fafc!important;color:#147fd1!important}
+:global(.workspace-theme-light) .upload{border-color:#a8cee6;background:#f5fbfe}
+:global(.workspace-theme-light) .upload span,:global(.workspace-theme-light) .mapField span,:global(.workspace-theme-light) .duplicateBar span{color:#71889a}
+:global(.workspace-theme-light) .mapField select,:global(.workspace-theme-light) .duplicateBar select{background:#fff;border-color:#d4e2eb;color:#173247}
+:global(.workspace-theme-light) .duplicateBar,:global(.workspace-theme-light) .dataPreview,:global(.workspace-theme-light) .actionBar,:global(.workspace-theme-light) .confirmBar{border-color:#d6e4ec;background:#f8fbfd}
+:global(.workspace-theme-light) .duplicateBar strong{color:#173247}
+:global(.workspace-theme-light) .previewHeader{background:#eff6fa;color:#60798b}
+:global(.workspace-theme-light) .previewRow,:global(.workspace-theme-light) .classificationList>div{border-color:#e1eaf0;color:#5a7284}
+:global(.workspace-theme-light) .previewRow strong,:global(.workspace-theme-light) .classificationList strong{color:#173247}
+:global(.workspace-theme-light) .dataPreview small,:global(.workspace-theme-light) .classificationList span{color:#71889a}
+:global(.workspace-theme-light) .classificationList{border-color:#d8e5ed}
+:global(.workspace-theme-light) .summaryGrid{background:#d8e5ed}
+:global(.workspace-theme-light) .summaryGrid>div{background:#fff}
+:global(.workspace-theme-light) .summaryGrid span{color:#71889a}
+:global(.workspace-theme-light) .summaryGrid strong{color:#173247}
+:global(.workspace-theme-light) .errorBox{border-color:#f1caca;background:#fff5f5}
+:global(.workspace-theme-light) .errorBox strong{color:#b64242}
+:global(.workspace-theme-light) .errorBox span,:global(.workspace-theme-light) .errorBox small{color:#a75f5f}
+:global(.workspace-theme-light) .confirmBar p{color:#667d8f}
+:global(.workspace-theme-light) .completePanel{border-color:#b9dec8;background:#f3fbf6}
+:global(.workspace-theme-light) .completePanel .summaryGrid{background:#cfe7d8}
+:global(.workspace-theme-light) .example{border-color:#cce0ec;background:#f5fafc;color:#147fd1}
+:global(.workspace-theme-light) .badge{border-color:#d4e2eb;color:#71889a;background:#f8fbfd}
+@media(max-width:800px){.appearance{grid-template-columns:1fr}.themePicker{width:100%}.themePicker>button{flex:1}}
