@@ -46,6 +46,6 @@ export default async function CredentialsPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
-  return <div style={{background:'#151719',padding:'18px'}}><span style={{fontSize:10,letterSpacing:'.14em',color:'var(--ws-muted)'}}>{label}</span><strong style={{display:'block',fontSize:40,marginTop:8}}>{String(value).padStart(2,'0')}</strong></div>;
+function Metric({ label, value, accent }: { label: string; value: number; accent: string }) {
+  return <div style={{background:'var(--ws-panel)',padding:'18px',borderTop:`3px solid ${accent}`}}><span style={{fontSize:10,letterSpacing:'.14em',color:'var(--ws-muted)'}}>{label}</span><strong style={{display:'block',fontSize:40,marginTop:8,color:'var(--ws-text)'}}>{String(value).padStart(2,'0')}</strong></div>;
 }
