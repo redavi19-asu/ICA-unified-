@@ -5,12 +5,14 @@ import styles from './billing-setup.module.css';
 
 export default function BillingSetupClient({
   organizationName,
+  companyId,
   monthlyPrice,
   stripeReady,
   cancelled,
   confirmationFailed,
 }: {
   organizationName: string;
+  companyId: string;
   monthlyPrice: number;
   stripeReady: boolean;
   cancelled: boolean;
@@ -43,9 +45,15 @@ export default function BillingSetupClient({
           <p className={styles.eyebrow}>STEP 2 OF 3 · ACTIVATE PROFESSIONAL</p>
           <h1>Your company exists.<br/>Now turn on the platform.</h1>
           <p className={styles.lede}>
-            {organizationName} has been created securely. Add a payment method through Stripe to begin
-            the 14-day ICA Unified Professional trial. Nothing is charged today.
+            {organizationName} has been created securely. ICA has issued the organization its own Company ID.
+            Add a payment method through Stripe to begin the 14-day ICA Unified Professional trial. Nothing is charged today.
           </p>
+
+          <div className={styles.companyIdCard}>
+            <span>YOUR ICA COMPANY ID</span>
+            <strong>{companyId}</strong>
+            <small>Keep this ID with your organization records. It identifies your ICA workspace for sign-in and support.</small>
+          </div>
 
           <div className={styles.timeline}>
             <div className={styles.done}><span>01</span><strong>Company created</strong><small>Organization + Owner account</small></div>
