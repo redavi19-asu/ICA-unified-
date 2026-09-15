@@ -1,13 +1,15 @@
-import nextVitals from "eslint-config-next/core-web-vitals.js";
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
 
-export default [
+export default defineConfig([
   ...nextVitals,
-  {
-    ignores: [
-      ".next/**",
-      ".open-next/**",
-      ".wrangler/**",
-      "node_modules/**",
-    ],
-  },
-];
+  ...nextTs,
+  globalIgnores([
+    '.next/**',
+    '.open-next/**',
+    '.wrangler/**',
+    'node_modules/**',
+    'next-env.d.ts',
+  ]),
+]);
