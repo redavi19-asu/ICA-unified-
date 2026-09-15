@@ -2,11 +2,19 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { queueEmail } from '../../../../lib/organization-ops';
+import { emailDeliveryConfigured } from '../../../../lib/email-delivery';
 import { consumeRateLimit, createSecurityToken } from '../../../../lib/security';
 
 const schema = z.object({ email: z.string().trim().email().toLowerCase() });
 
 export async function POST(request: Request) {
+  if (!emailDeliveryConfigured()) {
+    return NextResponse.json(
+      { error: 'Password recovery email is not configured yet. Contact your organization administrator.' },
+      { status: 503 },
+    );
+  }
+
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ ok: true, message: 'If that account exists, a reset link will be sent.' });

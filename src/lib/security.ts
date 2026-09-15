@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { emailDeliveryConfigured } from './email-delivery';
 
 type RateLimitInput = {
   scope: string;
@@ -28,7 +29,7 @@ function digest(value: string) {
 }
 
 export function emailVerificationIsEnforced() {
-  return Boolean(process.env.EMAIL_PROVIDER && process.env.EMAIL_API_KEY);
+  return emailDeliveryConfigured();
 }
 
 export async function consumeRateLimit(request: Request, input: RateLimitInput) {

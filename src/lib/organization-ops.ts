@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
+import { emailDeliveryConfigured, sendTransactionalEmail } from './email-delivery';
 
 export const PROFESSIONAL_PRICE_CENTS = 24900;
 export const PROFESSIONAL_PLAN = 'professional';
@@ -136,18 +137,50 @@ export async function queueEmail(input: {
 }) {
   await ensureOperationsTables();
   const id = randomUUID();
+  const recipient = input.recipient.toLowerCase();
   await prisma.$executeRawUnsafe(
     `INSERT INTO EmailOutbox
       (id, organizationId, recipient, subject, templateKey, bodyText, payloadJson, status, createdAt)
      VALUES (?, ?, ?, ?, ?, ?, ?, 'QUEUED', CURRENT_TIMESTAMP)`,
     id,
     input.organizationId,
-    input.recipient.toLowerCase(),
+    recipient,
     input.subject,
     input.templateKey,
     input.bodyText,
     JSON.stringify(input.payload || {}),
   );
+
+  if (emailDeliveryConfigured()) {
+    try {
+      const delivery = await sendTransactionalEmail({
+        recipient,
+        subject: input.subject,
+        bodyText: input.bodyText,
+        idempotencyKey: `ica-email-${id}`,
+      });
+      if (delivery.sent) {
+        await prisma.$executeRawUnsafe(
+          `UPDATE EmailOutbox
+           SET status = 'SENT', providerMessageId = ?, lastError = NULL, sentAt = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          delivery.providerMessageId,
+          id,
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Email delivery failed.';
+      await prisma.$executeRawUnsafe(
+        `UPDATE EmailOutbox
+         SET status = 'FAILED', lastError = ?
+         WHERE id = ?`,
+        message.slice(0, 500),
+        id,
+      );
+      console.error('ICA_EMAIL_DELIVERY_ERROR', message);
+    }
+  }
+
   return id;
 }
 

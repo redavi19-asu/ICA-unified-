@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { listEmailOutbox, queueEmail } from '../../../../lib/organization-ops';
+import { emailDeliveryConfigured } from '../../../../lib/email-delivery';
 
 const previewSchema = z.object({
   recipient: z.string().email(),
@@ -20,7 +21,7 @@ export async function GET() {
 
   return NextResponse.json({
     provider: process.env.EMAIL_PROVIDER || null,
-    readyToSend: Boolean(process.env.EMAIL_PROVIDER && process.env.EMAIL_API_KEY),
+    readyToSend: emailDeliveryConfigured(),
     counts: { queued, sent, failed },
     messages,
     templates: [
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a valid test recipient.' }, { status: 400 });
   }
 
-  await queueEmail({
+  const messageId = await queueEmail({
     organizationId: membership.organizationId,
     recipient: parsed.data.recipient,
     templateKey: 'SYSTEM_TEST',
@@ -53,5 +54,9 @@ export async function POST(request: Request) {
     bodyText: `ICA Unified email delivery is staged for ${membership.organization.name}. Once an email provider is connected, queued messages can be delivered without changing the organization workflows.`,
   });
 
-  return NextResponse.json({ ok: true, status: 'QUEUED' }, { status: 201 });
+  return NextResponse.json({
+    ok: true,
+    messageId,
+    status: emailDeliveryConfigured() ? 'DELIVERY_ATTEMPTED' : 'QUEUED',
+  }, { status: 201 });
 }
