@@ -27,6 +27,7 @@ type EventItem = {
   startAt: string;
   credits: number;
   category: string;
+  checkinMode: string;
 };
 
 export default function ComplianceCenterClient({
@@ -137,8 +138,8 @@ export default function ComplianceCenterClient({
 
       <section style={sectionStyle}>
         <div style={sectionHead}>
-          <div><p style={eyebrow}>03 / QR EVENT ATTENDANCE</p><h2 style={sectionTitle}>Scan → check in → award credit.</h2></div>
-          <p style={sectionCopy}>Generate a reusable event QR. Logged-in members scan it, confirm attendance, receive configured CE credit, and can receive an attendance certificate automatically.</p>
+          <div><p style={eyebrow}>03 / QR EVENT ATTENDANCE</p><h2 style={sectionTitle}>Choose the direction. Keep one attendance record.</h2></div>
+          <p style={sectionCopy}>Each event can use member self-scan, staff scanning the member&apos;s ICA QR, or both. Either path posts to the same attendance, CE, and credential record.</p>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(290px,1fr))',gap:14}}>
           {events.length === 0 ? <p style={emptyStyle}>Create an Event / Webinar workflow first.</p> : events.map((item) => {
@@ -148,8 +149,13 @@ export default function ComplianceCenterClient({
                 <p style={eyebrow}>{item.status} · {item.category}</p>
                 <h3 style={{fontSize:24,margin:'8px 0'}}>{item.name}</h3>
                 <p style={{color:'var(--ws-muted)',minHeight:40}}>{item.startAt ? new Date(item.startAt).toLocaleString() : 'Date not set'} · {item.credits || 0} credits</p>
-                {!checkin ? (
-                  <button onClick={() => createCheckin(item.id)} style={primaryButton}>CREATE CHECK-IN QR</button>
+                <div style={{display:'inline-block',marginBottom:14,padding:'7px 9px',border:'1px solid var(--ws-line)',borderRadius:999,fontSize:9,fontWeight:900,letterSpacing:'.08em',color:'var(--ws-blue)'}}>
+                  {item.checkinMode === 'STAFF_SCAN' ? 'STAFF SCANS MEMBER QR' : item.checkinMode === 'BOTH' ? 'BOTH CHECK-IN MODES' : 'MEMBER SCANS EVENT QR'}
+                </div>
+                {item.checkinMode === 'STAFF_SCAN' ? (
+                  <p style={{...sectionCopy,marginTop:0}}>Open ICA Unified Mobile → Staff Check-In, choose this event, then scan each attendee&apos;s MY ICA QR.</p>
+                ) : !checkin ? (
+                  <button onClick={() => createCheckin(item.id)} style={primaryButton}>CREATE EVENT CHECK-IN QR</button>
                 ) : (
                   <div style={{marginTop:18}}>
                     <div style={{background:'#fff',padding:14,width:'fit-content'}}><QRCodeSVG value={checkin.url} size={190} /></div>
