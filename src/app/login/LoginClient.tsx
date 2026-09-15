@@ -65,13 +65,12 @@ export default function LoginClient() {
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}
         <p className={styles.note}>Your company workspace is isolated from every other organization on the platform. ICA Master owners can sign in with the Master email and password without a Company ID.</p>
-        <span
-          aria-disabled="true"
-          title="New company registration is temporarily unavailable."
-          style={{display:'inline-block',marginTop:18,color:'inherit',fontSize:12,letterSpacing:'.08em',opacity:.38,cursor:'not-allowed',pointerEvents:'none'}}
+        <a
+          href="/register"
+          style={{display:'inline-block',marginTop:20,color:'#171714',fontSize:12,fontWeight:900,letterSpacing:'.08em',textDecoration:'none',borderBottom:'1px solid rgba(23,23,20,.35)',paddingBottom:4}}
         >
-          CREATE A NEW COMPANY WORKSPACE — COMING SOON
-        </span>
+          START A 14-DAY ICA UNIFIED TRIAL →
+        </a>
       </section>
     </main>
   );
