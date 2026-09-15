@@ -21,3 +21,7 @@ radial-gradient(circle at 90% 22%,rgba(139,92,246,.07),transparent 25%),
 .access button:disabled{opacity:.55;cursor:wait}.error{margin-top:18px;color:#c23f4a;background:#fff1f2;border:1px solid #ffd2d7;padding:11px 13px;border-radius:9px;font-weight:700}
 .note{margin-top:20px;font-size:11px;line-height:1.55;color:#6f8798;max-width:470px}
 @media(max-width:760px){.shell{grid-template-columns:1fr}.identity{min-height:380px;border-right:0;border-bottom:1px solid #dbe7ef}.access{min-height:560px}.identity:after{width:300px;height:300px}}
+
+.back{position:absolute;top:32px;left:clamp(32px,7vw,96px);z-index:2;color:#147fd1;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.14em}
+.back:hover{color:#0f6fae}
+@media(max-width:760px){.back{top:22px;left:22px}}
