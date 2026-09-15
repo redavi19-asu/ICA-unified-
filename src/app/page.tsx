@@ -89,6 +89,7 @@ export default function Home() {
           <a href="#plans">Plans</a>
           <a href="#included">What&apos;s Included</a>
           <a href="#mobile">Mobile</a>
+          <a href="/downloads">Apps</a>
           <a href="/login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>
@@ -107,6 +108,12 @@ export default function Home() {
             <a className={styles.secondary} href="/login">CUSTOMER LOGIN</a>
           </div>
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
+          <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
+            <span><b>WEB</b><small>LIVE</small></span>
+            <span><b>WINDOWS</b><small>DESKTOP</small></span>
+            <span><b>MAC</b><small>DESKTOP</small></span>
+            <span><b>IPHONE + IPAD</b><small>MOBILE</small></span>
+          </div>
         </div>
 
         <SystemStatusGlobe />
