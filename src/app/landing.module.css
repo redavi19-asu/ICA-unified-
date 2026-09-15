@@ -143,3 +143,49 @@
 .nodes span{display:flex;align-items:center;justify-content:center;gap:7px}
 .nodes span i{display:inline-flex;align-items:center;justify-content:center;color:#147fd1}
 .nodes span i svg{width:14px;height:14px}
+
+
+/* ICA accent system — restrained color, one accent per item */
+.nodes span:nth-child(1),.moduleCard:nth-child(1) .moduleIcon,.includedGrid article:nth-child(2) .includedIcon{--accent:#14b8a6;--soft:#e8fbf7}
+.nodes span:nth-child(2),.moduleCard:nth-child(2) .moduleIcon,.includedGrid article:nth-child(3) .includedIcon{--accent:#3b82f6;--soft:#edf5ff}
+.nodes span:nth-child(3),.includedGrid article:nth-child(4) .includedIcon{--accent:#f59e0b;--soft:#fff8e8}
+.nodes span:nth-child(4),.includedGrid article:nth-child(6) .includedIcon{--accent:#8b5cf6;--soft:#f4efff}
+.nodes span:nth-child(5),.includedGrid article:nth-child(4) .includedIcon{--accent:#22c55e;--soft:#eefcf2}
+.nodes span:nth-child(6),.includedGrid article:nth-child(6) .includedIcon{--accent:#f97316;--soft:#fff2ea}
+
+.nodes span:nth-child(1){color:#0f8f82}.nodes span:nth-child(2){color:#2f6ed7}.nodes span:nth-child(3){color:#c98506}.nodes span:nth-child(4){color:#7550d7}.nodes span:nth-child(5){color:#17974a}.nodes span:nth-child(6){color:#d85f10}
+.nodes span:nth-child(1) i{color:#14b8a6}.nodes span:nth-child(2) i{color:#3b82f6}.nodes span:nth-child(3) i{color:#f59e0b}.nodes span:nth-child(4) i{color:#8b5cf6}.nodes span:nth-child(5) i{color:#22c55e}.nodes span:nth-child(6) i{color:#f97316}
+
+.moduleCard:nth-child(1){border-top:3px solid #14b8a6}.moduleCard:nth-child(2){border-top:3px solid #3b82f6}.moduleCard:nth-child(3){border-top:3px solid #8b5cf6}.moduleCard:nth-child(4){border-top:3px solid #f97316}
+.moduleCard:nth-child(1) .moduleIcon{background:#e8fbf7;color:#14b8a6}.moduleCard:nth-child(2) .moduleIcon{background:#edf5ff;color:#3b82f6}.moduleCard:nth-child(3) .moduleIcon{background:#f4efff;color:#8b5cf6}.moduleCard:nth-child(4) .moduleIcon{background:#fff2ea;color:#f97316}
+.moduleCard:nth-child(1)>span{color:#0f8f82}.moduleCard:nth-child(2)>span{color:#2f6ed7}.moduleCard:nth-child(3)>span{color:#7550d7}.moduleCard:nth-child(4)>span{color:#d85f10}
+
+.workflowGrid article:nth-child(1){border-top:3px solid #14b8a6}.workflowGrid article:nth-child(2){border-top:3px solid #3b82f6}.workflowGrid article:nth-child(3){border-top:3px solid #8b5cf6}.workflowGrid article:nth-child(4){border-top:3px solid #f59e0b}
+.workflowGrid article:nth-child(1) .workflowTop i{background:#e8fbf7;color:#14b8a6}.workflowGrid article:nth-child(2) .workflowTop i{background:#edf5ff;color:#3b82f6}.workflowGrid article:nth-child(3) .workflowTop i{background:#f4efff;color:#8b5cf6}.workflowGrid article:nth-child(4) .workflowTop i{background:#fff8e8;color:#f59e0b}
+
+.integrationChoices article:first-child{border-top:3px solid #3b82f6}.integrationChoices article:last-child{border-top:3px solid #14b8a6}
+.integrationChoices article:first-child small,.integrationChoices article:first-child div{color:#2f6ed7}
+.integrationChoices article:last-child small,.integrationChoices article:last-child div{color:#0f8f82}
+
+.planCard:nth-child(1),.planFeatured:nth-child(1){border-top:4px solid #3b82f6}
+.planCard:nth-child(2),.planFeatured:nth-child(2){border-top:4px solid #8b5cf6}
+.planCard:nth-child(3),.planFeatured:nth-child(3){border-top:4px solid #f97316}
+
+.mobileFeatureGrid article:nth-child(1){border-top:3px solid #14b8a6}
+.mobileFeatureGrid article:nth-child(2){border-top:3px solid #3b82f6}
+.mobileFeatureGrid article:nth-child(3){border-top:3px solid #f97316}
+.mobileFeatureGrid article:nth-child(4){border-top:3px solid #f59e0b}
+.mobileFeatureGrid article:nth-child(5){border-top:3px solid #8b5cf6}
+.mobileFeatureGrid article:nth-child(6){border-top:3px solid #22c55e}
+.mobileFeatureGrid article:nth-child(1)>i{background:#e8fbf7;color:#14b8a6}.mobileFeatureGrid article:nth-child(2)>i{background:#edf5ff;color:#3b82f6}.mobileFeatureGrid article:nth-child(3)>i{background:#fff2ea;color:#f97316}.mobileFeatureGrid article:nth-child(4)>i{background:#fff8e8;color:#f59e0b}.mobileFeatureGrid article:nth-child(5)>i{background:#f4efff;color:#8b5cf6}.mobileFeatureGrid article:nth-child(6)>i{background:#eefcf2;color:#22c55e}
+
+.includedGrid article:nth-child(1){border-left:4px solid #3b82f6}.includedGrid article:nth-child(2){border-left:4px solid #14b8a6}.includedGrid article:nth-child(3){border-left:4px solid #3b82f6}.includedGrid article:nth-child(4){border-left:4px solid #22c55e}.includedGrid article:nth-child(5){border-left:4px solid #f97316}.includedGrid article:nth-child(6){border-left:4px solid #8b5cf6}.includedGrid article:nth-child(7){border-left:4px solid #f59e0b}.includedGrid article:nth-child(8){border-left:4px solid #06b6d4}.includedGrid article:nth-child(9){border-left:4px solid #64748b}.includedGrid article:nth-child(10){border-left:4px solid #0ea5e9}.includedGrid article:nth-child(11){border-left:4px solid #ec4899}
+.includedGrid article:nth-child(1) .includedIcon{background:#edf5ff;color:#3b82f6}.includedGrid article:nth-child(2) .includedIcon{background:#e8fbf7;color:#14b8a6}.includedGrid article:nth-child(3) .includedIcon{background:#edf5ff;color:#3b82f6}.includedGrid article:nth-child(4) .includedIcon{background:#eefcf2;color:#22c55e}.includedGrid article:nth-child(5) .includedIcon{background:#fff2ea;color:#f97316}.includedGrid article:nth-child(6) .includedIcon{background:#f4efff;color:#8b5cf6}.includedGrid article:nth-child(7) .includedIcon{background:#fff8e8;color:#f59e0b}.includedGrid article:nth-child(8) .includedIcon{background:#e9fbff;color:#06b6d4}.includedGrid article:nth-child(9) .includedIcon{background:#f1f5f9;color:#64748b}.includedGrid article:nth-child(10) .includedIcon{background:#edf8ff;color:#0ea5e9}.includedGrid article:nth-child(11) .includedIcon{background:#fff0f7;color:#ec4899}
+
+.supportCard{border-top:4px solid #0ea5e9}.boundaryCard{border-top:4px solid #f59e0b}
+.servicesTable article:nth-child(1){border-left:4px solid #14b8a6;padding-left:18px}.servicesTable article:nth-child(2){border-left:4px solid #3b82f6;padding-left:18px}.servicesTable article:nth-child(3){border-left:4px solid #8b5cf6;padding-left:18px}.servicesTable article:nth-child(4){border-left:4px solid #f97316;padding-left:18px}.servicesTable article:nth-child(5){border-left:4px solid #22c55e;padding-left:18px}
+
+.platformStrip span:nth-child(1) i{color:#0ea5e9}.platformStrip span:nth-child(2) i{color:#2563eb}.platformStrip span:nth-child(3) i{color:#475569}.platformStrip span:nth-child(4) i{color:#8b5cf6}
+.platformStrip span:nth-child(1){border-top:3px solid #0ea5e9}.platformStrip span:nth-child(2){border-top:3px solid #2563eb}.platformStrip span:nth-child(3){border-top:3px solid #475569}.platformStrip span:nth-child(4){border-top:3px solid #8b5cf6}
+
+.heroTrinkets .trinketOne{border-color:#bdeee5;color:#0f8f82;background:#f4fffc}.heroTrinkets .trinketTwo{border-color:#fde2a8;color:#b87506;background:#fffaf0}.heroTrinkets .trinketThree{border-color:#cfe0ff;color:#2f6ed7;background:#f6f9ff}
