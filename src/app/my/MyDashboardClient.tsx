@@ -85,8 +85,8 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
       </section>
 
       <section className={styles.heroAction}>
-        <div><p className={styles.eyebrow}>NEXT MOVE</p><h2>{stats.due > 0 ? 'Keep your required work moving.' : 'You are caught up.'}</h2><p>ICA Unified puts your training, credentials, deadlines, and required documents in one personal view.</p></div>
-        <button onClick={() => router.push('/workspace/learning')}>{stats.due > 0 ? 'CONTINUE TRAINING →' : 'OPEN LEARNING →'}</button>
+        <div><p className={styles.eyebrow}>NEXT MOVE</p><h2>{stats.due > 0 ? 'Keep your required work moving.' : 'You are caught up.'}</h2><p>ICA Unified puts your training, credentials, CE requirements, deadlines, and required documents in one personal view.</p></div>
+        <button onClick={() => router.push(stats.due > 0 ? '/workspace/learning' : '/my/wallet')}>{stats.due > 0 ? 'CONTINUE TRAINING →' : 'OPEN CE WALLET →'}</button>
       </section>
 
       <section className={styles.grid}>
@@ -102,13 +102,14 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
 
         <div className={styles.panel}>
           <div className={styles.panelHead}><p className={styles.eyebrow}>MY CREDENTIALS</p><span>{credentials.length} issued</span></div>
-          {credentials.length === 0 ? <p className={styles.empty}>Completed-course certificates will appear here.</p> : credentials.map((item) => (
+          {credentials.length === 0 ? <p className={styles.empty}>Completed-course and attendance certificates will appear here.</p> : credentials.map((item) => (
             <article className={styles.credential} key={item.id}>
               <div><strong>{item.name}</strong><span>{item.status.toUpperCase()}</span></div>
               <small>{item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleDateString()}` : 'No expiration'}</small>
               {item.code && <><code>{item.code}</code><button onClick={() => router.push(`/verify/${item.code}`)}>VERIFY RECORD →</button></>}
             </article>
           ))}
+          <button onClick={() => router.push('/my/wallet')} style={{width:'100%',marginTop:16,padding:'13px 15px',border:'1px solid #454b50',background:'transparent',color:'inherit',fontWeight:800,letterSpacing:'.08em',cursor:'pointer'}}>OPEN CREDENTIAL + CE WALLET →</button>
         </div>
       </section>
 

@@ -27,6 +27,8 @@ const initialMembership = {
   qualifications: '',
   benefits: '',
   renewalWindowDays: '30',
+  ceCreditsRequired: '',
+  ceCategory: 'GENERAL',
   confirmationSubject: 'Your membership application was received',
   confirmationMessage: 'Thank you for applying. We will review your application and contact you with next steps.',
   active: false,
@@ -41,6 +43,7 @@ const initialEvent = {
   capacity: '',
   meetingLink: '',
   ceuCredits: '',
+  creditCategory: 'GENERAL',
   certificateRule: 'COMPLETE_EVENT',
   confirmationSubject: 'Registration confirmed',
   confirmationMessage: 'You are registered. Your event details and access link are included below.',
@@ -71,8 +74,8 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
     loadWorkflows();
   }, []);
 
-  async function saveMembership(event: FormEvent) {
-    event.preventDefault();
+  async function saveMembership(eventObject: FormEvent) {
+    eventObject.preventDefault();
     setSaving(true);
     setMessage('');
 
@@ -175,10 +178,14 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <section>
-            <p className={styles.step}>02 / APPLICATION + APPROVAL</p>
+            <p className={styles.step}>02 / APPLICATION + RENEWAL</p>
             <Toggle label="Application required" value={membership.applicationRequired} onChange={(value) => setMembership({...membership, applicationRequired:value})} />
             <Toggle label="Admin approval required" value={membership.approvalRequired} onChange={(value) => setMembership({...membership, approvalRequired:value})} />
             <label>Renewal reminder window (days)<input value={membership.renewalWindowDays} onChange={(e) => setMembership({...membership, renewalWindowDays:e.target.value})} inputMode="numeric" /></label>
+            <div className={styles.twoCol}>
+              <label>CE credits required for renewal<input value={membership.ceCreditsRequired} onChange={(e) => setMembership({...membership, ceCreditsRequired:e.target.value})} placeholder="20" inputMode="decimal" /></label>
+              <label>CE category<input value={membership.ceCategory} onChange={(e) => setMembership({...membership, ceCategory:e.target.value})} placeholder="GENERAL" /></label>
+            </div>
           </section>
 
           <section>
@@ -189,7 +196,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save stores the membership rules, application requirements, pricing, approval flow, and member communication together.</span>
+            <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together.</span>
             <button disabled={saving}>{saving ? 'SAVING…' : membership.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
           </div>
         </form>
@@ -212,8 +219,9 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           <section>
             <p className={styles.step}>02 / ACCESS + EDUCATION</p>
             <label>Zoom / meeting / external access link<input value={event.meetingLink} onChange={(e) => setEvent({...event, meetingLink:e.target.value})} placeholder="https://zoom.us/..." /></label>
-            <div className={styles.twoCol}>
+            <div className={styles.threeCol}>
               <label>CEU / credit value<input value={event.ceuCredits} onChange={(e) => setEvent({...event, ceuCredits:e.target.value})} placeholder="1.5" inputMode="decimal" /></label>
+              <label>Credit category<input value={event.creditCategory} onChange={(e) => setEvent({...event, creditCategory:e.target.value})} placeholder="GENERAL" /></label>
               <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="COMPLETE_EVENT">Issue after completion</option><option value="PASS_QUIZ">Issue after passing quiz</option><option value="ATTENDANCE">Issue after attendance</option><option value="NONE">No certificate</option></select></label>
             </div>
           </section>
@@ -226,7 +234,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save keeps registration, pricing, access link, CEU value, certificate rule, and confirmation email together.</span>
+            <span>One save keeps registration, pricing, access, CE category/value, certificate rule, and confirmation email together.</span>
             <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
           </div>
         </form>

@@ -21,6 +21,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
       { label: 'Learning', path: '/workspace/learning' },
       { label: 'People', path: '/workspace/people' },
       { label: 'Credentials', path: '/workspace/credentials' },
+      { label: 'Compliance', path: '/workspace/compliance' },
       { label: 'Documents', path: '/workspace/documents' },
       { label: 'Reports', path: '/workspace/reports' },
       { label: 'Workflows', path: '/workspace/workflows' },
@@ -42,6 +43,10 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
       {
         title: 'Learning + Credentials',
         body: 'Learning manages education and progress. Credentials keeps certificates and verification records tied to the same member record.',
+      },
+      {
+        title: 'Compliance',
+        body: 'Compliance connects LMS course credits, AMS event attendance, CE requirements, renewal readiness, QR check-ins, and the member credential wallet through one credit ledger.',
       },
       {
         title: 'People + Tools',

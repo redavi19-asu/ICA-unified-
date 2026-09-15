@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { awardCourseCredits } from '../../../../lib/compliance';
 
 const schema = z.object({
   courseId: z.string().min(1),
@@ -99,6 +100,8 @@ export async function POST(request: Request) {
   });
 
   let credentialId: string | null = null;
+  let creditAward: { category: string; credits: number } | null = null;
+
   if (complete) {
     const expiresAt = lesson.course.certificateValidDays
       ? new Date(Date.now() + lesson.course.certificateValidDays * 24 * 60 * 60 * 1000)
@@ -120,12 +123,23 @@ export async function POST(request: Request) {
     });
     credentialId = credential.id;
 
+    try {
+      creditAward = await awardCourseCredits(
+        membership.organizationId,
+        membership.userId,
+        lesson.course.id,
+        lesson.course.title,
+      );
+    } catch (error) {
+      console.error('ICA_COURSE_CREDIT_AWARD_ERROR', error);
+    }
+
     await prisma.activity.create({
       data: {
         organizationId: membership.organizationId,
         actorId: membership.userId,
         type: 'course.completed',
-        message: `${membership.user.name} completed ${lesson.course.title}.`,
+        message: `${membership.user.name} completed ${lesson.course.title}${creditAward ? ` and earned ${creditAward.credits} ${creditAward.category} credit(s)` : ''}.`,
       },
     });
   }
@@ -136,6 +150,9 @@ export async function POST(request: Request) {
     progress,
     complete,
     credentialId,
-    message: complete ? `Course complete. Credential generated automatically.` : `Lesson complete. Course progress is now ${progress}%.`,
+    creditAward,
+    message: complete
+      ? `Course complete. Credential generated automatically${creditAward ? ` and ${creditAward.credits} ${creditAward.category} credit(s) posted` : ''}.`
+      : `Lesson complete. Course progress is now ${progress}%.`,
   });
 }

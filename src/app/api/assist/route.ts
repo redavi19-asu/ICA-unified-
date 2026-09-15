@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../lib/auth';
+import { prisma } from '../../../lib/prisma';
+import { getMemberComplianceSummary } from '../../../lib/compliance';
 
 const schema = z.object({
   question: z.string().min(2).max(1200),
@@ -9,67 +11,114 @@ const schema = z.object({
 const ICA_KNOWLEDGE = `
 You are ICA Assist, the in-product help desk for ICA Unified.
 
-ICA Unified is an association operating system combining AMS, LMS, credentials, documents, compliance, reporting, website integration, and business workflows around one organization-scoped member record.
+ICA Unified is an association operating system combining AMS, LMS, credentials, CE/compliance, documents, reporting, website integration, and business workflows around one organization-scoped member record.
 
 Current navigation and behavior:
 - Dashboard: organization overview and association operations metrics.
-- Workflows: Workflow Studio. Use this for membership programs and events/webinars.
-- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, confirmation email, and draft/publish status.
-- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, Zoom/meeting/external link, CEU/credit value, certificate rule, confirmation email, and draft/publish status.
-- Learning: full course workflow with course creation, text lessons, embedded YouTube/Vimeo/direct-video lessons, document/resource lessons, live instructor sessions using Zoom/Teams/Meet links, quizzes, assignments, due dates, completion progress, passing scores, and credentials/certificates tied to the same organization record. Owners/Admins/Managers can manage courses and assign them to people.
+- Workflows: Workflow Studio for membership programs and events/webinars.
+- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, and draft/publish status.
+- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, and draft/publish status.
+- Learning: course creation, text/video/document/live lessons, quizzes, assignments, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
 - People: member/user records and organization membership.
-- Credentials: credentials/certificates and verification records.
+- Credentials: organization credential/certificate records and verification.
+- Compliance: license/certification CE requirements, course credit rules, QR event check-in generation, and renewal/compliance controls.
+- My Credential + CE Wallet: a member view combining digital membership identity, credentials, CE transcript, renewal readiness, and recommended courses.
+- QR attendance: members scan an event QR, sign in, confirm attendance, and configured event credits are posted to the same CE ledger. Attendance certificate rules can issue a credential automatically.
 - Documents: controlled documents and acknowledgments.
 - Reports: organization reporting.
 - Tools: Owner/Admin area for data import/migration, website integration, API/webhooks, domain/DNS, and future export/backup.
-- Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls. This is not a normal organization-user area.
+- Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
 Help style:
 1. Give the shortest useful answer first.
-2. Give exact ICA navigation steps, e.g. "Learning → open course → Manage Course".
-3. Do not invent buttons, screens, billing features, invoice features, Stripe features, Zoom API automation, or functionality that is not listed above.
-4. If the user asks for something ICA does not yet implement, say that clearly, then explain the closest current workflow and what would need to be added.
+2. Give exact ICA navigation steps.
+3. Do not invent buttons, screens, billing features, invoice features, Stripe features, or functionality not listed above.
+4. If something is not implemented, say so clearly.
 5. Prefer 3-6 numbered steps, not long essays.
 6. Never expose another organization's information or suggest bypassing permissions.
-7. When helpful, distinguish between what ICA already does and what is planned.
 `;
 
 function fallbackAnswer(question: string) {
   const q = question.toLowerCase();
 
   if (q.includes('event') || q.includes('webinar') || q.includes('registration')) {
-    return 'Go to Workflows → Event / Webinar. Enter the event title/type, date and time, ticket price, member discount, capacity, meeting or Zoom link, CEU value, certificate rule, and confirmation email. Turn on “Publish registration now” when you are ready, then choose Save + Publish.';
+    return 'Go to Workflows → Event / Webinar. Enter the event details, CE credit value and category, certificate rule, and confirmation settings. After saving the event, admins can go to Compliance → QR Event Attendance to generate its check-in QR.';
   }
 
   if (q.includes('membership') || q.includes('member level') || q.includes('associate')) {
-    return 'Go to Workflows → Membership Program. Set the membership name, price and billing cadence, qualification requirements, application/approval rules, member benefits, renewal reminder window, and confirmation email. Save as a draft or publish it.';
+    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or publish it.';
   }
 
-  if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz') || q.includes('zoom') || q.includes('teams') || q.includes('meet')) {
-    return 'Go to Learning. Owners, admins, and managers can choose Build Course, create the course shell, then open the course and choose Manage Course. Add text, video, document, live instructor, or quiz lessons. Video lessons can embed YouTube, Vimeo, or direct video links; live lessons can use Zoom, Teams, or Meet links. Use Assignment Control to select people and set a due date.';
+  if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz')) {
+    return 'Go to Learning. Build or open a course, manage its lessons and quiz, then use Compliance → Course Credit Engine to define how many CE credits the completed course awards.';
   }
 
-  if (q.includes('ceu') || q.includes('credit') || q.includes('certificate')) {
-    return 'For an event or webinar, go to Workflows → Event / Webinar and enter the CEU / credit value plus the certificate rule. For course training, use Learning for lessons, quizzes, progress, assignments, passing scores, and completion credentials. Use Credentials for credential records and verification.';
+  if (q.includes('ceu') || q.includes('credit') || q.includes('certificate') || q.includes('compliance')) {
+    return 'Admins use Compliance to set CE requirements, course credit rules, and event QR check-ins. Members use My Credential + CE Wallet to see credits earned, credits still needed, certificates, transcript history, and recommended courses.';
   }
 
   if (q.includes('import') || q.includes('migration') || q.includes('csv') || q.includes('excel')) {
-    return 'Owners and admins can go to Tools → Data Import / Migration. Select the source file there. ICA currently stages the file for mapping before any database write, so the safe field-mapping/import engine is the next layer of that tool.';
+    return 'Owners and admins can go to Tools → Data Import / Migration. ICA currently stages the file for mapping before any database write.';
   }
 
   if (q.includes('invoice')) {
-    return 'ICA Unified does not have the registration-invoice flow wired yet, so I do not want to point you to a button that does not exist. The event price and registration setup live under Workflows → Event / Webinar. Billing/invoicing automation is a feature that still needs to be connected.';
+    return 'ICA Unified does not have the registration-invoice flow wired yet. Event price and registration setup live under Workflows → Event / Webinar; billing/invoicing automation still needs to be connected.';
   }
 
-  return 'I can help with ICA Unified navigation and setup. Try asking about memberships, events/webinars, registrations, learning courses, video lessons, live training, quizzes, credentials, people, documents, reports, imports, website integration, or platform administration.';
+  return 'I can help with memberships, events, QR attendance, CE/compliance, learning, credentials, people, documents, reports, imports, website integration, or platform administration.';
+}
+
+async function personalRecordAnswer(question: string, organizationId: string, userId: string) {
+  const q = question.toLowerCase();
+  const asksCredits = q.includes('how many credit') || q.includes('credits do i') || q.includes('my credit') || q.includes('my ceu') || q.includes('my compliance') || q.includes('renewal');
+  const asksCredential = (q.includes('my credential') || q.includes('my certificate') || q.includes('expire')) && !q.includes('create');
+
+  if (asksCredits) {
+    const summary = await getMemberComplianceSummary(organizationId, userId);
+    if (!summary.requirements.length) {
+      return 'Your organization has not configured a CE or renewal requirement yet. Open My Credential + CE Wallet to see any credits already posted to your record.';
+    }
+
+    const remaining = summary.requirements
+      .filter((item) => !item.met)
+      .map((item) => `${item.name}: ${item.gap.toFixed(1)} ${item.category} credit(s) still needed`);
+
+    if (!remaining.length) {
+      return `You currently have ${summary.earnedTotal.toFixed(1)} total CE credits posted, and every configured requirement is satisfied. Your renewal status is READY.`;
+    }
+
+    return `You have ${summary.earnedTotal.toFixed(1)} total CE credits posted. ${remaining.join('; ')}. Open My Credential + CE Wallet for the full transcript and recommended courses.`;
+  }
+
+  if (asksCredential) {
+    const credentials = await prisma.credential.findMany({
+      where: { organizationId, userId },
+      orderBy: [{ expiresAt: 'asc' }, { issuedAt: 'desc' }],
+      select: { name: true, status: true, expiresAt: true },
+    });
+    if (!credentials.length) return 'You do not have any issued credentials in this organization yet.';
+
+    const now = Date.now();
+    const expiring = credentials.filter((item) => item.expiresAt && item.expiresAt.getTime() > now && item.expiresAt.getTime() - now <= 60 * 86400000);
+    const expired = credentials.filter((item) => item.expiresAt && item.expiresAt.getTime() <= now);
+
+    return `You have ${credentials.length} credential(s). ${expired.length} expired and ${expiring.length} expire within 60 days. Open My Credential + CE Wallet to view and verify each record.`;
+  }
+
+  return null;
 }
 
 export async function POST(request: Request) {
   try {
-    await requireSession();
+    const { membership } = await requireSession();
     const { question } = schema.parse(await request.json());
-    const apiKey = process.env.OPENAI_API_KEY;
 
+    const personal = await personalRecordAnswer(question, membership.organizationId, membership.userId);
+    if (personal) {
+      return NextResponse.json({ ok: true, mode: 'member-record', answer: personal });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ ok: true, mode: 'guided', answer: fallbackAnswer(question) });
     }
