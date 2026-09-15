@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "ICA Unified",
+    "slug": "ica-unified-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "icaunified",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.icomputeranything.icaunified",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ICA Unified uses the camera to scan event and member QR codes."
+      }
+    },
+    "android": {
+      "package": "com.icomputeranything.icaunified",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      ["expo-camera", {
+        "cameraPermission": "Allow ICA Unified to scan event and member QR codes."
+      }],
+      ["expo-secure-store", {
+        "configureAndroidBackup": true
+      }]
+    ]
+  }
+}

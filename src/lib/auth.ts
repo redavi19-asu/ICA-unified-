@@ -44,8 +44,7 @@ export async function createSession(payload: SessionInput) {
     .sign(getSecret());
 }
 
-export async function readSession(): Promise<SessionPayload | null> {
-  const token = (await cookies()).get(COOKIE_NAME)?.value;
+export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
@@ -68,6 +67,12 @@ export async function readSession(): Promise<SessionPayload | null> {
   } catch {
     return null;
   }
+}
+
+export async function readSession(): Promise<SessionPayload | null> {
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  return verifySessionToken(token);
 }
 
 export async function requireSession() {
