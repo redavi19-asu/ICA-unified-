@@ -30,6 +30,8 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Build Next.js app
         run: npm run build
 
