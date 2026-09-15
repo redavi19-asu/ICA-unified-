@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
+import { emitOrganizationEvent } from '../../../../lib/organization-ops';
 
 const acceptSchema = z.object({
   token: z.string().min(20),
@@ -99,6 +100,19 @@ export async function POST(request: Request) {
 
     return { user, membership };
   });
+
+  try {
+    await emitOrganizationEvent(invitation.organizationId, 'member.activated', {
+      membershipId: result.membership.id,
+      userId: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      role: result.membership.role,
+      status: result.membership.status,
+    });
+  } catch (error) {
+    console.error('ICA_MEMBER_ACTIVATED_WEBHOOK_ERROR', error);
+  }
 
   const token = await createSession({
     userId: result.user.id,

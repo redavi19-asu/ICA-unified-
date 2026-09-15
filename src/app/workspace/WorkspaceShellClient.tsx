@@ -26,7 +26,11 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
       { label: 'Reports', path: '/workspace/reports' },
       { label: 'Workflows', path: '/workspace/workflows' },
     ];
-    if (role === 'OWNER' || role === 'ADMIN') base.push({ label: 'Tools', path: '/workspace/tools' });
+    if (role === 'OWNER' || role === 'ADMIN') {
+      base.push({ label: 'Integrations', path: '/workspace/integrations' });
+      base.push({ label: 'Billing', path: '/workspace/billing' });
+      base.push({ label: 'Tools', path: '/workspace/tools' });
+    }
     return base;
   }, [role]);
 
@@ -51,7 +55,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
       {
         title: 'People + Tools',
         body: role === 'OWNER' || role === 'ADMIN'
-          ? 'People manages member records. Tools handles imports, migrations, website connections, APIs, and organization setup.'
+          ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Billing holds the $249 plan foundation. Tools handles data migration and organization setup.'
           : 'People is where member records live. Organization setup tools are available to owners and admins.',
       },
     ];

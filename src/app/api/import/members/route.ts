@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { emitOrganizationEvent, queueEmail, renderInvitationEmail } from '../../../../lib/organization-ops';
 
 const rowSchema = z.object({
   rowNumber: z.number().int().positive(),
@@ -231,12 +232,32 @@ export async function POST(request: Request) {
         row.rowNumber,
       );
 
+      const inviteUrl = `${origin}/invite/${token}`;
       result.invited += 1;
       result.activationLinks.push({
         name: row.name,
         email: row.email,
-        inviteUrl: `${origin}/invite/${token}`,
+        inviteUrl,
       });
+
+      try {
+        const emailContent = renderInvitationEmail({
+          organizationName: membership.organization.name,
+          recipientName: row.name,
+          inviteUrl,
+          expiresLabel: 'expires in 14 days',
+        });
+        await queueEmail({
+          organizationId: membership.organizationId,
+          recipient: row.email,
+          templateKey: 'MIGRATION_ACTIVATION',
+          subject: emailContent.subject,
+          bodyText: emailContent.bodyText,
+          payload: { sourceRow: row.rowNumber },
+        });
+      } catch (emailError) {
+        console.error('ICA_IMPORT_EMAIL_QUEUE_ERROR', row.email, emailError);
+      }
     } catch (error) {
       console.error('ICA_MEMBER_IMPORT_ROW_ERROR', row.email, error);
       result.failed += 1;
@@ -252,6 +273,17 @@ export async function POST(request: Request) {
       message: `Member migration processed: ${result.updated} updated, ${result.invited} activation records created, ${result.skipped} skipped, ${result.failed} failed.`,
     },
   });
+
+  try {
+    await emitOrganizationEvent(membership.organizationId, 'migration.members.completed', {
+      updated: result.updated,
+      invited: result.invited,
+      skipped: result.skipped,
+      failed: result.failed,
+    });
+  } catch (error) {
+    console.error('ICA_IMPORT_WEBHOOK_ERROR', error);
+  }
 
   return NextResponse.json({
     ok: true,

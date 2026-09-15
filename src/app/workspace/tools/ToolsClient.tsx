@@ -412,7 +412,7 @@ export default function ToolsClient({ organizationName, role }: Props) {
         <article>
           <div className={styles.cardTop}><span>05</span><b>EXPORT / BACKUP</b></div>
           <h3>Keep organization data portable.</h3>
-          <p>Reserved for company-level exports, migration backups, and controlled data handoff.</p>
+          <p>Download a clean member CSV or a full organization backup for portability, recovery planning, and controlled data handoff.</p>
           <div className={styles.badge}>COMING NEXT</div>
         </article>
       </section>

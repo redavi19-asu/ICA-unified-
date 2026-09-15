@@ -17,32 +17,32 @@ const workflow = [
 
 const plans = [
   {
-    name: 'Core',
-    tag: 'ICA UNIFIED HOSTED',
-    description: 'For organizations that want ICA Unified to serve as their primary member and learning portal.',
-    features: ['AMS + LMS workspace', 'People & member records', 'Learning & credentials', 'Documents & compliance', 'Reporting', '14-day trial'],
-    cta: 'START CORE TRIAL',
-    href: '/register',
-  },
-  {
-    name: 'Business',
-    tag: 'CONNECTED WEBSITE',
-    description: 'For organizations that already have a website and want it connected to the ICA Unified backend.',
-    features: ['Everything in Core', 'Existing website integration', 'API & webhook workflows', 'Branded organization experience', 'Connected registration & enrollment', 'Integration onboarding'],
-    cta: 'START BUSINESS TRIAL',
+    name: 'Professional',
+    tag: '$249 / MONTH',
+    description: 'The complete ICA Unified association + learning platform for organizations that want one operational member record.',
+    features: ['AMS + LMS workspace', 'CE/compliance + credential wallet', 'Safe member data migration', 'API keys + signed webhooks', 'Custom-domain verification', '14-day trial'],
+    cta: 'START PROFESSIONAL TRIAL',
     href: '/register',
     featured: true,
   },
   {
-    name: 'Enterprise',
-    tag: 'CUSTOM INTEGRATION',
-    description: 'For larger organizations that need deeper data migration, identity, workflow, or infrastructure requirements.',
-    features: ['Everything in Business', 'Custom integrations', 'SSO planning', 'Data migration support', 'Advanced onboarding', 'Dedicated implementation scope'],
+    name: 'Professional + Integration',
+    tag: '$249 / MONTH + SETUP',
+    description: 'For organizations keeping an existing website or moving from another AMS/LMS and needing a connected implementation.',
+    features: ['Everything in Professional', 'Existing website connection', 'Migration mapping & onboarding', 'Branded portal/domain setup', 'Registration & enrollment integration', 'Implementation scoped separately'],
+    cta: 'START INTEGRATION TRIAL',
+    href: '/register',
+  },
+  {
+    name: 'Enterprise / Custom',
+    tag: 'CUSTOM IMPLEMENTATION',
+    description: 'For larger organizations with deeper identity, data, workflow, infrastructure, or volume requirements.',
+    features: ['Everything in Professional', 'Large migration planning', 'SSO planning', 'Custom integrations', 'Bespoke workflow development', 'Dedicated implementation scope'],
     cta: 'TALK TO I COMPUTER ANYTHING',
     href: 'https://icomputeranything.com/#contact',
     external: true,
   },
-];
+]
 
 export default function Home() {
   return (
@@ -149,8 +149,8 @@ export default function Home() {
       <section id="plans" className={styles.section}>
         <div className={styles.sectionHead}>
           <p className={styles.eyebrow}>PLANS & ONBOARDING</p>
-          <h2>Start with the platform. Add the integration your organization needs.</h2>
-          <p>Final subscription pricing will be shown before paid activation. Every new organization can begin with the 14-day trial workspace.</p>
+          <h2>$249/month for the platform. Add implementation only when the organization needs it.</h2>
+          <p>ICA Unified Professional is $249 per month. Data migration, custom integrations, and larger implementation work are scoped separately. Every new organization can begin with the 14-day trial workspace.</p>
         </div>
         <div className={styles.planGrid}>
           {plans.map((plan) => (

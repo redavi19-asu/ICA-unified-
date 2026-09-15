@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import {
+  emitOrganizationEvent,
+  queueEmail,
+  renderInvitationEmail,
+} from '../../../../lib/organization-ops';
 
 const inviteSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
   const tokenHash = createHash('sha256').update(token).digest('hex');
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 72);
 
-  await prisma.invitation.create({
+  const invitation = await prisma.invitation.create({
     data: {
       organizationId,
       email,
@@ -68,5 +73,38 @@ export async function POST(request: Request) {
   });
 
   const origin = new URL(request.url).origin;
-  return NextResponse.json({ inviteUrl: `${origin}/invite/${token}` }, { status: 201 });
+  const inviteUrl = `${origin}/invite/${token}`;
+  const emailContent = renderInvitationEmail({
+    organizationName: membership.organization.name,
+    recipientName: name,
+    inviteUrl,
+    expiresLabel: 'expires in 72 hours',
+  });
+
+  try {
+    await queueEmail({
+      organizationId,
+      recipient: email,
+      templateKey: 'MEMBER_INVITATION',
+      subject: emailContent.subject,
+      bodyText: emailContent.bodyText,
+      payload: { invitationId: invitation.id },
+    });
+  } catch (error) {
+    console.error('ICA_INVITE_EMAIL_QUEUE_ERROR', error);
+  }
+
+  try {
+    await emitOrganizationEvent(organizationId, 'member.invited', {
+      invitationId: invitation.id,
+      name,
+      email,
+      role,
+      jobTitle: jobTitle || null,
+    });
+  } catch (error) {
+    console.error('ICA_INVITE_WEBHOOK_ERROR', error);
+  }
+
+  return NextResponse.json({ inviteUrl, emailStatus: 'QUEUED' }, { status: 201 });
 }

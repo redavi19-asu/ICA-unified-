@@ -26,7 +26,9 @@ Current navigation and behavior:
 - QR attendance: members scan an event QR, sign in, confirm attendance, and configured event credits are posted to the same CE ledger. Attendance certificate rules can issue a credential automatically.
 - Documents: controlled documents and acknowledgments.
 - Reports: organization reporting.
-- Tools: Owner/Admin area for data import/migration, website integration, API/webhooks, domain/DNS, and future export/backup.
+- Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
+- Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, email outbox staging, custom-domain DNS ownership verification, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
+- Billing: Owner/Admin subscription foundation for ICA Unified Professional at $249/month. The company subscription is separate from member dues/event payments. Stripe checkout and Stripe Connect require later account credentials; they are not activated yet.
 - Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
 Help style:
@@ -58,14 +60,34 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('import') || q.includes('migration') || q.includes('csv') || q.includes('excel')) {
-    return 'Owners and admins can go to Tools → Data Import / Migration. ICA currently stages the file for mapping before any database write.';
+    return 'Owners and admins can go to Tools. Upload a member CSV, map the old columns to ICA fields, preview new/update/skip/bad rows, then confirm the import. New members receive secure activation records and imported status is preserved.';
+  }
+
+  if (q.includes('api') || q.includes('webhook') || q.includes('integration')) {
+    return 'Owners and admins can go to Integrations. Create a tenant-scoped API key, use Bearer authentication with /api/v1/members, or add an HTTPS webhook. ICA signs webhook bodies with HMAC-SHA256 and shows each signing secret only when it is created.';
+  }
+
+  if (q.includes('domain') || q.includes('dns')) {
+    return 'Go to Integrations → Custom Domain. Save the hostname, add the TXT verification record ICA gives you, then press Verify DNS Ownership. Final custom-host routing is activated later when Cloudflare account credentials are connected.';
+  }
+
+  if (q.includes('email')) {
+    return 'ICA has a transactional Email Outbox and templates staged now. Invitations can be queued without running a mail server. A managed email provider still needs to be connected before queued email is actually delivered.';
+  }
+
+  if (q.includes('billing') || q.includes('stripe') || q.includes('249') || q.includes('subscription')) {
+    return 'Go to Billing. ICA Unified Professional is configured at $249/month for the company subscription. Stripe checkout is not activated until account credentials are connected. Member dues and event payments are designed as a separate Stripe Connect money flow.';
+  }
+
+  if (q.includes('backup') || q.includes('export')) {
+    return 'Go to Integrations → Export + Backup. Owners/admins can download a clean member CSV or a full organization JSON backup. Password hashes are not included.';
   }
 
   if (q.includes('invoice')) {
-    return 'ICA Unified does not have the registration-invoice flow wired yet. Event price and registration setup live under Workflows → Event / Webinar; billing/invoicing automation still needs to be connected.';
+    return 'ICA Unified does not have the registration-invoice flow wired yet. Event price and registration setup live under Workflows → Event / Webinar; payment collection will be activated after the member-payment processor account is connected.';
   }
 
-  return 'I can help with memberships, events, QR attendance, CE/compliance, learning, credentials, people, documents, reports, imports, website integration, or platform administration.';
+  return 'I can help with memberships, events, QR attendance, CE/compliance, learning, credentials, people, documents, reports, migration, API/webhooks, domain verification, email staging, billing, exports, or platform administration.';
 }
 
 async function personalRecordAnswer(question: string, organizationId: string, userId: string) {
