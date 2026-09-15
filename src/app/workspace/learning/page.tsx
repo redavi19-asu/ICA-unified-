@@ -5,9 +5,16 @@ import LearningClient from './LearningClient';
 export default async function LearningPage() {
   const { membership } = await requireSession();
   const organizationId = membership.organizationId;
+  const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role);
 
   const courses = await prisma.course.findMany({
-    where: { organizationId },
+    where: canManage
+      ? { organizationId }
+      : {
+          organizationId,
+          published: true,
+          enrollments: { some: { userId: membership.userId } },
+        },
     orderBy: { createdAt: 'desc' },
     include: {
       lessons: { select: { id: true } },

@@ -14,11 +14,21 @@ export async function GET(request: Request) {
 
   const lesson = await prisma.lesson.findFirst({
     where: { id: lessonId, organizationId: membership.organizationId },
-    select: { id: true, mediaUrl: true, kind: true },
+    select: { id: true, courseId: true, mediaUrl: true, kind: true, course: { select: { published: true } } },
   });
 
   if (!lesson || lesson.kind !== 'VIDEO' || !lesson.mediaUrl?.startsWith('stream:')) {
     return NextResponse.json({ error: 'Stream video not found for this lesson.' }, { status: 404 });
+  }
+
+  if (membership.role === 'MEMBER') {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: membership.userId, courseId: lesson.courseId } },
+      select: { organizationId: true },
+    });
+    if (!lesson.course.published || !enrollment || enrollment.organizationId !== membership.organizationId) {
+      return NextResponse.json({ error: 'Stream video not found for this lesson.' }, { status: 404 });
+    }
   }
 
   const uid = lesson.mediaUrl.slice('stream:'.length);

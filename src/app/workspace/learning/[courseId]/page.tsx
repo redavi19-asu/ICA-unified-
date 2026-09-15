@@ -14,9 +14,17 @@ export default async function CoursePage(props: { params: Promise<{ courseId: st
   const params = await props.params;
   const { membership } = await requireSession();
   const organizationId = membership.organizationId;
+  const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role);
 
   const course = await prisma.course.findFirst({
-    where: { id: params.courseId, organizationId },
+    where: canManage
+      ? { id: params.courseId, organizationId }
+      : {
+          id: params.courseId,
+          organizationId,
+          published: true,
+          enrollments: { some: { userId: membership.userId } },
+        },
     include: {
       lessons: {
         orderBy: { order: 'asc' },
@@ -31,7 +39,6 @@ export default async function CoursePage(props: { params: Promise<{ courseId: st
 
   if (!course) notFound();
 
-  const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role);
   const members = canManage
     ? await prisma.membership.findMany({
         where: { organizationId, status: { not: 'SUSPENDED' } },

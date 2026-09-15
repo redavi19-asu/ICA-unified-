@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 import styles from './reports.module.css';
@@ -5,6 +6,7 @@ import PrintReportButton from './PrintReportButton';
 
 export default async function ReportsPage() {
   const { membership } = await requireSession();
+  if (!['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) redirect('/my');
   const organizationId = membership.organizationId;
 
   const [memberships, enrollments, credentials, documents] = await Promise.all([

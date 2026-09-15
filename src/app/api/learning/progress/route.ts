@@ -29,15 +29,24 @@ export async function POST(request: Request) {
   });
   if (!lesson) return NextResponse.json({ error: 'Lesson not found.' }, { status: 404 });
 
-  const enrollment = await prisma.enrollment.upsert({
+  const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role);
+  let enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: membership.userId, courseId: lesson.courseId } },
-    update: {},
-    create: {
-      organizationId: membership.organizationId,
-      userId: membership.userId,
-      courseId: lesson.courseId,
-    },
   });
+
+  if (!canManage && (!lesson.course.published || !enrollment)) {
+    return NextResponse.json({ error: 'This course is not assigned to your account.' }, { status: 403 });
+  }
+
+  if (!enrollment) {
+    enrollment = await prisma.enrollment.create({
+      data: {
+        organizationId: membership.organizationId,
+        userId: membership.userId,
+        courseId: lesson.courseId,
+      },
+    });
+  }
 
   let quizScore: number | null = null;
   if (lesson.kind === 'QUIZ') {

@@ -1,4 +1,5 @@
 import PeopleClient from './PeopleClient';
+import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 
@@ -15,6 +16,7 @@ function normalizeStatus(value: string): MemberStatus {
 
 export default async function PeoplePage() {
   const { membership } = await requireSession();
+  if (!['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) redirect('/my');
   const organizationId = membership.organizationId;
 
   const [memberships, invitations] = await Promise.all([

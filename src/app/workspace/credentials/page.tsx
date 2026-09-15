@@ -1,8 +1,10 @@
+import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 
 export default async function CredentialsPage() {
   const { membership } = await requireSession();
+  if (!['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) redirect('/my/wallet');
   const credentials = await prisma.credential.findMany({
     where: { organizationId: membership.organizationId },
     orderBy: [{ expiresAt: 'asc' }, { issuedAt: 'desc' }],
