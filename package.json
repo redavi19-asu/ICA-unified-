@@ -14,7 +14,6 @@
     "db:migrate:remote": "wrangler d1 migrations apply ica-unified --remote"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.6",
     "@prisma/adapter-d1": "^6.19.0",
     "@prisma/client": "^6.19.0",
     "bcryptjs": "^2.4.3",
@@ -23,7 +22,6 @@
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "wrangler": "^4.129.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -36,10 +34,13 @@
     "prisma": "^6.19.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "@eslint/eslintrc": "^3.3.7"
+    "@eslint/eslintrc": "^3.3.7",
+    "@opennextjs/cloudflare": "^1.20.6",
+    "wrangler": "^4.129.0"
   },
   "overrides": {
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.7"
+    "@types/react-dom": "19.2.7",
+    "postcss": "8.5.28"
   }
 }
