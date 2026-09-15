@@ -75,17 +75,11 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.globeStage}>
         <div className={styles.orbitLine} aria-hidden="true" />
-        <div className={styles.globe} aria-hidden="true">
-          <div className={styles.globeGrid} />
-          <div className={styles.globeLatitudeOne} />
-          <div className={styles.globeLatitudeTwo} />
-          <div className={styles.globeLongitudeOne} />
-          <div className={styles.globeLongitudeTwo} />
-          <div className={styles.globeScan} />
-          <span className={styles.globeNodeOne} />
-          <span className={styles.globeNodeTwo} />
-          <span className={styles.globeNodeThree} />
-          <span className={styles.globeNodeFour} />
+        <div className={styles.earth} aria-hidden="true">
+          <div className={styles.earthTexture} />
+          <div className={styles.earthClouds} />
+          <div className={styles.earthShade} />
+          <div className={styles.earthAtmosphere} />
         </div>
 
         <div className={styles.coreLabel}>
