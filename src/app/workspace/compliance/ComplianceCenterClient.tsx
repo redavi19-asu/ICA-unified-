@@ -82,14 +82,14 @@ export default function ComplianceCenterClient({
   }
 
   return (
-    <main style={{minHeight:'100vh',background:'#0f1113',color:'#f0eee8',padding:'clamp(24px,5vw,72px)',fontFamily:'Arial,sans-serif'}}>
+    <main style={{minHeight:'100vh',background:'var(--ws-bg)',color:'var(--ws-text)',padding:'clamp(24px,5vw,72px)',fontFamily:'Arial,sans-serif'}}>
       <button onClick={() => router.push('/workspace')} style={ghostButton}>← WORKSPACE</button>
-      <header style={{display:'grid',gridTemplateColumns:'minmax(0,1.5fr) minmax(280px,.7fr)',gap:30,alignItems:'end',borderBottom:'1px solid #303438',padding:'28px 0 34px'}}>
+      <header style={{display:'grid',gridTemplateColumns:'minmax(0,1.5fr) minmax(280px,.7fr)',gap:30,alignItems:'end',borderBottom:'1px solid var(--ws-line)',padding:'28px 0 34px'}}>
         <div>
           <p style={eyebrow}>{organizationName.toUpperCase()} / AMS + LMS</p>
           <h1 style={{fontSize:'clamp(54px,8vw,108px)',lineHeight:.77,letterSpacing:'-.065em',margin:'14px 0 0'}}>COMPLIANCE<br/>CENTER</h1>
         </div>
-        <p style={{color:'#989fa4',lineHeight:1.6}}>One credit ledger for courses, conferences, QR attendance, credentials, and renewal readiness. No AMS-to-LMS reconciliation step.</p>
+        <p style={{color:'var(--ws-muted)',lineHeight:1.6}}>One credit ledger for courses, conferences, QR attendance, credentials, and renewal readiness. No AMS-to-LMS reconciliation step.</p>
       </header>
 
       <section style={metricGrid}>
@@ -113,7 +113,7 @@ export default function ComplianceCenterClient({
           <button disabled={saving} style={primaryButton}>{saving ? 'SAVING…' : 'ADD RULE'}</button>
         </form>
 
-        <div style={{marginTop:20,borderTop:'1px solid #2b3034'}}>
+        <div style={{marginTop:20,borderTop:'1px solid var(--ws-line)'}}>
           {requirements.length === 0 ? <p style={emptyStyle}>No license or certification CE requirements yet.</p> : requirements.map((item) => (
             <article key={item.id} style={rowStyle}>
               <strong>{item.name}</strong>
@@ -130,7 +130,7 @@ export default function ComplianceCenterClient({
           <div><p style={eyebrow}>02 / COURSE CREDIT ENGINE</p><h2 style={sectionTitle}>Tell ICA what each course is worth.</h2></div>
           <p style={sectionCopy}>When a learner completes the course, ICA posts the credit automatically to the same member record that holds membership and credentials.</p>
         </div>
-        <div style={{borderTop:'1px solid #2b3034'}}>
+        <div style={{borderTop:'1px solid var(--ws-line)'}}>
           {courses.map((course) => <CourseRuleRow key={course.id} course={course} onSaved={(text) => setMessage(text)} />)}
         </div>
       </section>
@@ -144,17 +144,17 @@ export default function ComplianceCenterClient({
           {events.length === 0 ? <p style={emptyStyle}>Create an Event / Webinar workflow first.</p> : events.map((item) => {
             const checkin = checkins[item.id];
             return (
-              <article key={item.id} style={{border:'1px solid #2e3337',padding:20,background:'#141719'}}>
+              <article key={item.id} style={{border:'1px solid var(--ws-line)',padding:20,background:'var(--ws-panel)',borderRadius:14,boxShadow:'0 10px 28px rgba(31,69,96,.05)'}}>
                 <p style={eyebrow}>{item.status} · {item.category}</p>
                 <h3 style={{fontSize:24,margin:'8px 0'}}>{item.name}</h3>
-                <p style={{color:'#8d9499',minHeight:40}}>{item.startAt ? new Date(item.startAt).toLocaleString() : 'Date not set'} · {item.credits || 0} credits</p>
+                <p style={{color:'var(--ws-muted)',minHeight:40}}>{item.startAt ? new Date(item.startAt).toLocaleString() : 'Date not set'} · {item.credits || 0} credits</p>
                 {!checkin ? (
                   <button onClick={() => createCheckin(item.id)} style={primaryButton}>CREATE CHECK-IN QR</button>
                 ) : (
                   <div style={{marginTop:18}}>
                     <div style={{background:'#fff',padding:14,width:'fit-content'}}><QRCodeSVG value={checkin.url} size={190} /></div>
-                    <code style={{display:'block',color:'#aeb4b8',fontSize:10,wordBreak:'break-all',marginTop:12}}>{checkin.url}</code>
-                    <small style={{display:'block',color:'#747b80',marginTop:8}}>Valid until {new Date(checkin.expiresAt).toLocaleString()}</small>
+                    <code style={{display:'block',color:'var(--ws-muted)',fontSize:10,wordBreak:'break-all',marginTop:12}}>{checkin.url}</code>
+                    <small style={{display:'block',color:'var(--ws-muted)',marginTop:8}}>Valid until {new Date(checkin.expiresAt).toLocaleString()}</small>
                   </div>
                 )}
               </article>
@@ -163,7 +163,7 @@ export default function ComplianceCenterClient({
         </div>
       </section>
 
-      {message && <div style={{position:'fixed',right:22,bottom:22,maxWidth:420,padding:'15px 18px',background:'#efede7',color:'#111',fontWeight:700,boxShadow:'0 20px 50px rgba(0,0,0,.35)'}}>{message}</div>}
+      {message && <div style={{position:'fixed',right:22,bottom:22,maxWidth:420,padding:'15px 18px',background:'var(--ws-panel)',color:'var(--ws-text)',border:'1px solid var(--ws-line)',borderLeft:'4px solid var(--ws-green)',borderRadius:10,fontWeight:700,boxShadow:'0 20px 50px rgba(31,69,96,.18)'}}>{message}</div>}
     </main>
   );
 }
@@ -191,8 +191,8 @@ function CourseRuleRow({ course, onSaved }: { course: Course; onSaved: (message:
   }
 
   return (
-    <article style={{display:'grid',gridTemplateColumns:'minmax(220px,2fr) 1fr .6fr auto',gap:12,alignItems:'end',padding:'16px 0',borderBottom:'1px solid #252a2d'}}>
-      <div><strong>{course.title}</strong><small style={{display:'block',color:'#747b80',marginTop:5}}>{course.published ? 'Published' : 'Draft'}</small></div>
+    <article style={{display:'grid',gridTemplateColumns:'minmax(220px,2fr) 1fr .6fr auto',gap:12,alignItems:'end',padding:'16px 0',borderBottom:'1px solid var(--ws-line)'}}>
+      <div><strong>{course.title}</strong><small style={{display:'block',color:'var(--ws-muted)',marginTop:5}}>{course.published ? 'Published' : 'Draft'}</small></div>
       <Field label="Category"><input value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}/></Field>
       <Field label="Credits"><input value={credits} onChange={(e) => setCredits(e.target.value)} inputMode="decimal" style={inputStyle}/></Field>
       <button onClick={save} disabled={saving} style={ghostButton}>{saving ? 'SAVING…' : 'SAVE'}</button>
@@ -201,11 +201,11 @@ function CourseRuleRow({ course, onSaved }: { course: Course; onSaved: (message:
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label style={{display:'grid',gap:7,fontSize:10,letterSpacing:'.12em',color:'#7d858a'}}>{label.toUpperCase()}{children}</label>;
+  return <label style={{display:'grid',gap:7,fontSize:10,letterSpacing:'.12em',color:'var(--ws-muted)'}}>{label.toUpperCase()}{children}</label>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
-  return <div style={{background:'#15181a',padding:20}}><span style={eyebrow}>{label}</span><strong style={{display:'block',fontSize:42,marginTop:8}}>{String(value).padStart(2,'0')}</strong></div>;
+  return <div style={{background:'var(--ws-panel)',padding:20,borderTop:'3px solid var(--ws-teal)'}}><span style={eyebrow}>{label}</span><strong style={{display:'block',fontSize:42,marginTop:8,color:'var(--ws-text)'}}>{String(value).padStart(2,'0')}</strong></div>;
 }
 
 const eyebrow: CSSProperties = {fontSize:10,letterSpacing:'.16em',color:'#7d858a',margin:0};
@@ -217,5 +217,5 @@ const metricGrid: CSSProperties = {display:'grid',gridTemplateColumns:'repeat(au
 const inputStyle: CSSProperties = {width:'100%',boxSizing:'border-box' as const,background:'#101214',border:'1px solid #343a3e',color:'#f0eee8',padding:'12px 13px',outline:'none'};
 const primaryButton: CSSProperties = {background:'#efede7',color:'#111',border:0,padding:'13px 16px',fontWeight:800,letterSpacing:'.08em',cursor:'pointer'};
 const ghostButton: CSSProperties = {background:'transparent',color:'#d9d7d1',border:'1px solid #363b3f',padding:'10px 13px',fontWeight:700,letterSpacing:'.08em',cursor:'pointer'};
-const rowStyle: CSSProperties = {display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12,padding:'15px 0',borderBottom:'1px solid #252a2d',color:'#a9afb3'};
+const rowStyle: CSSProperties = {display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:12,padding:'15px 0',borderBottom:'1px solid var(--ws-line)',color:'#a9afb3'};
 const emptyStyle: CSSProperties = {color:'#777f84',padding:'18px 0'};
