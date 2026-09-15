@@ -71,6 +71,7 @@ export default async function CompliancePage() {
         startAt: typeof row.config.startAt === 'string' ? row.config.startAt : '',
         credits: Number(row.config.ceuCredits || 0),
         category: String(row.config.creditCategory || 'GENERAL'),
+        checkinMode: String(row.config.checkinMode || 'SELF_SCAN'),
       }))}
     />
   );
