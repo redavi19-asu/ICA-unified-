@@ -75,6 +75,49 @@ const professionalServices = [
   ['Training + live consulting', 'Custom quote', 'Dedicated staff training, live implementation sessions, after-hours help, or on-site work.'],
 ];
 
+
+function MiniIcon({ type }: { type: string }) {
+  const common = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  if (type === 'people') return <svg {...common}><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.8-3.1 2.6-4.7 5.5-4.7s4.7 1.6 5.5 4.7"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 14.7c2.8-.3 4.6 1.1 5.2 4.3"/></svg>;
+  if (type === 'learning') return <svg {...common}><path d="M3 6.5 12 3l9 3.5-9 3.5-9-3.5Z"/><path d="M6 9v5.2c2.5 2.4 9.5 2.4 12 0V9"/><path d="M21 7v6"/></svg>;
+  if (type === 'credential') return <svg {...common}><circle cx="12" cy="8" r="4"/><path d="m9.4 12-1 8 3.6-2 3.6 2-1-8"/><path d="m10.4 8 1 1 2-2"/></svg>;
+  if (type === 'document') return <svg {...common}><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>;
+  if (type === 'compliance') return <svg {...common}><path d="M12 3 4.5 6v5c0 5 3 8.2 7.5 10 4.5-1.8 7.5-5 7.5-10V6z"/><path d="m8.5 12 2.1 2.1 4.9-5"/></svg>;
+  if (type === 'report') return <svg {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>;
+  if (type === 'workflow') return <svg {...common}><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M9 6.5h3a3 3 0 0 1 3 3V15M15 17.5h-3a3 3 0 0 1-3-3V9"/></svg>;
+  if (type === 'api') return <svg {...common}><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/></svg>;
+  if (type === 'domain') return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>;
+  if (type === 'support') return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M8 15v-3a4 4 0 0 1 8 0v3M7.5 15h2v3h-2zM14.5 15h2v3h-2z"/></svg>;
+  if (type === 'mobile') return <svg {...common}><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 5h4M11 18.5h2"/></svg>;
+  if (type === 'data') return <svg {...common}><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>;
+  return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>;
+}
+
+function PlatformIcon({ type }: { type: 'web' | 'windows' | 'mac' | 'iphone' | 'ipad' }) {
+  if (type === 'windows') return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 4.4 10.8 3v8.2H2.5V4.4Zm9.6-1.6L21.5 1.3v9.9h-9.4V2.8ZM2.5 12.5h8.3V21l-8.3-1.4v-7.1Zm9.6 0h9.4v10.2l-9.4-1.6v-8.6Z" fill="currentColor"/></svg>;
+  if (type === 'mac') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="11" rx="1.7" fill="none" stroke="currentColor" strokeWidth="1.7"/><path d="M2.5 18.5h19M9 15.5h6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+  if (type === 'iphone') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7.2" y="2" width="9.6" height="20" rx="2.2" fill="none" stroke="currentColor" strokeWidth="1.7"/><path d="M10 4.5h4M11.2 19h1.6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>;
+  if (type === 'ipad') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.2" y="2.7" width="13.6" height="18.6" rx="1.8" fill="none" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="18.7" r=".8" fill="currentColor"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.7"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" fill="none" stroke="currentColor" strokeWidth="1.7"/></svg>;
+}
+
+function iconFor(title: string) {
+  const key = title.toLowerCase();
+  if (key.includes('member') || key.includes('people') || key.includes('ams')) return 'people';
+  if (key.includes('learn') || key.includes('lms')) return 'learning';
+  if (key.includes('credential') || key.includes('ce')) return 'credential';
+  if (key.includes('document')) return 'document';
+  if (key.includes('compliance')) return 'compliance';
+  if (key.includes('report')) return 'report';
+  if (key.includes('workflow')) return 'workflow';
+  if (key.includes('api') || key.includes('webhook') || key.includes('website')) return 'api';
+  if (key.includes('domain') || key.includes('export')) return 'domain';
+  if (key.includes('support')) return 'support';
+  if (key.includes('mobile')) return 'mobile';
+  if (key.includes('data') || key.includes('platform')) return 'data';
+  return 'web';
+}
+
 export default function Home() {
   return (
     <main className={styles.page}>
@@ -109,10 +152,15 @@ export default function Home() {
           </div>
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
-            <span><b>WEB</b><small>LIVE</small></span>
-            <span><b>WINDOWS</b><small>DESKTOP</small></span>
-            <span><b>MAC</b><small>DESKTOP</small></span>
-            <span><b>IPHONE + IPAD</b><small>MOBILE</small></span>
+            <span><i><PlatformIcon type="web" /></i><b>WEB</b><small>LIVE</small></span>
+            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>DESKTOP</small></span>
+            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>DESKTOP</small></span>
+            <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>MOBILE</small></span>
+          </div>
+          <div className={styles.heroTrinkets} aria-hidden="true">
+            <span className={styles.trinketOne}>QR CHECK-IN</span>
+            <span className={styles.trinketTwo}>CE WALLET</span>
+            <span className={styles.trinketThree}>LIVE MEMBER DATA</span>
           </div>
         </div>
 
@@ -136,6 +184,7 @@ export default function Home() {
         <div className={styles.moduleGrid}>
           {modules.map(([title, copy]) => (
             <article key={title} className={styles.moduleCard}>
+              <div className={styles.moduleIcon}><MiniIcon type={iconFor(title)} /></div>
               <span>{title}</span>
               <p>{copy}</p>
             </article>
@@ -151,7 +200,7 @@ export default function Home() {
         <div className={styles.workflowGrid}>
           {workflow.map(([number, title, copy]) => (
             <article key={number}>
-              <span>{number}</span>
+              <div className={styles.workflowTop}><span>{number}</span><i><MiniIcon type={number === '01' ? 'people' : number === '02' ? 'data' : number === '03' ? 'support' : 'credential'} /></i></div>
               <h3>{title}</h3>
               <p>{copy}</p>
             </article>
@@ -227,12 +276,12 @@ export default function Home() {
         </div>
 
         <div className={styles.mobileFeatureGrid}>
-          <article><span>01</span><h3>Scan QR</h3><p>Use the device camera to scan ICA event check-in codes and move directly into the attendance workflow.</p></article>
-          <article><span>02</span><h3>Member Lookup</h3><p>Find a member quickly and view their current membership status, role, and organization record.</p></article>
-          <article><span>03</span><h3>Attendance</h3><p>Confirm event attendance against the existing ICA event workflow and preserve the activity in the same organization record.</p></article>
-          <article><span>04</span><h3>CE + Wallet</h3><p>Show earned CE, remaining requirements, credentials, verification status, and attendance certificates from the same ledger.</p></article>
-          <article><span>05</span><h3>Notifications</h3><p>Surface event, credential, renewal, learning, and organization alerts without requiring the full desktop dashboard.</p></article>
-          <article><span>06</span><h3>Same Cloud Account</h3><p>No second member database and no separate mobile account. Mobile, web, and future desktop clients use the same ICA Unified organization data.</p></article>
+          <article><span>01</span><i><MiniIcon type="mobile" /></i><h3>Scan QR</h3><p>Use the device camera to scan ICA event check-in codes and move directly into the attendance workflow.</p></article>
+          <article><span>02</span><i><MiniIcon type="people" /></i><h3>Member Lookup</h3><p>Find a member quickly and view their current membership status, role, and organization record.</p></article>
+          <article><span>03</span><i><MiniIcon type="workflow" /></i><h3>Attendance</h3><p>Confirm event attendance against the existing ICA event workflow and preserve the activity in the same organization record.</p></article>
+          <article><span>04</span><i><MiniIcon type="credential" /></i><h3>CE + Wallet</h3><p>Show earned CE, remaining requirements, credentials, verification status, and attendance certificates from the same ledger.</p></article>
+          <article><span>05</span><i><MiniIcon type="support" /></i><h3>Notifications</h3><p>Surface event, credential, renewal, learning, and organization alerts without requiring the full desktop dashboard.</p></article>
+          <article><span>06</span><i><MiniIcon type="data" /></i><h3>Same Cloud Account</h3><p>No second member database and no separate mobile account. Mobile, web, and future desktop clients use the same ICA Unified organization data.</p></article>
         </div>
 
         <div className={styles.platformAvailability}>
@@ -257,6 +306,7 @@ export default function Home() {
         <div className={styles.includedGrid}>
           {includedWithProfessional.map(([title, copy]) => (
             <article key={title}>
+              <div className={styles.includedIcon}><MiniIcon type={iconFor(title)} /></div>
               <span>INCLUDED</span>
               <h3>{title}</h3>
               <p>{copy}</p>
