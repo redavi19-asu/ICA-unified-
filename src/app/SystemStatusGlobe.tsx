@@ -15,6 +15,95 @@ function NodeIcon({ type }: { type: string }) {
   return <svg {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>;
 }
 
+
+function RealMapGlobe() {
+  const srcDoc = \`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css" />
+  <style>
+    html,body,#map{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+    body{font-family:Arial,sans-serif}
+    .maplibregl-map{background:transparent}
+    .maplibregl-canvas{outline:none}
+    .maplibregl-ctrl-attrib{font-size:8px!important;background:rgba(255,255,255,.72)!important;color:#345!important}
+    .maplibregl-ctrl-attrib a{color:#246a9d!important}
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script type="module">
+    import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.mjs';
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [-18, 22],
+      zoom: 0.55,
+      minZoom: 0,
+      maxZoom: 5.5,
+      pitch: 0,
+      bearing: 0,
+      attributionControl: true,
+      canvasContextAttributes: { antialias: true }
+    });
+
+    let userInteracting = false;
+    let resumeTimer = 0;
+    let lastFrame = performance.now();
+
+    function pauseSpin() {
+      userInteracting = true;
+      window.clearTimeout(resumeTimer);
+    }
+
+    function resumeSpinSoon() {
+      window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(() => { userInteracting = false; }, 3200);
+    }
+
+    map.on('style.load', () => {
+      map.setProjection({ type: 'globe' });
+    });
+
+    map.on('load', () => {
+      const animate = (now) => {
+        const delta = Math.min(34, now - lastFrame);
+        lastFrame = now;
+
+        if (!userInteracting && map.getZoom() < 2.4) {
+          const center = map.getCenter();
+          map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+        }
+        requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    });
+
+    ['mousedown','touchstart','wheel'].forEach((eventName) => {
+      map.getCanvasContainer().addEventListener(eventName, pauseSpin, { passive: true });
+    });
+    map.on('moveend', resumeSpinSoon);
+    map.on('zoomend', resumeSpinSoon);
+  </script>
+</body>
+</html>\`;
+
+  return (
+    <div className={styles.realGlobeWrap}>
+      <iframe
+        className={styles.realGlobeFrame}
+        title="Interactive ICA Unified world globe"
+        srcDoc={srcDoc}
+        sandbox="allow-scripts allow-same-origin"
+      />
+      <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
+    </div>
+  );
+}
+
 export default function SystemStatusGlobe() {
   const [status, setStatus] = useState<HealthState>('checking');
 
@@ -75,12 +164,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.globeStage}>
         <div className={styles.orbitLine} aria-hidden="true" />
-        <div className={styles.earth} aria-hidden="true">
-          <div className={styles.earthTexture} />
-          <div className={styles.earthClouds} />
-          <div className={styles.earthShade} />
-          <div className={styles.earthAtmosphere} />
-        </div>
+        <RealMapGlobe />
 
         <div className={styles.coreLabel}>
           <small>ONE SHARED PLATFORM</small>
