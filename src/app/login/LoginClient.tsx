@@ -45,6 +45,7 @@ export default function LoginClient() {
   return (
     <main className={styles.shell}>
       <section className={styles.identity}>
+        <a href="/" className={styles.back}>← BACK TO ICA UNIFIED</a>
         <p>I COMPUTER ANYTHING / BUSINESS SYSTEMS</p>
         <h1>ICA<br />UNIFIED</h1>
         <div className={styles.line} />
