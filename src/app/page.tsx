@@ -19,30 +19,60 @@ const plans = [
   {
     name: 'Professional',
     tag: '$249 / MONTH',
-    description: 'The complete ICA Unified association + learning platform for organizations that want one operational member record.',
-    features: ['AMS + LMS workspace', 'CE/compliance + credential wallet', 'Safe member data migration', 'API keys + signed webhooks', 'Custom-domain verification', '14-day trial'],
+    description: 'The complete ICA Unified association + learning platform with standard support included.',
+    features: ['AMS + LMS workspace', 'CE/compliance + credential wallet', 'Safe self-service member importer', 'API keys + signed webhooks', 'Custom-domain verification', 'Standard support included', '14-day trial'],
     cta: 'START PROFESSIONAL TRIAL',
     href: '/register',
     featured: true,
   },
   {
-    name: 'Professional + Integration',
-    tag: '$249 / MONTH + SETUP',
-    description: 'For organizations keeping an existing website or moving from another AMS/LMS and needing a connected implementation.',
-    features: ['Everything in Professional', 'Existing website connection', 'Migration mapping & onboarding', 'Branded portal/domain setup', 'Registration & enrollment integration', 'Implementation scoped separately'],
-    cta: 'START INTEGRATION TRIAL',
+    name: 'Professional + Setup',
+    tag: '$249 / MONTH + ONE-TIME SETUP',
+    description: 'For organizations that want ICA help configuring the platform or connecting an existing website.',
+    features: ['Everything in Professional', 'Guided onboarding from $499', 'Website/API connection planning', 'Branded portal/domain setup', 'Registration & enrollment integration', 'Scope approved before work begins'],
+    cta: 'START SETUP TRIAL',
     href: '/register',
   },
   {
     name: 'Enterprise / Custom',
     tag: 'CUSTOM IMPLEMENTATION',
-    description: 'For larger organizations with deeper identity, data, workflow, infrastructure, or volume requirements.',
-    features: ['Everything in Professional', 'Large migration planning', 'SSO planning', 'Custom integrations', 'Bespoke workflow development', 'Dedicated implementation scope'],
+    description: 'For larger organizations with deeper migration, identity, workflow, infrastructure, or volume requirements.',
+    features: ['Everything in Professional', 'Managed migration from $1,500', 'SSO planning', 'Custom integrations', 'Custom workflow/report development', 'Written implementation quote'],
     cta: 'TALK TO I COMPUTER ANYTHING',
     href: 'https://icomputeranything.com/#contact',
     external: true,
   },
-]
+];
+
+const includedWithProfessional = [
+  ['Platform', 'AMS + LMS access in one organization workspace.'],
+  ['Members', 'Member records, roles, status, job titles, invitations, activation, and organization access.'],
+  ['Learning', 'Courses, lessons, quizzes, assignments, progress, completion, and automatic credentials.'],
+  ['CE + Compliance', 'Credit rules, requirements, transcripts, renewal readiness, QR event attendance, and credential wallet.'],
+  ['Workflows', 'Membership programs, events/webinars, pricing fields, approvals, CE rules, certificates, and confirmations.'],
+  ['Documents + Reports', 'Controlled documents, acknowledgments, organization reporting, and compliance snapshots.'],
+  ['Data Import', 'Self-service CSV importer with field mapping, preview, duplicate detection, validation, and controlled commit.'],
+  ['API + Webhooks', 'Organization API keys, standard ICA API endpoints, and signed HTTPS webhooks.'],
+  ['Domains + Export', 'Custom-domain ownership verification, member CSV export, and full organization backup export.'],
+  ['Product Support', 'Standard support for using and operating existing ICA Unified features.'],
+];
+
+const standardSupport = [
+  'Login, account, invitation, and member-access issues.',
+  'Help using existing ICA Unified features, workflows, courses, events, credentials, reports, and compliance tools.',
+  'Troubleshooting ICA Unified behavior and confirmed product bugs.',
+  'Basic configuration questions and guidance using existing API endpoints.',
+  'Email/ticket support Monday–Friday, 9 AM–6 PM Eastern, excluding major holidays.',
+  'Normal requests target a response within 1 business day; major organization-wide platform issues target same-business-day response.',
+];
+
+const professionalServices = [
+  ['Guided onboarding + configuration', 'Starting at $499 one time', 'Hands-on setup assistance, configuration review, and launch preparation.'],
+  ['Managed data migration', 'Starting at $1,500 one time', 'ICA cleans, maps, validates, and imports customer data instead of the customer using the included importer themselves.'],
+  ['Custom integrations', 'Custom quote', 'New third-party integrations, proprietary systems, new API endpoints, accounting/CRM connections, or specialized automation.'],
+  ['Custom development', 'Custom quote', 'Customer-specific workflows, reports, software features, website work, or special infrastructure requirements.'],
+  ['Training + live consulting', 'Custom quote', 'Dedicated staff training, live implementation sessions, after-hours help, or on-site work.'],
+];
 
 export default function Home() {
   return (
@@ -56,6 +86,7 @@ export default function Home() {
           <a href="#platform">Platform</a>
           <a href="#integrations">Integrations</a>
           <a href="#plans">Plans</a>
+          <a href="#included">What&apos;s Included</a>
           <a href="/login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>
@@ -164,6 +195,86 @@ export default function Home() {
               <a href={plan.href} {...(plan.external ? { target: '_blank', rel: 'noreferrer' } : {})}>{plan.cta} →</a>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section id="included" className={styles.transparencySection}>
+        <div className={styles.sectionHead}>
+          <p className={styles.eyebrow}>CLEAR PRICING / CLEAR SUPPORT</p>
+          <h2>Know exactly what the $249/month subscription includes.</h2>
+          <p>
+            Standard Support covers the use and operation of existing ICA Unified features.
+            Custom development, implementation, migration, training, and third-party integration
+            work are professional services and are quoted separately.
+          </p>
+        </div>
+
+        <div className={styles.includedGrid}>
+          {includedWithProfessional.map(([title, copy]) => (
+            <article key={title}>
+              <span>INCLUDED</span>
+              <h3>{title}</h3>
+              <p>{copy}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.supportSplit}>
+          <article className={styles.supportCard}>
+            <p className={styles.eyebrow}>STANDARD SUPPORT / INCLUDED</p>
+            <h3>Normal product support is part of the subscription.</h3>
+            <ul>
+              {standardSupport.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+            <div className={styles.supportNote}>
+              Response targets describe when ICA will respond and begin triage. They are not a guaranteed resolution time.
+            </div>
+          </article>
+
+          <article className={styles.boundaryCard}>
+            <p className={styles.eyebrow}>THE IMPORTANT LINE</p>
+            <h3>Software access is included. Hands-on project work is separate.</h3>
+            <div className={styles.boundaryExample}>
+              <strong>INCLUDED</strong>
+              <span>Customer uploads a CSV, maps fields, previews it, and runs the ICA migration tool.</span>
+            </div>
+            <div className={styles.boundaryExample}>
+              <strong>PROFESSIONAL SERVICE</strong>
+              <span>Customer sends ICA old spreadsheets/databases and asks ICA to clean, reconstruct, map, and migrate everything for them.</span>
+            </div>
+            <div className={styles.boundaryExample}>
+              <strong>INCLUDED</strong>
+              <span>Customer uses ICA&apos;s existing API keys, endpoints, and webhook system.</span>
+            </div>
+            <div className={styles.boundaryExample}>
+              <strong>PROFESSIONAL SERVICE</strong>
+              <span>Customer asks ICA to build a new Salesforce, accounting, proprietary database, SSO, or custom-system integration.</span>
+            </div>
+          </article>
+        </div>
+
+        <div className={styles.servicesHead}>
+          <div>
+            <p className={styles.eyebrow}>OPTIONAL PROFESSIONAL SERVICES</p>
+            <h3>Extra work is priced before the work starts.</h3>
+          </div>
+          <p>No surprise implementation bill. If a request falls outside Standard Support, ICA defines the scope and price before beginning the paid work.</p>
+        </div>
+
+        <div className={styles.servicesTable}>
+          {professionalServices.map(([service, price, description]) => (
+            <article key={service}>
+              <div><span>SERVICE</span><strong>{service}</strong></div>
+              <div><span>PRICE</span><strong>{price}</strong></div>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.pricingPromise}>
+          <strong>$249/month.</strong>
+          <span>Standard support included. Optional project work is disclosed and approved separately.</span>
+          <a href="/register">START 14-DAY TRIAL →</a>
         </div>
       </section>
 
