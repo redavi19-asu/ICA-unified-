@@ -1,5 +1,50 @@
+import { SignJWT, jwtVerify } from 'jose';
 import { prisma } from './prisma';
 import { verifySessionToken } from './auth';
+
+const qrDevSecret = 'ica-unified-development-only-secret-change-me';
+
+function getQrSecret() {
+  const configuredSecret = process.env.AUTH_SECRET;
+  if (!configuredSecret && process.env.NODE_ENV === 'production') {
+    throw new Error('AUTH_SECRET must be configured in production.');
+  }
+  return new TextEncoder().encode(configuredSecret || qrDevSecret);
+}
+
+export async function createMemberQrToken(input: { userId: string; organizationId: string; membershipId: string }) {
+  return new SignJWT({
+    purpose: 'ICA_MEMBER_QR',
+    userId: input.userId,
+    organizationId: input.organizationId,
+    membershipId: input.membershipId,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('365d')
+    .sign(getQrSecret());
+}
+
+export async function verifyMemberQrToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, getQrSecret());
+    if (
+      payload.purpose !== 'ICA_MEMBER_QR' ||
+      typeof payload.userId !== 'string' ||
+      typeof payload.organizationId !== 'string' ||
+      typeof payload.membershipId !== 'string'
+    ) return null;
+
+    return {
+      userId: payload.userId,
+      organizationId: payload.organizationId,
+      membershipId: payload.membershipId,
+    };
+  } catch {
+    return null;
+  }
+}
+
 
 export async function readMobileSession(request: Request) {
   const header = request.headers.get('authorization') || '';
