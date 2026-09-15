@@ -34,7 +34,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push('/workspace');
+    router.push('/setup/billing');
     router.refresh();
   }
 
