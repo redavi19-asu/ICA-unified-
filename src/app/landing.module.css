@@ -139,3 +139,7 @@
 @keyframes softFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @media(max-width:1000px){.workflowGrid:before{display:none}.integration,.mobileSection,.transparencySection{padding-left:clamp(20px,5vw,72px);padding-right:clamp(20px,5vw,72px)}}
 @media(max-width:650px){.platformStrip span{min-width:calc(50% - 5px);flex:1}.heroTrinkets span{font-size:6.5px}.finalCta{border-radius:22px;margin-inline:14px}.includedIcon{position:static;margin-bottom:16px}.includedGrid h3{padding-right:0}}
+
+.nodes span{display:flex;align-items:center;justify-content:center;gap:7px}
+.nodes span i{display:inline-flex;align-items:center;justify-content:center;color:#147fd1}
+.nodes span i svg{width:14px;height:14px}
