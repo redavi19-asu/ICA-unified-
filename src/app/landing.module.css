@@ -212,3 +212,11 @@
 @keyframes cloudDrift{from{transform:translateX(0)}to{transform:translateX(-18px)}}
 @media(max-width:650px){.earth{width:220px;height:220px}.globeStage .coreLabel{transform:translateY(78px)}}
 @media(prefers-reduced-motion:reduce){.earthTexture,.earthClouds{animation:none!important}}
+
+
+/* Real MapLibre globe */
+.realGlobeWrap{position:relative;width:286px;height:286px;border-radius:50%;overflow:hidden;z-index:3;background:#dff3ff;box-shadow:0 0 0 1px rgba(62,143,197,.28),0 20px 48px rgba(27,83,120,.18),0 0 40px rgba(60,166,224,.18)}
+.realGlobeFrame{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:50%;background:transparent}
+.globeHint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:8;white-space:nowrap;border:1px solid rgba(197,221,235,.9);background:rgba(255,255,255,.86);backdrop-filter:blur(8px);border-radius:999px;padding:5px 8px;color:#496f87;font-size:6px;font-weight:900;letter-spacing:.12em;pointer-events:none;box-shadow:0 5px 15px rgba(32,76,105,.08)}
+.globeStage .coreLabel{transform:translateY(112px);z-index:8}
+@media(max-width:650px){.realGlobeWrap{width:230px;height:230px}.globeStage .coreLabel{transform:translateY(92px)}}
