@@ -1,2 +1,22 @@
 .shell{min-height:100vh;background:#081019;color:#edf7ff;padding:clamp(24px,5vw,64px);max-width:1450px;margin:0 auto}.back{color:#8fb6cf;text-decoration:none;font-size:9px;letter-spacing:.12em}.header{display:grid;grid-template-columns:1fr auto;gap:36px;align-items:end;border-bottom:1px solid #1c3c53;padding:28px 0}.header p,.grid article>p{color:#5eb8ff;font-size:8px;font-weight:900;letter-spacing:.15em;margin:0}.header h1{font-size:clamp(52px,8vw,104px);line-height:.77;letter-spacing:-.07em;margin:10px 0 5px}.header span{color:#8198a8;font-size:11px}.price{border:1px solid #3277a5;background:#0a1b28;padding:20px 24px;min-width:240px}.price small{color:#72c7ff;font-size:8px;letter-spacing:.15em}.price strong{display:block;font-size:44px;letter-spacing:-.05em;margin-top:7px}.price span{display:block;margin-top:4px}.statusGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1b4059;margin:18px 0}.statusGrid div{background:#091720;padding:16px}.statusGrid span{display:block;color:#708a9c;font-size:7px;letter-spacing:.12em}.statusGrid strong{display:block;font-size:13px;margin-top:7px;color:#e9f6ff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.grid article{border:1px solid #1e4057;background:linear-gradient(150deg,#0b1b28,#08131d);padding:24px;border-radius:10px}.grid article.primary,.grid article.wide{grid-column:1/-1}.grid h2{font-size:28px;letter-spacing:-.04em;margin:10px 0}.copy{color:#8ba0ae;line-height:1.7;font-size:12px;max-width:850px}.line{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-top:1px solid #173148}.line span{color:#7890a0;font-size:10px}.line strong{font-size:10px;color:#dff2ff}.flow{border:1px solid #24506e;background:#071620;padding:14px;margin-top:18px;color:#65bfff;font:10px monospace;overflow-wrap:anywhere}.readiness{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1d3c52;margin-top:18px}.readiness span{background:#081620;padding:14px;color:#9bb0be;font-size:10px}.readiness b{color:#51de8b;margin-right:7px}@media(max-width:760px){.header,.grid{grid-template-columns:1fr}.price{min-width:0}.statusGrid{grid-template-columns:1fr 1fr}.grid article.primary,.grid article.wide{grid-column:auto}.readiness{grid-template-columns:1fr}}
 .billingActions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.billingActions form{margin:0}.billingActions button,.billingActions a{min-height:46px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;padding:0 17px;font-size:9px;font-weight:900;letter-spacing:.08em;text-decoration:none;cursor:pointer}.billingActions button{border:0;background:#178cff;color:#fff}.billingActions a{border:1px solid #31516a;color:#dff2ff;background:#081722}
+
+/* workspace light theme */
+:global(.workspace-theme-light) .shell{background:transparent;color:#10202f}
+:global(.workspace-theme-light) .back{color:#147fd1}
+:global(.workspace-theme-light) .header{border-bottom-color:#d9e5ed}
+:global(.workspace-theme-light) .header p,:global(.workspace-theme-light) .grid article>p{color:#147fd1}
+:global(.workspace-theme-light) .header span,:global(.workspace-theme-light) .copy{color:#6c8191}
+:global(.workspace-theme-light) .price,:global(.workspace-theme-light) .grid article{border-color:#d7e4ec;background:#fff;box-shadow:0 12px 34px rgba(31,69,96,.06)}
+:global(.workspace-theme-light) .price small{color:#147fd1}
+:global(.workspace-theme-light) .statusGrid{background:#d8e5ed;border-radius:14px;overflow:hidden}
+:global(.workspace-theme-light) .statusGrid div{background:#fff}
+:global(.workspace-theme-light) .statusGrid span{color:#71889a}
+:global(.workspace-theme-light) .statusGrid strong{color:#173247}
+:global(.workspace-theme-light) .line{border-color:#e0e9ef}
+:global(.workspace-theme-light) .line span{color:#71889a}
+:global(.workspace-theme-light) .line strong{color:#173247}
+:global(.workspace-theme-light) .flow{border-color:#c7dfed;background:#f4faff;color:#147fd1}
+:global(.workspace-theme-light) .readiness{background:#d8e5ed}
+:global(.workspace-theme-light) .readiness span{background:#fff;color:#60798b}
+:global(.workspace-theme-light) .billingActions a{border-color:#bfd8e8;color:#147fd1;background:#f5fafc}
