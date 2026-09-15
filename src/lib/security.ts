@@ -16,6 +16,51 @@ function db() {
   return database;
 }
 
+let securityTablesReady: Promise<void> | null = null;
+
+async function ensureSecurityTables() {
+  if (!securityTablesReady) {
+    securityTablesReady = (async () => {
+      const database = db();
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS UserSecurityState (
+          userId TEXT PRIMARY KEY NOT NULL,
+          emailVerifiedAt INTEGER,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS SecurityToken (
+          id TEXT PRIMARY KEY NOT NULL,
+          userId TEXT NOT NULL,
+          purpose TEXT NOT NULL,
+          tokenHash TEXT NOT NULL UNIQUE,
+          expiresAt INTEGER NOT NULL,
+          usedAt INTEGER,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+      await database.prepare(`
+        CREATE INDEX IF NOT EXISTS SecurityToken_user_purpose
+        ON SecurityToken (userId, purpose, expiresAt)
+      `).run();
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS RateLimitBucket (
+          bucketKey TEXT PRIMARY KEY NOT NULL,
+          count INTEGER NOT NULL DEFAULT 0,
+          resetAt INTEGER NOT NULL,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+    })().catch((error) => {
+      securityTablesReady = null;
+      throw error;
+    });
+  }
+  return securityTablesReady;
+}
+
 function ipFor(request: Request) {
   return (
     request.headers.get('cf-connecting-ip') ||
@@ -33,6 +78,7 @@ export function emailVerificationIsEnforced() {
 }
 
 export async function consumeRateLimit(request: Request, input: RateLimitInput) {
+  await ensureSecurityTables();
   const now = Date.now();
   const nextReset = now + input.windowSeconds * 1000;
   const bucketKey = digest(
@@ -63,6 +109,7 @@ export async function consumeRateLimit(request: Request, input: RateLimitInput) 
 }
 
 export async function ensureUserSecurityState(userId: string, verified = false) {
+  await ensureSecurityTables();
   const database = db();
   await database.prepare(
     `INSERT INTO UserSecurityState (userId, emailVerifiedAt, createdAt, updatedAt)
@@ -78,6 +125,7 @@ export async function ensureUserSecurityState(userId: string, verified = false) 
 }
 
 export async function isUserEmailVerified(userId: string) {
+  await ensureSecurityTables();
   const row = await db().prepare(
     'SELECT emailVerifiedAt FROM UserSecurityState WHERE userId = ? LIMIT 1',
   ).bind(userId).first() as { emailVerifiedAt?: number | null } | null;
@@ -91,6 +139,7 @@ export async function markUserEmailVerified(userId: string) {
 }
 
 export async function createSecurityToken(userId: string, purpose: string, ttlSeconds: number) {
+  await ensureSecurityTables();
   const database = db();
   const raw = randomBytes(32).toString('base64url');
   const tokenHash = digest(raw);
@@ -113,6 +162,7 @@ export async function createSecurityToken(userId: string, purpose: string, ttlSe
 }
 
 export async function consumeSecurityToken(raw: string, purpose: string) {
+  await ensureSecurityTables();
   const database = db();
   const tokenHash = digest(raw);
   const now = Date.now();
