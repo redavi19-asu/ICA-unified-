@@ -159,3 +159,9 @@
 .workspace-theme-light .ica-assist-panel{border-color:#bfd9e9;background:#fff;color:#10202f;box-shadow:0 28px 80px rgba(31,69,96,.20)}.workspace-theme-light .ica-assist-panel header{border-bottom-color:#dce8ef;background:#f7fbfd}.workspace-theme-light .ica-assist-panel header strong{color:#173247}.workspace-theme-light .ica-assist-panel header button{color:#71889a}.workspace-theme-light .ica-assist-answer{border-color:#d9e5ed;background:#f5fafc}.workspace-theme-light .ica-assist-user{border-color:#a9cee6;background:#eaf6fd}.workspace-theme-light .ica-assist-answer p,.workspace-theme-light .ica-assist-user p{color:#435e71}.workspace-theme-light .ica-assist-panel form{border-top-color:#dce8ef;background:#f8fbfd}.workspace-theme-light .ica-assist-panel input{border-color:#d2e1ea;background:#fff;color:#173247}
 
 @media(max-width:760px){.workspace-theme-light .workspace-mobile-dock{background:rgba(255,255,255,.97)}}
+
+.workspace-theme-dark{
+  --ws-bg:#07101a;--ws-panel:#0b1b28;--ws-panel-soft:#081722;--ws-text:#edf6ff;--ws-muted:#8ca0af;
+  --ws-line:#1d3042;--ws-blue:#5eb8ff;--ws-teal:#35d4c0;--ws-purple:#a47aff;--ws-amber:#ffc14d;--ws-green:#35e982;
+  background:#07101a;color:#edf6ff
+}
