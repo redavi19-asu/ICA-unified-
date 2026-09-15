@@ -40,6 +40,29 @@ export async function POST(request: Request) {
 
   const passwordHash = existingUser ? null : await bcrypt.hash(parsed.data.password, 12);
 
+  let importedState: { desiredRole: string; desiredStatus: string; jobTitle: string | null } | null = null;
+  try {
+    const importedRows = await prisma.$queryRawUnsafe<Array<{
+      desiredRole: string;
+      desiredStatus: string;
+      jobTitle: string | null;
+    }>>(
+      `SELECT desiredRole, desiredStatus, jobTitle
+       FROM MigrationMemberState
+       WHERE organizationId = ? AND email = ?
+       LIMIT 1`,
+      invitation.organizationId,
+      invitation.email,
+    );
+    importedState = importedRows[0] || null;
+  } catch {
+    // Migration table may not exist for organizations that have never imported members.
+  }
+
+  const targetRole = importedState?.desiredRole || invitation.role;
+  const targetStatus = importedState?.desiredStatus || 'ONBOARDING';
+  const targetJobTitle = importedState?.jobTitle ?? invitation.jobTitle;
+
   const result = await prisma.$transaction(async (tx) => {
     let user = existingUser;
     if (!user) {
@@ -50,13 +73,13 @@ export async function POST(request: Request) {
 
     const membership = await tx.membership.upsert({
       where: { userId_organizationId: { userId: user.id, organizationId: invitation.organizationId } },
-      update: { role: invitation.role, status: 'ONBOARDING', jobTitle: invitation.jobTitle },
+      update: { role: targetRole, status: targetStatus, jobTitle: targetJobTitle },
       create: {
         userId: user.id,
         organizationId: invitation.organizationId,
-        role: invitation.role,
-        status: 'ONBOARDING',
-        jobTitle: invitation.jobTitle,
+        role: targetRole,
+        status: targetStatus,
+        jobTitle: targetJobTitle,
       },
     });
 
