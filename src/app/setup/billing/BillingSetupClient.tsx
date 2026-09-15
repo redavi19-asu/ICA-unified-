@@ -72,7 +72,7 @@ export default function BillingSetupClient({
             <span>due today</span>
           </div>
 
-          <div className={styles.line}><span>After 14 days</span><strong>$${monthlyPrice}/month</strong></div>
+          <div className={styles.line}><span>After 14 days</span><strong>${monthlyPrice}/month</strong></div>
           <div className={styles.line}><span>Billing cadence</span><strong>Monthly</strong></div>
           <div className={styles.line}><span>Standard support</span><strong>Included</strong></div>
           <div className={styles.line}><span>Platform access</span><strong>Web + Apps</strong></div>
