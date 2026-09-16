@@ -57,9 +57,19 @@ export async function POST(request: Request) {
     let membership = user?.memberships[0];
     const localPasswordValid = Boolean(
       user &&
-        membership &&
+        user.memberships.length > 0 &&
         (await bcrypt.compare(body.password, user.passwordHash))
     );
+
+    if (localPasswordValid && !body.organizationSlug && user && user.memberships.length > 1) {
+      return NextResponse.json(
+        {
+          error: 'This email belongs to more than one ICA workspace. Enter the ICA Company ID to choose the correct organization.',
+          code: 'COMPANY_ID_REQUIRED',
+        },
+        { status: 409 },
+      );
+    }
 
     let masterOwner = false;
 
