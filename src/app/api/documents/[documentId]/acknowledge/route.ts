@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireSession } from '../../../../../lib/auth';
 import { prisma } from '../../../../../lib/prisma';
+import { getDocumentContent } from '../../../../../lib/document-content';
 
 export async function POST(_request: Request, props: { params: Promise<{ documentId: string }> }) {
   const params = await props.params;
@@ -20,6 +21,14 @@ export async function POST(_request: Request, props: { params: Promise<{ documen
 
   if (!document.requiresAck) {
     return NextResponse.json({ error: 'This document does not require acknowledgment.' }, { status: 400 });
+  }
+
+  const content = await getDocumentContent(membership.organizationId, document.id);
+  if (!content || (!String(content.bodyText || '').trim() && !content.storageKey)) {
+    return NextResponse.json(
+      { error: 'This controlled document has no reviewable content yet.' },
+      { status: 409 },
+    );
   }
 
   const acknowledgedAt = new Date();
