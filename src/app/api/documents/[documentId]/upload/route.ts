@@ -4,6 +4,10 @@ import { requireSession } from '../../../../../../lib/auth';
 import { prisma } from '../../../../../../lib/prisma';
 import { attachDocumentFile } from '../../../../../../lib/document-content';
 
+type StorageBucket = {
+  put: (key: string, value: ArrayBuffer, options?: unknown) => Promise<unknown>;
+};
+
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 function safeName(name: string) {
@@ -47,7 +51,7 @@ export async function POST(
   }
 
   const { env } = getCloudflareContext();
-  const bucket = (env as any).ICA_UNIFIED_STORAGE;
+  const bucket = (env as unknown as { ICA_UNIFIED_STORAGE?: StorageBucket }).ICA_UNIFIED_STORAGE;
   if (!bucket) {
     return NextResponse.json({ error: 'Controlled document storage is not configured.' }, { status: 503 });
   }
