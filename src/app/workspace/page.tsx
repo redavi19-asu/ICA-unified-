@@ -12,11 +12,27 @@ export default async function WorkspacePage() {
 
   const organizationId = membership.organizationId;
 
-  const [members, courses, credentials, documents, platformAdmin, workflowStats] = await Promise.all([
-    prisma.membership.count({ where: { organizationId } }),
+  const [memberships, courses, enrollments, credentials, documents, platformAdmin, workflowStats] = await Promise.all([
+    prisma.membership.findMany({
+      where: { organizationId },
+      select: { role: true },
+    }),
     prisma.course.count({ where: { organizationId } }),
-    prisma.credential.count({ where: { organizationId } }),
-    prisma.document.count({ where: { organizationId } }),
+    prisma.enrollment.findMany({
+      where: { organizationId },
+      select: { status: true, progress: true, dueAt: true },
+    }),
+    prisma.credential.findMany({
+      where: { organizationId },
+      select: { status: true, expiresAt: true },
+    }),
+    prisma.document.findMany({
+      where: { organizationId },
+      select: {
+        requiresAck: true,
+        acknowledgments: { select: { acknowledgedAt: true } },
+      },
+    }),
     prisma.platformAdmin.findUnique({
       where: { email: membership.user.email.toLowerCase() },
       select: { role: true, active: true },
@@ -89,13 +105,66 @@ export default async function WorkspacePage() {
     })(),
   ]);
 
+  const now = new Date();
+  const memberRoleCounts = {
+    owners: memberships.filter((item) => item.role === 'OWNER').length,
+    admins: memberships.filter((item) => item.role === 'ADMIN').length,
+    managers: memberships.filter((item) => item.role === 'MANAGER').length,
+    members: memberships.filter((item) => item.role === 'MEMBER').length,
+  };
+
+  const averageCompletion = enrollments.length
+    ? Math.round(enrollments.reduce((sum, item) => sum + item.progress, 0) / enrollments.length)
+    : 0;
+  const overdueTraining = enrollments.filter(
+    (item) => item.status !== 'COMPLETE' && item.dueAt && item.dueAt < now,
+  ).length;
+
+  const credentialActive = credentials.filter(
+    (item) => item.status === 'active' && (!item.expiresAt || item.expiresAt > now),
+  ).length;
+  const credentialExpiringSoon = credentials.filter(
+    (item) => item.expiresAt &&
+      item.expiresAt > now &&
+      item.expiresAt.getTime() - now.getTime() <= 30 * 86400000,
+  ).length;
+  const credentialExpired = credentials.filter(
+    (item) => Boolean(item.expiresAt && item.expiresAt <= now),
+  ).length;
+
+  let requiredAcknowledgments = 0;
+  let completedAcknowledgments = 0;
+  for (const document of documents) {
+    if (!document.requiresAck) continue;
+    requiredAcknowledgments += memberships.length;
+    completedAcknowledgments += document.acknowledgments.filter((ack) => ack.acknowledgedAt).length;
+  }
+  const pendingAcknowledgments = Math.max(0, requiredAcknowledgments - completedAcknowledgments);
+  const documentCompliance = requiredAcknowledgments
+    ? Math.round((completedAcknowledgments / requiredAcknowledgments) * 100)
+    : 100;
+
   return (
     <WorkspaceClient
       userName={membership.user.name}
       role={membership.role}
       organizationName={membership.organization.name}
       platformRole={platformAdmin?.active ? platformAdmin.role : null}
-      stats={{ members, courses, credentials, documents }}
+      stats={{
+        members: memberships.length,
+        courses,
+        credentials: credentials.length,
+        documents: documents.length,
+        assignments: enrollments.length,
+        averageCompletion,
+        overdueTraining,
+        credentialActive,
+        credentialExpiringSoon,
+        credentialExpired,
+        documentCompliance,
+        pendingAcknowledgments,
+        roleCounts: memberRoleCounts,
+      }}
       workflowStats={workflowStats}
     />
   );
