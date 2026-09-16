@@ -28,7 +28,7 @@ Current navigation and behavior:
 - Reports: organization reporting.
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
 - Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
-- Billing: Owner/Admin subscription flow for ICA Unified Professional at $249/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
+- Billing: Owner/Admin subscription flow for ICA Unified Professional at $299/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
 - Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
 Help style:
@@ -76,7 +76,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('billing') || q.includes('stripe') || q.includes('249') || q.includes('subscription')) {
-    return 'Go to Billing. ICA Unified Professional is $249/month for the company subscription. Member dues and event payments stay separate and use the organization Stripe Connect account. Complete Connect onboarding there to activate paid public workflows.';
+    return 'Go to Billing. ICA Unified Professional is $299/month for the company subscription. Member dues and event payments stay separate and use the organization Stripe Connect account. Complete Connect onboarding there to activate paid public workflows.';
   }
 
   if (q.includes('backup') || q.includes('export')) {
