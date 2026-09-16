@@ -36,6 +36,7 @@ type Props = {
 export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats, workflowStats }: Props) {
   const router = useRouter();
   const firstName = userName.split(' ')[0] || userName;
+  const canManagePeople = role === 'OWNER' || role === 'ADMIN';
   const [systemHealth, setSystemHealth] = useState<'checking' | 'connected' | 'issue'>('checking');
 
   useEffect(() => {
@@ -91,7 +92,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/reports')}>▥ <span>Reports</span></button>
           <button className="workflow-nav-button" onClick={() => router.push('/workspace/workflows')}>↯ <span>Workflows</span></button>
           <p>COMPANY SETTINGS</p>
-          <button onClick={() => router.push('/workspace/people')}>◈ <span>Roles & Permissions</span></button>
+          {canManagePeople && <button onClick={() => router.push('/workspace/people')}>◈ <span>Roles & Permissions</span></button>}
           {(role === 'OWNER' || role === 'ADMIN') && (
             <>
               <button className="tools-nav-button" onClick={() => router.push('/workspace/tools')}>⚙ <span>Tools</span></button>
@@ -193,7 +194,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
                 <span><i className="dot green"/> Members <b>{stats.roleCounts.members}</b></span>
               </div>
             </div>
-            <div className="people-footer"><button onClick={() => router.push('/workspace/people')}>+ Quick Invite</button><button onClick={() => router.push('/workspace/people')}>View onboarding</button><button onClick={() => router.push('/workspace/people')}>Manage people</button></div>
+            <div className="people-footer">{canManagePeople && <button onClick={() => router.push('/workspace/people')}>+ Quick Invite</button>}<button onClick={() => router.push('/workspace/people')}>View onboarding</button><button onClick={() => router.push('/workspace/people')}>{canManagePeople ? 'Manage people' : 'View people'}</button></div>
           </article>
         </section>
 
@@ -221,7 +222,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
         </section>
 
         <section className="dashboard-actionbar">
-          <button onClick={() => router.push('/workspace/people')}><i>♙+</i><span>Quick Invite</span></button>
+          {canManagePeople ? <button onClick={() => router.push('/workspace/people')}><i>♙+</i><span>Quick Invite</span></button> : <button onClick={() => router.push('/workspace/people')}><i>♙</i><span>View People</span></button>}
           <button onClick={() => router.push('/workspace/learning')}><i>▥</i><span>Create Course</span></button>
           <button onClick={() => router.push('/workspace/documents')}><i>▤</i><span>Upload Document</span></button>
           <button onClick={() => router.push('/workspace/workflows')}><i>↯</i><span>New Workflow</span></button>
