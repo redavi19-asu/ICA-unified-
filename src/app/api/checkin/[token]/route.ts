@@ -9,6 +9,9 @@ export async function POST(
   context: { params: Promise<{ token: string }> },
 ) {
   const { membership } = await requireSession();
+  if (membership.status !== 'ACTIVE') {
+    return NextResponse.json({ error: 'Your membership is not active for event check-in.' }, { status: 403 });
+  }
   const { token } = await context.params;
   const event = await getEventForToken(token);
 
