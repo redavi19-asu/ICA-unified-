@@ -7,7 +7,7 @@ import BillingSetupClient from './BillingSetupClient';
 export default async function BillingSetupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelled?: string; confirm?: string }>;
+  searchParams: Promise<{ cancelled?: string; confirm?: string; trial?: string }>;
 }) {
   const { membership } = await requireSession();
   const params = await searchParams;
@@ -28,6 +28,7 @@ export default async function BillingSetupPage({
       stripeReady={isStripeCheckoutConfigured()}
       cancelled={params.cancelled === '1'}
       confirmationFailed={params.confirm === 'failed'}
+      trialExpired={params.trial === 'expired'}
     />
   );
 }
