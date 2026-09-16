@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -19,105 +19,118 @@ function NodeIcon({ type }: { type: string }) {
 
 function RealMapGlobe() {
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const mapInstanceRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    let disposed = false;
+    let frame = 0;
+    let resumeTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const style: maplibregl.StyleSpecification = {
-      version: 8,
-      sources: {
-        osm: {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          minzoom: 0,
-          maxzoom: 19,
-          attribution: '© OpenStreetMap contributors',
-        },
-      },
-      layers: [
-        {
-          id: 'osm',
-          type: 'raster',
-          source: 'osm',
-          paint: {
-            'raster-saturation': 0.58,
-            'raster-contrast': 0.18,
-            'raster-brightness-min': 0.03,
-            'raster-brightness-max': 1,
+    async function initMap() {
+      if (!mapRef.current || mapInstanceRef.current || disposed) return;
+
+      const maplibregl = await import('maplibre-gl');
+      if (!mapRef.current || disposed) return;
+
+      const style: StyleSpecification = {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            minzoom: 0,
+            maxzoom: 19,
+            attribution: '© OpenStreetMap contributors',
           },
         },
-      ],
-    };
-
-    const map = new maplibregl.Map({
-      container: mapRef.current,
-      style,
-      center: [-18, 22],
-      zoom: 1.18,
-      minZoom: 0.75,
-      maxZoom: 5.5,
-      pitch: 0,
-      bearing: 0,
-      attributionControl: false,
-      canvasContextAttributes: { antialias: true },
-    });
-
-    mapInstanceRef.current = map;
-
-    let userInteracting = false;
-    let resumeTimer: ReturnType<typeof setTimeout> | undefined;
-    let frame = 0;
-    let lastFrame = performance.now();
-
-    const pauseSpin = () => {
-      userInteracting = true;
-      if (resumeTimer) window.clearTimeout(resumeTimer);
-    };
-
-    const resumeSpinSoon = () => {
-      if (resumeTimer) window.clearTimeout(resumeTimer);
-      resumeTimer = window.setTimeout(() => {
-        userInteracting = false;
-      }, 3200);
-    };
-
-    map.on('style.load', () => {
-      map.setProjection({ type: 'globe' });
-    });
-
-    map.on('load', () => {
-      setMapReady(true);
-
-      const animate = (now: number) => {
-        const delta = Math.min(34, now - lastFrame);
-        lastFrame = now;
-
-        if (!userInteracting && map.getZoom() < 2.4) {
-          const center = map.getCenter();
-          map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-        }
-
-        frame = requestAnimationFrame(animate);
+        layers: [
+          {
+            id: 'osm',
+            type: 'raster',
+            source: 'osm',
+            paint: {
+              'raster-saturation': 0.58,
+              'raster-contrast': 0.18,
+              'raster-brightness-min': 0.03,
+              'raster-brightness-max': 1,
+            },
+          },
+        ],
       };
 
-      frame = requestAnimationFrame(animate);
-    });
+      const map = new maplibregl.Map({
+        container: mapRef.current,
+        style,
+        center: [-18, 22],
+        zoom: 1.18,
+        minZoom: 0.75,
+        maxZoom: 5.5,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false,
+        canvasContextAttributes: { antialias: true },
+      });
 
-    const canvas = map.getCanvasContainer();
-    ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
-      canvas.addEventListener(eventName, pauseSpin, { passive: true });
-    });
+      mapInstanceRef.current = map;
 
-    map.on('moveend', resumeSpinSoon);
-    map.on('zoomend', resumeSpinSoon);
+      let userInteracting = false;
+      let lastFrame = performance.now();
+
+      const pauseSpin = () => {
+        userInteracting = true;
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+      };
+
+      const resumeSpinSoon = () => {
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+        resumeTimer = window.setTimeout(() => {
+          userInteracting = false;
+        }, 3200);
+      };
+
+      map.on('style.load', () => {
+        map.setProjection({ type: 'globe' });
+      });
+
+      map.on('load', () => {
+        if (disposed) return;
+        setMapReady(true);
+
+        const animate = (now: number) => {
+          if (disposed || !mapInstanceRef.current) return;
+
+          const delta = Math.min(34, now - lastFrame);
+          lastFrame = now;
+
+          if (!userInteracting && map.getZoom() < 2.4) {
+            const center = map.getCenter();
+            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+          }
+
+          frame = requestAnimationFrame(animate);
+        };
+
+        frame = requestAnimationFrame(animate);
+      });
+
+      const canvas = map.getCanvasContainer();
+      ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
+        canvas.addEventListener(eventName, pauseSpin, { passive: true });
+      });
+
+      map.on('moveend', resumeSpinSoon);
+      map.on('zoomend', resumeSpinSoon);
+    }
+
+    void initMap();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
       if (resumeTimer) window.clearTimeout(resumeTimer);
-      map.remove();
+      mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
     };
   }, []);
