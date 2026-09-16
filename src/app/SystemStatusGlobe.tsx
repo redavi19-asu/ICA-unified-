@@ -36,15 +36,46 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
-      // Required for Next.js/Turbopack so vector-tile workers load correctly.
-      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+      const tracestrackKey = process.env.NEXT_PUBLIC_TRACESTRACK_API_KEY?.trim();
+      const topoTileUrl = tracestrackKey
+        ? `https://tile.tracestrack.com/topo__/{z}/{x}/{y}.webp?key=${encodeURIComponent(tracestrackKey)}`
+        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+      const style = {
+        version: 8 as const,
+        sources: {
+          basemap: {
+            type: 'raster' as const,
+            tiles: [topoTileUrl],
+            tileSize: 256,
+            minzoom: 0,
+            maxzoom: 19,
+            attribution: tracestrackKey
+              ? 'Tiles © Tracestrack · Map data © OpenStreetMap contributors'
+              : '© OpenStreetMap contributors',
+          },
+        },
+        layers: [
+          {
+            id: 'basemap',
+            type: 'raster' as const,
+            source: 'basemap',
+            paint: {
+              'raster-saturation': tracestrackKey ? 0.08 : 0.18,
+              'raster-contrast': tracestrackKey ? 0.08 : 0.12,
+              'raster-brightness-min': 0.04,
+              'raster-brightness-max': 1,
+            },
+          },
+        ],
+      };
 
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style: 'https://demotiles.maplibre.org/style.json',
-        center: [8, 14],
-        zoom: 1.25,
-        minZoom: 0.7,
+        style,
+        center: [-18, 22],
+        zoom: 1.12,
+        minZoom: 0.8,
         maxZoom: 5.5,
         pitch: 0,
         bearing: 0,
@@ -71,7 +102,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       let spinStarted = false;
 
-      map.on('style.load', () => {
+      map.on('load', () => {
         if (disposed) return;
 
         map.setProjection({ type: 'globe' });
@@ -211,7 +242,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre rendering · Map data: Natural Earth</small>
+        <small className={styles.mapCredit}>MapLibre globe · Tracestrack Topo when configured · OpenStreetMap fallback</small>
       </div>
     </div>
   );
