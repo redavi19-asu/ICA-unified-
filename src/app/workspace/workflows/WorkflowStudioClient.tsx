@@ -193,12 +193,12 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
             <p className={styles.step}>03 / CONFIRMATION</p>
             <label>Email subject<input value={membership.confirmationSubject} onChange={(e) => setMembership({...membership, confirmationSubject:e.target.value})} /></label>
             <label>Confirmation email<textarea value={membership.confirmationMessage} onChange={(e) => setMembership({...membership, confirmationMessage:e.target.value})} /></label>
-            <Toggle label="Publish this membership now" value={membership.active} onChange={(value) => setMembership({...membership, active:value})} />
+            <Toggle label="Mark this membership configuration active" value={membership.active} onChange={(value) => setMembership({...membership, active:value})} />
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together.</span>
-            <button disabled={saving}>{saving ? 'SAVING…' : membership.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
+            <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together. Public application/payment execution is connected separately.</span>
+            <button disabled={saving}>{saving ? 'SAVING…' : membership.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
           </div>
         </form>
       ) : (
@@ -238,14 +238,14 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <section>
-            <p className={styles.step}>03 / CONFIRMATION + PUBLISHING</p>
+            <p className={styles.step}>03 / CONFIRMATION + ACTIVATION</p>
             <label>Email subject<input value={event.confirmationSubject} onChange={(e) => setEvent({...event, confirmationSubject:e.target.value})} /></label>
             <label>Registration email<textarea value={event.confirmationMessage} onChange={(e) => setEvent({...event, confirmationMessage:e.target.value})} /></label>
-            <Toggle label="Publish registration now" value={event.active} onChange={(value) => setEvent({...event, active:value})} />
+            <Toggle label="Mark this event configuration active" value={event.active} onChange={(value) => setEvent({...event, active:value})} />
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save keeps registration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together.</span>
+            <span>One save keeps event configuration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together. Public registration/payment execution is connected separately.</span>
             <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
           </div>
         </form>
