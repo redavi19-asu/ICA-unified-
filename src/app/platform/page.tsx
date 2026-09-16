@@ -4,12 +4,13 @@ import Link from 'next/link';
 
 export default async function PlatformPage() {
   const admin = await requirePlatformAdmin();
-  const [organizations, userCount, courseCount] = await Promise.all([
+  const [organizations, organizationCount, userCount, courseCount] = await Promise.all([
     prisma.organization.findMany({
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { memberships: true, courses: true, credentials: true } } },
       take: 100,
     }),
+    prisma.organization.count(),
     prisma.user.count(),
     prisma.course.count(),
   ]);
@@ -30,7 +31,7 @@ export default async function PlatformPage() {
       </header>
 
       <section style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginTop:28}}>
-        <Metric label="ORGANIZATIONS" value={organizations.length}/>
+        <Metric label="ORGANIZATIONS" value={organizationCount}/>
         <Metric label="USERS" value={userCount}/>
         <Metric label="COURSES" value={courseCount}/>
         <Metric label="TRIALS" value={organizations.filter((o) => o.status === 'TRIAL').length}/>
