@@ -127,13 +127,7 @@ async function saveAccountSnapshot(organizationId: string, account: StripeAccoun
     detailsSubmitted,
   );
 
-  return {
-    connectedAccountId: account.id,
-    onboardingStatus,
-    chargesEnabled: Boolean(chargesEnabled),
-    payoutsEnabled: Boolean(payoutsEnabled),
-    detailsSubmitted: Boolean(detailsSubmitted),
-  };
+  return getOrganizationPaymentAccount(organizationId);
 }
 
 export async function refreshOrganizationPaymentAccount(organizationId: string) {
