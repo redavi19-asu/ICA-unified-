@@ -248,6 +248,15 @@ export async function createWorkflowPaymentCheckout(input: {
   if (submission.amountCents <= 0) throw new Error('PAYMENT_NOT_REQUIRED');
   if (submission.paymentStatus === 'PAID') throw new Error('PAYMENT_ALREADY_COMPLETE');
 
+  const paymentEligibleStatus =
+    workflow.kind === 'EVENT'
+      ? submission.status === 'PAYMENT_PENDING'
+      : submission.status === 'PAYMENT_PENDING' || submission.status === 'PENDING_REVIEW';
+
+  if (!paymentEligibleStatus) {
+    throw new Error('SUBMISSION_NOT_ELIGIBLE_FOR_PAYMENT');
+  }
+
   const account = await refreshOrganizationPaymentAccount(workflow.organizationId);
   if (!account?.connectedAccountId || !Number(account.chargesEnabled)) {
     throw new Error('ORGANIZATION_PAYMENT_NOT_READY');
