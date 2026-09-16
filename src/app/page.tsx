@@ -80,7 +80,7 @@ const capabilityGroups = [
     icon: 'data',
     summary: 'ICA subscription money and customer organization money stay separate.',
     items: [
-      'ICA Unified Professional billing uses Stripe for the organization’s $249/month software subscription.',
+      'ICA Unified Professional billing uses Stripe for the organization’s $299/month software subscription.',
       'Each customer organization can connect its own Stripe account through Stripe Connect.',
       'Paid membership and event workflows can open secure Stripe Checkout for that organization.',
       'Payment return and Stripe webhook verification update the exact workflow submission before paid access is granted.',
@@ -168,7 +168,7 @@ const capabilityGroups = [
 const plans = [
   {
     name: 'Professional',
-    tag: '$249 / MONTH',
+    tag: '$299 / MONTH',
     description: 'The complete ICA Unified association + learning platform with standard support included.',
     features: ['AMS + LMS workspace', 'CE/compliance + credential wallet', 'Safe self-service member importer', 'API keys + signed webhooks', 'Custom-domain verification', 'Standard support included', '14-day trial'],
     cta: 'START PROFESSIONAL TRIAL',
@@ -177,7 +177,7 @@ const plans = [
   },
   {
     name: 'Professional + Setup',
-    tag: '$249 / MONTH + ONE-TIME SETUP',
+    tag: '$299 / MONTH + ONE-TIME SETUP',
     description: 'For organizations that want ICA help configuring the platform or connecting an existing website.',
     features: ['Everything in Professional', 'Guided onboarding from $499', 'Website/API connection planning', 'Branded portal/domain setup', 'Registration & enrollment integration', 'Scope approved before work begins'],
     cta: 'START SETUP TRIAL',
@@ -451,8 +451,8 @@ export default async function Home() {
       <section id="plans" className={styles.section}>
         <div className={styles.sectionHead}>
           <p className={styles.eyebrow}>PLANS & ONBOARDING</p>
-          <h2>$249/month for the platform. Add implementation only when the organization needs it.</h2>
-          <p>ICA Unified Professional is $249 per month. Data migration, custom integrations, and larger implementation work are scoped separately. Every new organization can begin with the 14-day trial workspace.</p>
+          <h2>$299/month for the platform. Add implementation only when the organization needs it.</h2>
+          <p>ICA Unified Professional is $299 per month. Data migration, custom integrations, and larger implementation work are scoped separately. Every new organization can begin with the 14-day trial workspace.</p>
         </div>
         <div className={styles.planGrid}>
           {plans.map((plan) => (
@@ -544,7 +544,7 @@ export default async function Home() {
         </div>
 
         <div className={styles.pricingPromise}>
-          <strong>$249/month.</strong>
+          <strong>$299/month.</strong>
           <span>Standard support included. Optional project work is disclosed and approved separately.</span>
           <a href="/register">START 14-DAY TRIAL →</a>
         </div>
