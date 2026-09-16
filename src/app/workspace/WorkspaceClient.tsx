@@ -226,7 +226,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/learning')}><i>▥</i><span>Create Course</span></button>
           <button onClick={() => router.push('/workspace/documents')}><i>▤</i><span>Upload Document</span></button>
           <button onClick={() => router.push('/workspace/workflows')}><i>↯</i><span>New Workflow</span></button>
-          <div className="system-status"><small>SYSTEM STATUS</small><strong>{systemHealth === 'connected' ? '● All Systems Operational' : systemHealth === 'checking' ? '● Checking Systems' : '● Service Issue'}</strong></div>
+          <div className="system-status"><small>SYSTEM STATUS</small><strong>{systemHealth === 'connected' ? '● Core Systems Operational' : systemHealth === 'checking' ? '● Checking Systems' : '● Service Issue'}</strong></div>
         </section>
       </section>
 
