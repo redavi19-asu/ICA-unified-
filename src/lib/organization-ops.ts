@@ -222,6 +222,64 @@ export async function listEmailOutbox(organizationId: string, limit = 50) {
   );
 }
 
+
+export async function retryEmailOutbox(organizationId: string, limit = 50) {
+  await ensureOperationsTables();
+  if (!emailDeliveryConfigured()) {
+    return { attempted: 0, sent: 0, failed: 0, skipped: true };
+  }
+
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    id: string;
+    recipient: string;
+    subject: string;
+    bodyText: string;
+  }>>(
+    `SELECT id, recipient, subject, bodyText
+     FROM EmailOutbox
+     WHERE organizationId = ? AND status IN ('QUEUED','FAILED')
+     ORDER BY createdAt ASC
+     LIMIT ?`,
+    organizationId,
+    limit,
+  );
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const row of rows) {
+    try {
+      const delivery = await sendTransactionalEmail({
+        recipient: row.recipient,
+        subject: row.subject,
+        bodyText: row.bodyText,
+        idempotencyKey: `ica-email-${row.id}`,
+      });
+
+      if (delivery.sent) {
+        sent += 1;
+        await prisma.$executeRawUnsafe(
+          `UPDATE EmailOutbox
+           SET status = 'SENT', providerMessageId = ?, lastError = NULL, sentAt = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          delivery.providerMessageId,
+          row.id,
+        );
+      }
+    } catch (error) {
+      failed += 1;
+      const message = error instanceof Error ? error.message : 'Email delivery failed.';
+      await prisma.$executeRawUnsafe(
+        `UPDATE EmailOutbox SET status = 'FAILED', lastError = ? WHERE id = ?`,
+        message.slice(0, 500),
+        row.id,
+      );
+    }
+  }
+
+  return { attempted: rows.length, sent, failed, skipped: false };
+}
+
 export async function createApiKey(organizationId: string, createdById: string, name: string) {
   await ensureOperationsTables();
   const raw = `ica_live_${randomBytes(28).toString('base64url')}`;
