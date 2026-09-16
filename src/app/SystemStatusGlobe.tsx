@@ -127,28 +127,33 @@ function RealMapGlobe({ health }: { health: HealthState }) {
           });
         }
 
-        map.once('idle', () => {
-          if (!disposed) setMapReady(true);
-        });
+        map.once('render', () => {
+          if (disposed) return;
+          setMapReady(true);
 
-        if (!spinStarted) {
-          spinStarted = true;
-          const animate = (now: number) => {
-            if (disposed || !mapInstanceRef.current) return;
+          if (!spinStarted) {
+            spinStarted = true;
+            lastFrame = performance.now();
 
-            const delta = Math.min(34, now - lastFrame);
-            lastFrame = now;
+            const animate = (now: number) => {
+              if (disposed || !mapInstanceRef.current) return;
 
-            if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-              const center = map.getCenter();
-              map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-            }
+              const delta = Math.min(34, now - lastFrame);
+              lastFrame = now;
+
+              if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
+                const center = map.getCenter();
+                map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+              }
+
+              frame = requestAnimationFrame(animate);
+            };
 
             frame = requestAnimationFrame(animate);
-          };
+          }
+        });
 
-          frame = requestAnimationFrame(animate);
-        }
+        map.triggerRepaint();
       });
 
       map.on('error', (event) => {
