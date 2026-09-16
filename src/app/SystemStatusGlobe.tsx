@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { GeoJSONSourceSpecification, Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
-import worldCountries from './world-countries.json';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -22,7 +21,6 @@ function RealMapGlobe({ health }: { health: HealthState }) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const healthRef = useRef<HealthState>(health);
   const mapInstanceRef = useRef<MapLibreMap | null>(null);
-  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     healthRef.current = health;
@@ -39,24 +37,12 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
-      const style: StyleSpecification = {
-        version: 8,
-        sources: {},
-        layers: [
-          {
-            id: 'ocean',
-            type: 'background',
-            paint: { 'background-color': '#D8F2FF' },
-          },
-        ],
-      };
-
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style,
-        center: [-18, 22],
-        zoom: 1.18,
-        minZoom: 0.95,
+        style: 'https://demotiles.maplibre.org/globe.json',
+        center: [17.65431710431244, 32.954120326746775],
+        zoom: 0.95,
+        minZoom: 0.7,
         maxZoom: 5.5,
         pitch: 0,
         bearing: 0,
@@ -83,76 +69,27 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       let spinStarted = false;
 
-      map.on('style.load', () => {
-        if (disposed) return;
+      map.on('load', () => {
+        if (disposed || spinStarted) return;
 
-        map.setProjection({ type: 'globe' });
+        spinStarted = true;
+        lastFrame = performance.now();
 
-        if (!map.getSource('countries')) {
-          map.addSource('countries', {
-            type: 'geojson',
-            data: worldCountries as unknown as GeoJSONSourceSpecification['data'],
-          });
+        const animate = (now: number) => {
+          if (disposed || !mapInstanceRef.current) return;
 
-          map.addLayer({
-            id: 'countries-fill',
-            type: 'fill',
-            source: 'countries',
-            paint: {
-              'fill-color': [
-                'match',
-                ['get', 'MAPCOLOR7'],
-                1, '#D6C7FF',
-                2, '#EBCA8A',
-                3, '#C1E599',
-                4, '#E7E58F',
-                5, '#98DDA1',
-                6, '#83D5F4',
-                7, '#B1BBF9',
-                '#EAB38F',
-              ],
-              'fill-opacity': 1,
-            },
-          });
+          const delta = Math.min(34, now - lastFrame);
+          lastFrame = now;
 
-          map.addLayer({
-            id: 'countries-boundary',
-            type: 'line',
-            source: 'countries',
-            paint: {
-              'line-color': '#FFFFFF',
-              'line-width': 1.15,
-              'line-opacity': 0.95,
-            },
-          });
-        }
+          if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
+            const center = map.getCenter();
+            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+          }
 
-        setMapReady(true);
+          frame = requestAnimationFrame(animate);
+        };
 
-        if (!spinStarted) {
-          spinStarted = true;
-          lastFrame = performance.now();
-
-          const animate = (now: number) => {
-            if (disposed || !mapInstanceRef.current) return;
-
-            const delta = Math.min(34, now - lastFrame);
-            lastFrame = now;
-
-            if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-              const center = map.getCenter();
-              map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-            }
-
-            frame = requestAnimationFrame(animate);
-          };
-
-          window.setTimeout(() => {
-            if (!disposed) frame = requestAnimationFrame(animate);
-          }, 120);
-        }
-
-        map.triggerRepaint();
+        frame = requestAnimationFrame(animate);
       });
 
       map.on('error', (event) => {
@@ -183,7 +120,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
     <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
       <div
         ref={mapRef}
-        className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
+        className={styles.realGlobeMap}
         aria-label="Interactive ICA Unified MapLibre world globe"
       />
       <div className={styles.globeHint}>{health === 'issue' ? 'SERVICE ISSUE · AUTO-SPIN PAUSED' : 'DRAG · ZOOM · AUTO-SPIN'}</div>
