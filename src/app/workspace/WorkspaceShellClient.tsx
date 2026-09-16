@@ -17,6 +17,14 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   const items = useMemo(() => {
+    if (role === 'MEMBER') {
+      return [
+        { label: 'My Workspace', path: '/my' },
+        { label: 'Learning', path: '/workspace/learning' },
+        { label: 'CE Wallet', path: '/my/wallet' },
+      ];
+    }
+
     const base = [
       { label: 'Dashboard', path: '/workspace' },
       { label: 'Learning', path: '/workspace/learning' },
