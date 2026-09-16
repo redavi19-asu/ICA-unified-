@@ -35,8 +35,8 @@ export async function POST(request: Request) {
     },
     include: { user: true },
   });
-  if (!member || member.status === 'SUSPENDED') {
-    return NextResponse.json({ error: 'Member is not active for check-in.' }, { status: 404 });
+  if (!member || member.status !== 'ACTIVE') {
+    return NextResponse.json({ error: 'Member is not active for check-in.' }, { status: 403 });
   }
 
   const rows = await prisma.$queryRawUnsafe<Array<{
