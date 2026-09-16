@@ -13,6 +13,22 @@ type Workflow = {
   updatedAt: string;
 };
 
+type Submission = {
+  id: string;
+  workflowId: string;
+  kind: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  notes: string | null;
+  status: string;
+  paymentStatus: string;
+  amountCents: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type Props = {
   organizationName: string;
   role: string;
@@ -60,6 +76,9 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   async function loadWorkflows() {
     try {
@@ -69,6 +88,33 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
     } finally {
       setLoading(false);
     }
+  }
+
+
+  async function loadSubmissions(workflow: Workflow) {
+    setSelectedWorkflow(workflow);
+    setSubmissionsLoading(true);
+    setMessage('');
+    const response = await fetch(`/api/workflows/${workflow.id}/submissions`, { cache: 'no-store' });
+    const data = await response.json();
+    setSubmissionsLoading(false);
+    if (!response.ok) {
+      setMessage(data.error || 'Unable to load workflow submissions.');
+      return;
+    }
+    setSubmissions(data.submissions || []);
+  }
+
+  async function updateSubmission(submissionId: string, status: string) {
+    if (!selectedWorkflow) return;
+    const response = await fetch(`/api/workflows/${selectedWorkflow.id}/submissions`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ submissionId, status }),
+    });
+    const data = await response.json();
+    setMessage(data.message || data.error || 'Submission updated.');
+    if (response.ok) await loadSubmissions(selectedWorkflow);
   }
 
   useEffect(() => {
@@ -151,8 +197,8 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
         </div>
         <p>
           Create a membership program or event once. ICA Unified stores the pricing,
-          approvals, qualifications, communications, education credits, and publishing
-          rules together instead of sending you through separate modules.
+          approvals, qualifications, communications, education credits, and execution
+          rules together. When a workflow is ACTIVE, ICA gives it a live public application or registration page.
         </p>
       </section>
 
@@ -197,7 +243,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together. Public application/payment execution is connected separately.</span>
+            <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together. ACTIVE workflows immediately receive a public application page.</span>
             <button disabled={saving}>{saving ? 'SAVING…' : membership.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
           </div>
         </form>
@@ -245,8 +291,8 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
           </section>
 
           <div className={styles.saveBar}>
-            <span>One save keeps event configuration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together. Public registration/payment execution is connected separately.</span>
-            <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + PUBLISH' : 'SAVE DRAFT'}</button>
+            <span>One save keeps event configuration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together. ACTIVE workflows immediately receive a public registration page.</span>
+            <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
           </div>
         </form>
       )}
@@ -265,10 +311,61 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               <div><small>{workflow.kind}</small><strong>{workflow.name}</strong></div>
               <span className={workflow.status === 'ACTIVE' ? styles.live : styles.draft}>{workflow.status}</span>
               <time>{new Date(workflow.updatedAt).toLocaleString()}</time>
+              <div className={styles.workflowActions}>
+                {workflow.status === 'ACTIVE' && <a href={`/flow/${workflow.id}`} target="_blank" rel="noreferrer">OPEN PUBLIC FLOW ↗</a>}
+                <button type="button" onClick={() => loadSubmissions(workflow)}>VIEW SUBMISSIONS</button>
+              </div>
             </article>
           ))}
         </div>
       </section>
+
+      {selectedWorkflow && (
+        <section className={styles.submissions}>
+          <div className={styles.savedHead}>
+            <div>
+              <p className={styles.kicker}>LIVE EXECUTION</p>
+              <h2>{selectedWorkflow.name} submissions</h2>
+            </div>
+            <button type="button" onClick={() => { setSelectedWorkflow(null); setSubmissions([]); }}>CLOSE</button>
+          </div>
+
+          {submissionsLoading ? <p className={styles.empty}>Loading submissions…</p> : submissions.length === 0 ? (
+            <p className={styles.empty}>No applications or registrations have been submitted yet.</p>
+          ) : (
+            <div className={styles.submissionList}>
+              {submissions.map((submission) => (
+                <article key={submission.id} className={styles.submissionRow}>
+                  <div>
+                    <small>{new Date(submission.createdAt).toLocaleString()}</small>
+                    <strong>{submission.name}</strong>
+                    <span>{submission.email}{submission.phone ? ` · ${submission.phone}` : ''}{submission.company ? ` · ${submission.company}` : ''}</span>
+                    {submission.notes && <p>{submission.notes}</p>}
+                  </div>
+                  <div className={styles.submissionState}>
+                    <b>{submission.status.replaceAll('_', ' ')}</b>
+                    <span>{submission.amountCents > 0 ? `${(submission.amountCents / 100).toFixed(2)} · ${submission.paymentStatus}` : 'NO PAYMENT REQUIRED'}</span>
+                  </div>
+                  <div className={styles.submissionActions}>
+                    {selectedWorkflow.kind === 'MEMBERSHIP' ? (
+                      <>
+                        {submission.status !== 'APPROVED' && <button type="button" onClick={() => updateSubmission(submission.id, 'APPROVED')}>APPROVE</button>}
+                        {submission.status !== 'REJECTED' && <button type="button" onClick={() => updateSubmission(submission.id, 'REJECTED')}>REJECT</button>}
+                      </>
+                    ) : (
+                      <>
+                        {submission.status !== 'REGISTERED' && <button type="button" onClick={() => updateSubmission(submission.id, 'REGISTERED')}>REGISTER</button>}
+                        {submission.status !== 'WAITLISTED' && <button type="button" onClick={() => updateSubmission(submission.id, 'WAITLISTED')}>WAITLIST</button>}
+                        {submission.status !== 'REJECTED' && <button type="button" onClick={() => updateSubmission(submission.id, 'REJECTED')}>REJECT</button>}
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }
