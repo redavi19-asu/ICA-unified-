@@ -39,9 +39,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style: 'https://demotiles.maplibre.org/globe.json',
-        center: [17.65431710431244, 32.954120326746775],
-        zoom: 0.95,
+        style: 'https://demotiles.maplibre.org/style.json',
+        center: [0, 12],
+        zoom: 1.05,
         minZoom: 0.7,
         maxZoom: 5.5,
         pitch: 0,
@@ -69,9 +69,12 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       let spinStarted = false;
 
-      map.on('load', () => {
-        if (disposed || spinStarted) return;
+      map.on('style.load', () => {
+        if (disposed) return;
 
+        map.setProjection({ type: 'globe' });
+
+        if (spinStarted) return;
         spinStarted = true;
         lastFrame = performance.now();
 
