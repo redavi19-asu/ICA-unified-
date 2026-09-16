@@ -25,7 +25,7 @@ function RealMapGlobe() {
   useEffect(() => {
     let disposed = false;
     let frame = 0;
-    let resumeTimer: ReturnType<typeof setTimeout> | undefined;
+    let resumeTimer: number | undefined;
 
     async function initMap() {
       if (!mapRef.current || mapInstanceRef.current || disposed) return;
