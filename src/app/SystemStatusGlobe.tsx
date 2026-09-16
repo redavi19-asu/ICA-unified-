@@ -75,8 +75,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
     const texture = document.createElement('canvas');
     texture.width = textureWidth;
     texture.height = textureHeight;
-    const textureContext = texture.getContext('2d', { alpha: false });
-    if (!textureContext) return;
+    const textureContextResult = texture.getContext('2d', { alpha: false });
+    if (!textureContextResult) return;
+    const textureContext: CanvasRenderingContext2D = textureContextResult;
 
     textureContext.fillStyle = '#56c8eb';
     textureContext.fillRect(0, 0, textureWidth, textureHeight);
