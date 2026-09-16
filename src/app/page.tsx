@@ -60,7 +60,7 @@ const includedWithProfessional = [
   ['Domains + Export', 'Custom-domain verification + organization host resolution, member CSV export, and full organization backup export.'],
   ['Payments', 'Company SaaS billing stays separate from organization dues/event money through Stripe Connect.'],
   ['Product Support', 'Standard support for using and operating existing ICA Unified features.'],
-  ['Mobile Access', 'ICA Unified Mobile for iPhone and iPad is included with Professional when released, using the same organization login and cloud data.'],
+  ['Mobile Access', 'ICA Unified Mobile native app code is included with Professional; signed store distribution activates when the mobile release is published.'],
 ];
 
 const standardSupport = [
@@ -164,9 +164,9 @@ export default async function Home() {
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
             <span><i><PlatformIcon type="web" /></i><b>WEB</b><small>LIVE</small></span>
-            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>PLANNED</small></span>
-            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>PLANNED</small></span>
-            <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>IN DEVELOPMENT</small></span>
+            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>SIGNING PENDING</small></span>
+            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>NOTARIZATION PENDING</small></span>
+            <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>STORE RELEASE PENDING</small></span>
           </div>
           <div className={styles.heroTrinkets} aria-hidden="true">
             <span className={styles.trinketOne}>QR CHECK-IN</span>
@@ -274,16 +274,17 @@ export default async function Home() {
             <p className={styles.eyebrow}>ICA UNIFIED MOBILE</p>
             <h2>Built for the people standing at the event.</h2>
             <p>
-              The desktop workspace runs the organization. ICA Unified Mobile is being built for the staff member
+              The desktop workspace runs the organization. ICA Unified Mobile is built as a native Expo app for the staff member
               checking people in, walking a conference floor, helping a member, or verifying credentials in real time.
-              One iPhone/iPad app. Same organization. Same member record. Same ICA Unified cloud data.
+              Production build profiles are in place; signing and store submission are the remaining release steps.
+              One app. Same organization. Same member record. Same ICA Unified cloud data.
             </p>
           </div>
           <div className={styles.mobileStatusCard}>
             <span>APP AVAILABILITY</span>
             <strong>iPhone + iPad</strong>
-            <b>IN DEVELOPMENT</b>
-            <small>One App Store download for both devices.</small>
+            <b>STORE RELEASE PENDING</b>
+            <small>Native app code + production build profiles are ready; signing/submission remains.</small>
           </div>
         </div>
 
@@ -298,9 +299,9 @@ export default async function Home() {
 
         <div className={styles.platformAvailability}>
           <div><span>WEB</span><strong>LIVE</strong></div>
-          <div><span>IPHONE + IPAD</span><strong>IN DEVELOPMENT</strong></div>
-          <div><span>ANDROID</span><strong>PLANNED</strong></div>
-          <div><span>WINDOWS + MAC</span><strong>PLANNED</strong></div>
+          <div><span>IPHONE + IPAD</span><strong>STORE RELEASE PENDING</strong></div>
+          <div><span>ANDROID</span><strong>BUILD CONFIG READY</strong></div>
+          <div><span>WINDOWS + MAC</span><strong>SIGNING / RELEASE</strong></div>
         </div>
       </section>
 
