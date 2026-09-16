@@ -4,7 +4,6 @@ import {
   ensureWorkflowExecutionTables,
   getPublicWorkflow,
   getWorkflowSubmission,
-  setWorkflowSubmissionStatus,
 } from './workflow-execution';
 import { queueEmail } from './organization-ops';
 
@@ -23,6 +22,17 @@ type CheckoutSession = {
   mode?: string;
   metadata?: Record<string, string>;
   amount_total?: number | null;
+};
+
+export type OrganizationPaymentAccountRecord = {
+  organizationId: string;
+  provider: string;
+  connectedAccountId: string | null;
+  onboardingStatus: string;
+  chargesEnabled: number;
+  payoutsEnabled: number;
+  detailsSubmitted: number;
+  updatedAt: string;
 };
 
 let paymentTableReady: Promise<void> | null = null;
