@@ -61,7 +61,6 @@ function RealMapGlobe({ health }: { health: HealthState }) {
             paint: {
               'raster-opacity': 1,
               'raster-fade-duration': 0,
-              'raster-resampling': 'linear',
               'raster-saturation': 0.62,
               'raster-contrast': 0.14,
               'raster-brightness-min': 0.02,
