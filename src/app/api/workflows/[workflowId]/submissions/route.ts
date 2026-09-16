@@ -83,6 +83,16 @@ export async function PATCH(
   );
   if (!submission) return NextResponse.json({ error: 'Submission not found.' }, { status: 404 });
 
+  if (
+    submission.amountCents > 0 &&
+    submission.paymentStatus !== 'PAID' &&
+    (parsed.data.status === 'APPROVED' || parsed.data.status === 'REGISTERED')
+  ) {
+    return NextResponse.json({
+      error: 'Payment is still pending. Complete the connected-account payment before granting paid access.',
+    }, { status: 409 });
+  }
+
   if (workflow.kind === 'MEMBERSHIP' && !['APPROVED', 'REJECTED', 'CANCELLED'].includes(parsed.data.status)) {
     return NextResponse.json({ error: 'Membership applications can be approved, rejected, or cancelled.' }, { status: 400 });
   }
