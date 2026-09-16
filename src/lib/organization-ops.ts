@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { emailDeliveryConfigured, sendTransactionalEmail } from './email-delivery';
 
-export const PROFESSIONAL_PRICE_CENTS = 24900;
+export const PROFESSIONAL_PRICE_CENTS = 29900;
 export const PROFESSIONAL_PLAN = 'professional';
 
 export async function ensureOperationsTables() {
@@ -10,7 +10,7 @@ export async function ensureOperationsTables() {
     CREATE TABLE IF NOT EXISTS OrganizationBillingProfile (
       organizationId TEXT PRIMARY KEY NOT NULL,
       plan TEXT NOT NULL DEFAULT 'professional',
-      priceCents INTEGER NOT NULL DEFAULT 24900,
+      priceCents INTEGER NOT NULL DEFAULT 29900,
       currency TEXT NOT NULL DEFAULT 'usd',
       subscriptionStatus TEXT NOT NULL DEFAULT 'NOT_CONNECTED',
       provider TEXT NOT NULL DEFAULT 'STRIPE',
