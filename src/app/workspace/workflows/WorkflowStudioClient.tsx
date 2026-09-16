@@ -79,6 +79,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [editingWorkflowId, setEditingWorkflowId] = useState<string | null>(null);
 
   async function loadWorkflows() {
     try {
@@ -121,15 +122,59 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
     loadWorkflows();
   }, []);
 
+  function editWorkflow(workflow: Workflow) {
+    setMessage('');
+    setEditingWorkflowId(workflow.id);
+    setTab(workflow.kind);
+
+    if (workflow.kind === 'MEMBERSHIP') {
+      setMembership({
+        ...initialMembership,
+        ...(workflow.config as Partial<typeof initialMembership>),
+        name: workflow.name,
+        active: workflow.status === 'ACTIVE',
+      });
+    } else {
+      setEvent({
+        ...initialEvent,
+        ...(workflow.config as Partial<typeof initialEvent>),
+        name: workflow.name,
+        active: workflow.status === 'ACTIVE',
+      });
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function setWorkflowStatus(workflow: Workflow, status: 'DRAFT' | 'ACTIVE') {
+    const response = await fetch(`/api/workflows/${workflow.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    setMessage(data.error || `${workflow.name} is now ${status}.`);
+    if (response.ok) {
+      if (selectedWorkflow?.id === workflow.id) {
+        setSelectedWorkflow({ ...selectedWorkflow, status });
+      }
+      await loadWorkflows();
+    }
+  }
+
   async function saveMembership(eventObject: FormEvent) {
     eventObject.preventDefault();
     setSaving(true);
     setMessage('');
 
-    const response = await fetch('/api/workflows', {
-      method: 'POST',
+    const response = await fetch(editingWorkflowId ? `/api/workflows/${editingWorkflowId}` : '/api/workflows', {
+      method: editingWorkflowId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(editingWorkflowId ? {
+        name: membership.name,
+        status: membership.active ? 'ACTIVE' : 'DRAFT',
+        config: membership,
+      } : {
         kind: 'MEMBERSHIP',
         name: membership.name,
         status: membership.active ? 'ACTIVE' : 'DRAFT',
@@ -145,8 +190,10 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
       return;
     }
 
+    const wasEditing = Boolean(editingWorkflowId);
     setMembership(initialMembership);
-    setMessage('Membership workflow saved.');
+    setEditingWorkflowId(null);
+    setMessage(wasEditing ? 'Membership workflow updated.' : 'Membership workflow saved.');
     await loadWorkflows();
   }
 
@@ -155,10 +202,14 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
     setSaving(true);
     setMessage('');
 
-    const response = await fetch('/api/workflows', {
-      method: 'POST',
+    const response = await fetch(editingWorkflowId ? `/api/workflows/${editingWorkflowId}` : '/api/workflows', {
+      method: editingWorkflowId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(editingWorkflowId ? {
+        name: event.name,
+        status: event.active ? 'ACTIVE' : 'DRAFT',
+        config: event,
+      } : {
         kind: 'EVENT',
         name: event.name,
         status: event.active ? 'ACTIVE' : 'DRAFT',
@@ -174,8 +225,10 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
       return;
     }
 
+    const wasEditing = Boolean(editingWorkflowId);
     setEvent(initialEvent);
-    setMessage('Event / webinar workflow saved.');
+    setEditingWorkflowId(null);
+    setMessage(wasEditing ? 'Event / webinar workflow updated.' : 'Event / webinar workflow saved.');
     await loadWorkflows();
   }
 
@@ -244,7 +297,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
 
           <div className={styles.saveBar}>
             <span>One save stores membership, renewal CE rules, pricing, approval flow, and member communication together. ACTIVE workflows immediately receive a public application page.</span>
-            <button disabled={saving}>{saving ? 'SAVING…' : membership.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
+            <button disabled={saving}>{saving ? 'SAVING…' : editingWorkflowId ? 'UPDATE WORKFLOW' : membership.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
           </div>
         </form>
       ) : (
@@ -292,7 +345,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
 
           <div className={styles.saveBar}>
             <span>One save keeps event configuration, pricing, access, CE, certificate rules, check-in direction, and confirmation email together. ACTIVE workflows immediately receive a public registration page.</span>
-            <button disabled={saving}>{saving ? 'SAVING…' : event.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
+            <button disabled={saving}>{saving ? 'SAVING…' : editingWorkflowId ? 'UPDATE WORKFLOW' : event.active ? 'SAVE + ACTIVATE' : 'SAVE DRAFT'}</button>
           </div>
         </form>
       )}
@@ -313,6 +366,10 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               <time>{new Date(workflow.updatedAt).toLocaleString()}</time>
               <div className={styles.workflowActions}>
                 {workflow.status === 'ACTIVE' && <a href={`/flow/${workflow.id}`} target="_blank" rel="noreferrer">OPEN PUBLIC FLOW ↗</a>}
+                <button type="button" onClick={() => editWorkflow(workflow)}>EDIT</button>
+                <button type="button" onClick={() => setWorkflowStatus(workflow, workflow.status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE')}>
+                  {workflow.status === 'ACTIVE' ? 'DEACTIVATE' : 'ACTIVATE'}
+                </button>
                 <button type="button" onClick={() => loadSubmissions(workflow)}>VIEW SUBMISSIONS</button>
               </div>
             </article>
