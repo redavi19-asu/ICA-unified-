@@ -54,8 +54,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
   }, [health]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvasResult = canvasRef.current;
+    if (!canvasResult) return;
+    const canvas: HTMLCanvasElement = canvasResult;
 
     const size = 320;
     const textureWidth = 1024;
@@ -69,8 +70,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
     canvas.width = size;
     canvas.height = size;
 
-    const context = canvas.getContext('2d', { alpha: true });
-    if (!context) return;
+    const contextResult = canvas.getContext('2d', { alpha: true });
+    if (!contextResult) return;
+    const context: CanvasRenderingContext2D = contextResult;
 
     const texture = document.createElement('canvas');
     texture.width = textureWidth;
