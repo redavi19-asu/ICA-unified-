@@ -8,6 +8,7 @@ export default async function BillingPage() {
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
   const profile = await ensureBillingProfile(membership.organizationId);
+  const billingPortalReady = Boolean((process.env.STRIPE_SECRET_KEY || '').trim() && profile?.providerCustomerId);
   const price = (PROFESSIONAL_PRICE_CENTS / 100).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -84,7 +85,9 @@ export default async function BillingPage() {
           <h2>Subscription + installation controls.</h2>
           <p className={styles.copy}>Owners and admins can manage the company subscription in Stripe and open the ICA access center for the web app and any released ICA clients.</p>
           <div className={styles.billingActions}>
-            <form action="/api/billing/portal" method="post"><button type="submit">MANAGE SUBSCRIPTION →</button></form>
+            {billingPortalReady
+              ? <form action="/api/billing/portal" method="post"><button type="submit">MANAGE SUBSCRIPTION →</button></form>
+              : <span className={styles.disabledAction}>STRIPE CUSTOMER NOT CONNECTED</span>}
             <a href="/downloads">OPEN ICA ACCESS CENTER →</a>
           </div>
         </article>
