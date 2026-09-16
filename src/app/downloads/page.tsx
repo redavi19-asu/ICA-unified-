@@ -14,12 +14,21 @@ export default async function DownloadsPage({
   const params = await searchParams;
   const billing = await ensureBillingProfile(membership.organizationId);
 
+  const localTrialExpired =
+    membership.organization.status === 'TRIAL' &&
+    Boolean(membership.organization.trialEndsAt && membership.organization.trialEndsAt.getTime() <= Date.now());
+
   if (
-    isStripeCheckoutConfigured() &&
     membership.organization.plan !== 'internal' &&
-    membership.organization.slug !== 'ica-master' &&
-    !isStripeEntitledStatus(billing?.subscriptionStatus || '')
-  ) redirect('/setup/billing');
+    membership.organization.slug !== 'ica-master'
+  ) {
+    if (isStripeCheckoutConfigured() && !isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
+      redirect('/setup/billing');
+    }
+    if (!isStripeCheckoutConfigured() && localTrialExpired) {
+      redirect('/setup/billing?trial=expired');
+    }
+  }
 
   const windowsUrl = (process.env.ICA_WINDOWS_DOWNLOAD_URL || '').trim();
   const macUrl = (process.env.ICA_MAC_DOWNLOAD_URL || '').trim();
