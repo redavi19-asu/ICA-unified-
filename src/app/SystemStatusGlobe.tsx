@@ -147,8 +147,6 @@ function RealMapGlobe() {
           className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
           aria-label="Interactive ICA Unified MapLibre world globe"
         />
-        <div className={styles.globeColorWash} aria-hidden="true" />
-        <div className={styles.globeAttribution}>MAPLIBRE · OPENSTREETMAP</div>
       </div>
       <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
     </div>
@@ -233,7 +231,8 @@ export default function SystemStatusGlobe() {
       </div>
 
       <div className={styles.systemBottom}>
-        WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE
+        <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
+        <small className={styles.mapCredit}>MapLibre rendering · Map data © OpenStreetMap contributors</small>
       </div>
     </div>
   );
