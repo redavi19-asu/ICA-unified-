@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import './globals.css';
+import CookieNotice from './CookieNotice';
 
 export const metadata: Metadata = {
   title: 'ICA Unified | AMS + LMS Business Platform',
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>{children}<CookieNotice /></body>
     </html>
   );
 }
