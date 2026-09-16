@@ -57,9 +57,9 @@ export default async function DownloadsPage({
 
       <section className={styles.grid}>
         <AppCard platform="WEB" title="ICA Unified Web" copy="The complete organization workspace. Nothing to install—open it from any supported modern browser." href="/workspace" action="OPEN WEB APP" state="READY" />
-        <AppCard platform="WINDOWS" title="ICA Unified for Windows" copy="A dedicated Windows desktop client connected to the same ICA Unified organization and data." href={windowsUrl} action="DOWNLOAD WINDOWS" state={windowsUrl ? 'READY' : 'PLANNED'} />
-        <AppCard platform="macOS" title="ICA Unified for Mac" copy="A dedicated macOS desktop client for Apple Silicon and supported Intel Macs." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'PLANNED'} />
-        <AppCard platform="IPHONE + IPAD" title="ICA Unified Mobile" copy="Event-floor companion for QR check-in, member lookup, attendance, CE, credentials, and notifications." href="" action="APP STORE" state="IN DEVELOPMENT" />
+        <AppCard platform="WINDOWS" title="ICA Unified for Windows" copy="The Tauri desktop wrapper is built in the ICA codebase and connects to the same organization data. Public download activates after Windows signing and installer verification." href={windowsUrl} action="DOWNLOAD WINDOWS" state={windowsUrl ? 'READY' : 'SIGNING / RELEASE'} />
+        <AppCard platform="macOS" title="ICA Unified for Mac" copy="The Tauri desktop wrapper is built in the ICA codebase. Public download activates after Apple signing, notarization, and package verification." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'SIGNING / RELEASE'} />
+        <AppCard platform="IPHONE + IPAD" title="ICA Unified Mobile" copy="Native Expo app code and production build profiles are ready for QR check-in, member lookup, attendance, CE, credentials, and notifications. App Store signing/submission remains." href="" action="APP STORE" state="STORE RELEASE PENDING" />
       </section>
 
       <section className={styles.sameAccount}>
