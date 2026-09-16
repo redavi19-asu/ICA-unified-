@@ -75,7 +75,7 @@ function fallbackAnswer(question: string) {
     return 'ICA uses a transactional Email Outbox for invitations and other system messages. Delivery occurs through the managed email provider when that provider is configured; the Integrations screen shows the current provider/outbox status.';
   }
 
-  if (q.includes('billing') || q.includes('stripe') || q.includes('249') || q.includes('subscription')) {
+  if (q.includes('billing') || q.includes('stripe') || q.includes('299') || q.includes('subscription')) {
     return 'Go to Billing. ICA Unified Professional is $299/month for the company subscription. Member dues and event payments stay separate and use the organization Stripe Connect account. Complete Connect onboarding there to activate paid public workflows.';
   }
 
