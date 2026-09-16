@@ -28,7 +28,7 @@ Current navigation and behavior:
 - Reports: organization reporting.
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
 - Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, email outbox staging, custom-domain DNS ownership verification, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
-- Billing: Owner/Admin subscription foundation for ICA Unified Professional at $249/month. The company subscription is separate from member dues/event payments. Stripe checkout and Stripe Connect require later account credentials; they are not activated yet.
+- Billing: Owner/Admin subscription flow for ICA Unified Professional at $249/month. Stripe Checkout, subscription sync, webhooks, and the billing portal activate when production Stripe credentials are configured. The company subscription is separate from member dues/event payments. Stripe Connect for dues/event money remains a separate future account layer.
 - Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
 Help style:
@@ -72,11 +72,11 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('email')) {
-    return 'ICA has a transactional Email Outbox and templates staged now. Invitations can be queued without running a mail server. A managed email provider still needs to be connected before queued email is actually delivered.';
+    return 'ICA uses a transactional Email Outbox for invitations and other system messages. Delivery occurs through the managed email provider when that provider is configured; the Integrations screen shows the current provider/outbox status.';
   }
 
   if (q.includes('billing') || q.includes('stripe') || q.includes('249') || q.includes('subscription')) {
-    return 'Go to Billing. ICA Unified Professional is configured at $249/month for the company subscription. Stripe checkout is not activated until account credentials are connected. Member dues and event payments are designed as a separate Stripe Connect money flow.';
+    return 'Go to Billing. ICA Unified Professional is $249/month for the company subscription. Stripe Checkout, subscription sync, and the billing portal work when production Stripe credentials are configured. Member dues and event payments remain a separate future Stripe Connect money flow.';
   }
 
   if (q.includes('backup') || q.includes('export')) {
