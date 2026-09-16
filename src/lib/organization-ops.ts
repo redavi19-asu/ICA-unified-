@@ -548,3 +548,33 @@ export async function verifyCustomDomain(organizationId: string) {
     return { verified: false, error: error instanceof Error ? error.message : 'DNS verification failed.' };
   }
 }
+
+export async function resolveVerifiedCustomDomain(hostname: string) {
+  await ensureOperationsTables();
+  const normalized = hostname.trim().toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '');
+  if (!normalized) return null;
+
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    organizationId: string;
+    hostname: string;
+  }>>(
+    `SELECT organizationId, hostname
+     FROM CustomDomain
+     WHERE hostname = ? AND status = 'VERIFIED'
+     LIMIT 1`,
+    normalized,
+  );
+  const match = rows[0];
+  if (!match) return null;
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: match.organizationId },
+    select: { id: true, name: true, slug: true, status: true },
+  });
+  if (!organization || ['SUSPENDED', 'CANCELLED'].includes(organization.status)) return null;
+
+  return {
+    ...organization,
+    hostname: match.hostname,
+  };
+}
