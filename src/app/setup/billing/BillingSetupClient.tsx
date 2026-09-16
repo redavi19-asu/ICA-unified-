@@ -59,7 +59,7 @@ export default function BillingSetupClient({
           <div className={styles.timeline}>
             <div className={styles.done}><span>01</span><strong>Company created</strong><small>Organization + Owner account</small></div>
             <div className={styles.current}><span>02</span><strong>Secure billing</strong><small>Stripe-hosted checkout</small></div>
-            <div><span>03</span><strong>Get the apps</strong><small>Web · Windows · Mac</small></div>
+            <div><span>03</span><strong>Access the platform</strong><small>Web now · apps as released</small></div>
           </div>
 
           <div className={styles.trust}>
@@ -84,7 +84,7 @@ export default function BillingSetupClient({
           <div className={styles.line}><span>After 14 days</span><strong>${monthlyPrice}/month</strong></div>
           <div className={styles.line}><span>Billing cadence</span><strong>Monthly</strong></div>
           <div className={styles.line}><span>Standard support</span><strong>Included</strong></div>
-          <div className={styles.line}><span>Platform access</span><strong>Web + Apps</strong></div>
+          <div className={styles.line}><span>Platform access</span><strong>Web now · apps as released</strong></div>
 
           {cancelled && <p className={styles.notice}>Checkout was cancelled. Your ICA company record is still safe.</p>}
           {confirmationFailed && <p className={styles.error}>Stripe returned to ICA, but the subscription could not be confirmed. Please try again.</p>}
