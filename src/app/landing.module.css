@@ -242,3 +242,27 @@
 
 @keyframes globeIssueGlow{0%,100%{box-shadow:0 0 0 1px rgba(231,76,60,.68),0 0 14px rgba(231,76,60,.34),0 0 34px rgba(231,76,60,.22)}50%{box-shadow:0 0 0 1px rgba(255,99,86,.92),0 0 26px rgba(231,76,60,.62),0 0 58px rgba(231,76,60,.34)}}
 @media(prefers-reduced-motion:reduce){.realGlobeIssue{animation:none!important}}
+
+
+/* Complete product capability map — detailed without repeating the sales sections */
+.capabilitySection{color:#10202f;padding:clamp(70px,8vw,120px) max(clamp(20px,5vw,72px),calc((100vw - 1480px)/2 + 72px));background:linear-gradient(180deg,#f8fbfd 0%,#eef6fa 100%);border-top:1px solid #dce7ee;border-bottom:1px solid #dce7ee}
+.capabilityGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:38px}
+.capabilityCard{background:#fff;border:1px solid #d7e4ed;border-radius:20px;padding:26px;box-shadow:0 12px 34px rgba(31,69,96,.055)}
+.capabilityTop{display:flex;align-items:flex-start;gap:16px;padding-bottom:18px;border-bottom:1px solid #e3edf2}
+.capabilityTop>i{flex:0 0 auto;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:#edf7fd;color:#147fd1}
+.capabilityTop>i svg{width:24px;height:24px}
+.capabilityTop span{display:block;color:#6e8595;font-size:9px;line-height:1.4;font-weight:900;letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}
+.capabilityTop h3{margin:0;color:#183247;font-size:22px;letter-spacing:-.025em}
+.capabilityCard ul{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:11px}
+.capabilityCard li{position:relative;padding-left:20px;color:#50697a;line-height:1.55;font-size:13px}
+.capabilityCard li:before{content:"✓";position:absolute;left:0;top:0;color:#279466;font-weight:900}
+.capabilityCard:nth-child(4n+1){border-top:3px solid #14b8a6}
+.capabilityCard:nth-child(4n+2){border-top:3px solid #3b82f6}
+.capabilityCard:nth-child(4n+3){border-top:3px solid #8b5cf6}
+.capabilityCard:nth-child(4n+4){border-top:3px solid #f59e0b}
+.capabilityCard:nth-child(4n+1) .capabilityTop>i{background:#e8fbf7;color:#14b8a6}
+.capabilityCard:nth-child(4n+2) .capabilityTop>i{background:#edf5ff;color:#3b82f6}
+.capabilityCard:nth-child(4n+3) .capabilityTop>i{background:#f4efff;color:#8b5cf6}
+.capabilityCard:nth-child(4n+4) .capabilityTop>i{background:#fff8e8;color:#f59e0b}
+@media(max-width:900px){.capabilityGrid{grid-template-columns:1fr}.capabilitySection{padding-left:clamp(20px,5vw,72px);padding-right:clamp(20px,5vw,72px)}}
+@media(max-width:650px){.capabilityCard{padding:20px}.capabilityTop h3{font-size:20px}.capabilityCard li{font-size:12px}}
