@@ -13,7 +13,7 @@ const nextConfig = {
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https:",
       "connect-src 'self' https: wss:",
-      "frame-src 'self' data: blob: https://challenges.cloudflare.com https://*.stripe.com https://*.cloudflarestream.com https://*.videodelivery.net",
+      "frame-src 'self' about: data: blob: https://challenges.cloudflare.com https://*.stripe.com https://*.cloudflarestream.com https://*.videodelivery.net",
       "worker-src 'self' blob:",
       "media-src 'self' blob: https://*.cloudflarestream.com https://*.videodelivery.net",
       "upgrade-insecure-requests",
