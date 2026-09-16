@@ -42,14 +42,14 @@ function RealMapGlobe({ health }: { health: HealthState }) {
           basemap: {
             type: 'raster' as const,
             tiles: [
-              'https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-              'https://tile-b.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-              'https://tile-c.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+              'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+              'https://b.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+              'https://c.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
             ],
             tileSize: 256,
             minzoom: 0,
             maxzoom: 20,
-            attribution: 'Humanitarian style © HOT · Tiles hosted by OpenStreetMap France · Map data © OpenStreetMap contributors',
+            attribution: 'CyclOSM style · Tiles hosted by OpenStreetMap France · Map data © OpenStreetMap contributors',
           },
         },
         layers: [
@@ -58,9 +58,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
             type: 'raster' as const,
             source: 'basemap',
             paint: {
-              'raster-saturation': 0.22,
-              'raster-contrast': 0.1,
-              'raster-brightness-min': 0.03,
+              'raster-saturation': 0.55,
+              'raster-contrast': 0.16,
+              'raster-brightness-min': 0.02,
               'raster-brightness-max': 1,
             },
           },
@@ -71,7 +71,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         container: mapRef.current,
         style,
         center: [-18, 22],
-        zoom: 1.12,
+        zoom: 1.28,
         minZoom: 0.8,
         maxZoom: 5.5,
         pitch: 0,
@@ -239,7 +239,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre globe · Humanitarian OpenStreetMap style · Tiles via OpenStreetMap France</small>
+        <small className={styles.mapCredit}>MapLibre globe · CyclOSM style · Tiles via OpenStreetMap France</small>
       </div>
     </div>
   );
