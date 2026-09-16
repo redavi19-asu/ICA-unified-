@@ -203,6 +203,7 @@ export async function createWorkflowPaymentCheckout(input: {
   );
   if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
   if (submission.amountCents <= 0) throw new Error('PAYMENT_NOT_REQUIRED');
+  if (submission.paymentStatus === 'PAID') throw new Error('PAYMENT_ALREADY_COMPLETE');
 
   const account = await refreshOrganizationPaymentAccount(workflow.organizationId);
   if (!account?.connectedAccountId || !Number(account.chargesEnabled)) {
