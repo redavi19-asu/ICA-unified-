@@ -8,6 +8,7 @@ import {
   getPublicWorkflow,
 } from '../../../../../../lib/workflow-execution';
 import { emitOrganizationEvent, queueEmail } from '../../../../../../lib/organization-ops';
+import { createWorkflowPaymentCheckout } from '../../../../../../lib/member-payments';
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -77,6 +78,7 @@ export async function POST(
 
     const origin = new URL(request.url).origin;
     let activationUrl: string | null = null;
+    let checkoutUrl: string | null = null;
 
     if (
       workflow.kind === 'MEMBERSHIP' &&
@@ -91,6 +93,19 @@ export async function POST(
         origin,
       });
       activationUrl = activation.inviteUrl;
+    }
+
+    if (result.amountCents > 0 && result.status !== 'WAITLISTED') {
+      try {
+        const checkout = await createWorkflowPaymentCheckout({
+          workflowId: workflow.id,
+          submissionId: result.submissionId,
+          origin,
+        });
+        checkoutUrl = checkout.checkoutUrl;
+      } catch (error) {
+        console.error('ICA_WORKFLOW_CHECKOUT_NOT_READY', error);
+      }
     }
 
     const statusLabel =
@@ -173,14 +188,17 @@ export async function POST(
       status: result.status,
       amountCents: result.amountCents,
       activationUrl,
+      checkoutUrl,
       message:
         result.status === 'PENDING_REVIEW'
           ? 'Application received and queued for review.'
           : result.status === 'WAITLISTED'
             ? 'Registration received. You are currently on the waitlist.'
-            : result.status === 'PAYMENT_PENDING'
-              ? 'Registration received. Payment is still pending because the organization payment connection is not enabled yet.'
-              : workflow.kind === 'MEMBERSHIP'
+            : result.amountCents > 0 && checkoutUrl
+              ? 'Submission received. Continue to secure Stripe payment.'
+              : result.status === 'PAYMENT_PENDING'
+                ? 'Registration received. Payment is still pending because the organization payment connection is not enabled yet.'
+                : workflow.kind === 'MEMBERSHIP'
                 ? 'Membership approved. Your ICA activation information is ready.'
                 : 'Registration confirmed.',
     }, { status: 201 });
