@@ -1,5 +1,6 @@
-import { randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
+import { queueEmail, renderInvitationEmail } from './organization-ops';
 
 export type PublicWorkflow = {
   id: string;
@@ -227,4 +228,80 @@ export async function createWorkflowSubmission(input: {
   );
 
   return { duplicate: false as const, submissionId: id, status, amountCents };
+}
+
+
+export async function createMembershipActivation(input: {
+  organizationId: string;
+  organizationName: string;
+  name: string;
+  email: string;
+  origin: string;
+  invitedById?: string | null;
+}) {
+  const email = input.email.toLowerCase();
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      memberships: {
+        where: { organizationId: input.organizationId },
+        select: { id: true },
+      },
+    },
+  });
+
+  if (existingUser?.memberships[0]) {
+    return { alreadyMember: true as const, inviteUrl: null, emailQueued: false };
+  }
+
+  await prisma.invitation.updateMany({
+    where: {
+      organizationId: input.organizationId,
+      email,
+      status: 'PENDING',
+    },
+    data: { status: 'REVOKED' },
+  });
+
+  const token = randomBytes(32).toString('hex');
+  const tokenHash = createHash('sha256').update(token).digest('hex');
+  const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+  const invitation = await prisma.invitation.create({
+    data: {
+      organizationId: input.organizationId,
+      email,
+      name: input.name,
+      role: 'MEMBER',
+      status: 'PENDING',
+      tokenHash,
+      expiresAt,
+      invitedById: input.invitedById || null,
+    },
+  });
+
+  const inviteUrl = `${input.origin}/invite/${token}`;
+  const emailContent = renderInvitationEmail({
+    organizationName: input.organizationName,
+    recipientName: input.name,
+    inviteUrl,
+    expiresLabel: 'expires in 14 days',
+  });
+
+  let emailQueued = true;
+  try {
+    await queueEmail({
+      organizationId: input.organizationId,
+      recipient: email,
+      templateKey: 'WORKFLOW_MEMBERSHIP_ACTIVATION',
+      subject: emailContent.subject,
+      bodyText: emailContent.bodyText,
+      payload: { invitationId: invitation.id },
+    });
+  } catch (error) {
+    emailQueued = false;
+    console.error('ICA_WORKFLOW_ACTIVATION_EMAIL_ERROR', error);
+  }
+
+  return { alreadyMember: false as const, inviteUrl, emailQueued };
 }
