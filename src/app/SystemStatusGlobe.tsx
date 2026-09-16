@@ -91,7 +91,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         if (!map.getSource('countries')) {
           map.addSource('countries', {
             type: 'geojson',
-            data: worldCountries as GeoJSONSourceSpecification['data'],
+            data: worldCountries as unknown as GeoJSONSourceSpecification['data'],
           });
 
           map.addLayer({
