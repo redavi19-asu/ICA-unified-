@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { readMobileSession, verifyMemberQrToken } from '../../../../lib/mobile-auth';
 import { prisma } from '../../../../lib/prisma';
 import { recordEventAttendance } from '../../../../lib/compliance';
+import { canUserAttendPaidEvent } from '../../../../lib/workflow-execution';
 
 const schema = z.object({
   workflowId: z.string().min(1),
@@ -60,6 +61,19 @@ export async function POST(request: Request) {
 
   let config: Record<string, unknown> = {};
   try { config = JSON.parse(event.configJson || '{}'); } catch {}
+
+  const eligibility = await canUserAttendPaidEvent({
+    organizationId: auth.membership.organizationId,
+    workflowId: event.id,
+    email: member.user.email,
+  });
+  if (!eligibility.allowed) {
+    const error =
+      eligibility.reason === 'PAYMENT_REQUIRED'
+        ? 'This member still has a pending event payment.'
+        : 'This member does not have an active paid registration for this event.';
+    return NextResponse.json({ error }, { status: 403 });
+  }
 
   const checkinMode = String(config.checkinMode || 'SELF_SCAN');
   if (checkinMode !== 'STAFF_SCAN' && checkinMode !== 'BOTH') {
