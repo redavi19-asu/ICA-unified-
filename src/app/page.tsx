@@ -154,9 +154,9 @@ export default function Home() {
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
             <span><i><PlatformIcon type="web" /></i><b>WEB</b><small>LIVE</small></span>
-            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>DESKTOP</small></span>
-            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>DESKTOP</small></span>
-            <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>MOBILE</small></span>
+            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>PLANNED</small></span>
+            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>PLANNED</small></span>
+            <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>IN DEVELOPMENT</small></span>
           </div>
           <div className={styles.heroTrinkets} aria-hidden="true">
             <span className={styles.trinketOne}>QR CHECK-IN</span>
