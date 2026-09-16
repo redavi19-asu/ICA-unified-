@@ -4,6 +4,16 @@ import { requireSession } from '../../../../../../lib/auth';
 import { prisma } from '../../../../../../lib/prisma';
 import { getDocumentContent } from '../../../../../../lib/document-content';
 
+type StoredObject = {
+  body: BodyInit | null;
+  httpEtag: string;
+  writeHttpMetadata: (headers: Headers) => void;
+};
+
+type StorageBucket = {
+  get: (key: string) => Promise<StoredObject | null>;
+};
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ documentId: string }> },
@@ -23,7 +33,7 @@ export async function GET(
   }
 
   const { env } = getCloudflareContext();
-  const bucket = (env as any).ICA_UNIFIED_STORAGE;
+  const bucket = (env as unknown as { ICA_UNIFIED_STORAGE?: StorageBucket }).ICA_UNIFIED_STORAGE;
   if (!bucket) {
     return NextResponse.json({ error: 'Controlled document storage is not configured.' }, { status: 503 });
   }
