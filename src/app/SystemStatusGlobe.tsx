@@ -40,7 +40,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style: 'https://demotiles.maplibre.org/globe.json',
+        style: 'https://demotiles.maplibre.org/style.json',
         center: [-18, 22],
         zoom: 1.18,
         minZoom: 0.95,
@@ -69,11 +69,8 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       };
 
       map.on('style.load', () => {
-        map.setProjection({ type: 'globe' });
-      });
-
-      map.on('load', () => {
         if (disposed) return;
+        map.setProjection({ type: 'globe' });
         setMapReady(true);
 
         const animate = (now: number) => {
@@ -91,6 +88,10 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         };
 
         frame = requestAnimationFrame(animate);
+      });
+
+      map.on('error', (event) => {
+        console.error('ICA_MAPLIBRE_GLOBE_ERROR', event.error);
       });
 
       const canvas = map.getCanvasContainer();
