@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readMobileSession } from '../../../../../lib/mobile-auth';
 import { prisma } from '../../../../../lib/prisma';
 import { getEventForToken, recordEventAttendance } from '../../../../../lib/compliance';
+import { canUserAttendPaidEvent } from '../../../../../lib/workflow-execution';
 
 export async function POST(
   request: Request,
@@ -23,6 +24,19 @@ export async function POST(
   }
   if (event.organizationId !== membership.organizationId) {
     return NextResponse.json({ error: 'This check-in belongs to a different organization.' }, { status: 403 });
+  }
+
+  const eligibility = await canUserAttendPaidEvent({
+    organizationId: membership.organizationId,
+    workflowId: event.workflowId,
+    email: membership.user.email,
+  });
+  if (!eligibility.allowed) {
+    const error =
+      eligibility.reason === 'PAYMENT_REQUIRED'
+        ? 'Your event payment is still pending.'
+        : 'A completed registration is required before checking in to this paid event.';
+    return NextResponse.json({ error }, { status: 403 });
   }
 
   const checkinMode = String(event.config.checkinMode || 'SELF_SCAN');
