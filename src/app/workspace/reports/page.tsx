@@ -41,7 +41,7 @@ export default async function ReportsPage() {
     return total + Math.max(0, memberships.length - document.acknowledgments.filter((ack) => ack.acknowledgedAt).length);
   }, 0);
 
-  const completionRate = enrollments.length ? Math.round((completed / enrollments.length) * 100) : 100;
+  const completionRate = enrollments.length ? Math.round((completed / enrollments.length) * 100) : 0;
 
   return (
     <main className={styles.shell}>
