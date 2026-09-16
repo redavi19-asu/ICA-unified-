@@ -79,25 +79,21 @@ export async function ensureOrganizationPaymentTable() {
   return paymentTableReady;
 }
 
-export async function getOrganizationPaymentAccount(organizationId: string) {
+export async function getOrganizationPaymentAccount(
+  organizationId: string,
+): Promise<OrganizationPaymentAccountRecord | null> {
   await ensureOrganizationPaymentTable();
-  const rows = await prisma.$queryRawUnsafe<Array<{
-    organizationId: string;
-    provider: string;
-    connectedAccountId: string | null;
-    onboardingStatus: string;
-    chargesEnabled: number;
-    payoutsEnabled: number;
-    detailsSubmitted: number;
-    updatedAt: string;
-  }>>(
+  const rows = await prisma.$queryRawUnsafe<OrganizationPaymentAccountRecord[]>(
     `SELECT * FROM OrganizationPaymentAccount WHERE organizationId = ? LIMIT 1`,
     organizationId,
   );
   return rows[0] || null;
 }
 
-async function saveAccountSnapshot(organizationId: string, account: StripeAccount) {
+async function saveAccountSnapshot(
+  organizationId: string,
+  account: StripeAccount,
+): Promise<OrganizationPaymentAccountRecord | null> {
   await ensureOrganizationPaymentTable();
   const chargesEnabled = account.charges_enabled ? 1 : 0;
   const payoutsEnabled = account.payouts_enabled ? 1 : 0;
@@ -131,7 +127,9 @@ async function saveAccountSnapshot(organizationId: string, account: StripeAccoun
   return getOrganizationPaymentAccount(organizationId);
 }
 
-export async function refreshOrganizationPaymentAccount(organizationId: string) {
+export async function refreshOrganizationPaymentAccount(
+  organizationId: string,
+): Promise<OrganizationPaymentAccountRecord | null> {
   const existing = await getOrganizationPaymentAccount(organizationId);
   if (!existing?.connectedAccountId || !stripeConnectConfigured()) return existing;
 
