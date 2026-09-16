@@ -29,7 +29,11 @@ export default async function DownloadsPage({
     <main className={styles.shell}>
       <header className={styles.nav}>
         <Link href="/" className={styles.brand}>ICA <span>UNIFIED</span></Link>
-        <div><a href="/workspace">Workspace</a><a href="/workspace/billing">Billing</a><a href="/login">Customer Login</a></div>
+        <div>
+          <a href="/workspace">Workspace</a>
+          {['OWNER', 'ADMIN'].includes(membership.role) && <a href="/workspace/billing">Billing</a>}
+          <a href="/login">Customer Login</a>
+        </div>
       </header>
 
       <section className={styles.hero}>
@@ -44,15 +48,15 @@ export default async function DownloadsPage({
 
       <section className={styles.grid}>
         <AppCard platform="WEB" title="ICA Unified Web" copy="The complete organization workspace. Nothing to install—open it from any supported modern browser." href="/workspace" action="OPEN WEB APP" state="READY" />
-        <AppCard platform="WINDOWS" title="ICA Unified for Windows" copy="A dedicated Windows desktop client connected to the same ICA Unified organization and data." href={windowsUrl} action="DOWNLOAD WINDOWS" state={windowsUrl ? 'READY' : 'PACKAGING'} />
-        <AppCard platform="macOS" title="ICA Unified for Mac" copy="A dedicated macOS desktop client for Apple Silicon and supported Intel Macs." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'PACKAGING'} />
+        <AppCard platform="WINDOWS" title="ICA Unified for Windows" copy="A dedicated Windows desktop client connected to the same ICA Unified organization and data." href={windowsUrl} action="DOWNLOAD WINDOWS" state={windowsUrl ? 'READY' : 'PLANNED'} />
+        <AppCard platform="macOS" title="ICA Unified for Mac" copy="A dedicated macOS desktop client for Apple Silicon and supported Intel Macs." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'PLANNED'} />
         <AppCard platform="IPHONE + IPAD" title="ICA Unified Mobile" copy="Event-floor companion for QR check-in, member lookup, attendance, CE, credentials, and notifications." href="" action="APP STORE" state="IN DEVELOPMENT" />
       </section>
 
       <section className={styles.sameAccount}>
         <div><span>ONE ORGANIZATION</span><strong>{membership.organization.name}</strong></div>
         <div><span>ONE LOGIN</span><strong>{membership.user.email}</strong></div>
-        <div><span>ONE CLOUD RECORD</span><strong>WEB ↔ DESKTOP ↔ MOBILE</strong></div>
+        <div><span>ONE CLOUD RECORD</span><strong>WEB · DESKTOP/MOBILE AS RELEASED</strong></div>
       </section>
 
       <p className={styles.fine}>
