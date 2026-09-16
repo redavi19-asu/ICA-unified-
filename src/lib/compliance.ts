@@ -441,7 +441,7 @@ export async function createEventCheckinToken(organizationId: string, workflowId
   }>>(
     `SELECT id, name, configJson
      FROM WorkflowDefinition
-     WHERE id = ? AND organizationId = ? AND kind = 'EVENT'
+     WHERE id = ? AND organizationId = ? AND kind = 'EVENT' AND status = 'ACTIVE'
      LIMIT 1`,
     workflowId,
     organizationId,
@@ -449,6 +449,11 @@ export async function createEventCheckinToken(organizationId: string, workflowId
 
   const event = rows[0];
   if (!event) return null;
+
+  let eventConfig: Record<string, unknown> = {};
+  try { eventConfig = JSON.parse(event.configJson || '{}'); } catch {}
+  const checkinMode = String(eventConfig.checkinMode || 'SELF_SCAN');
+  if (checkinMode !== 'SELF_SCAN' && checkinMode !== 'BOTH') return null;
 
   // Self-scan event QR codes are deliberately short-lived so a screenshot
   // cannot be reused for days. Creating a new code invalidates the prior one.
@@ -491,7 +496,7 @@ export async function getEventForToken(token: string) {
             w.name, w.configJson
      FROM EventCheckinToken t
      JOIN WorkflowDefinition w ON w.id = t.workflowId
-     WHERE t.token = ? AND w.kind = 'EVENT'
+     WHERE t.token = ? AND w.kind = 'EVENT' AND w.status = 'ACTIVE'
      LIMIT 1`,
     token,
   );
@@ -505,6 +510,9 @@ export async function getEventForToken(token: string) {
   } catch {
     config = {};
   }
+
+  const checkinMode = String(config.checkinMode || 'SELF_SCAN');
+  if (checkinMode !== 'SELF_SCAN' && checkinMode !== 'BOTH') return null;
 
   return {
     token: row.token,
