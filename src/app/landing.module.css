@@ -214,15 +214,21 @@
 @media(prefers-reduced-motion:reduce){.earthTexture,.earthClouds{animation:none!important}}
 
 
-/* Real MapLibre globe — actual map sphere only */
+/* Real MapLibre globe — stable blue/white sphere with safe fallback */
 .globeStage:before{display:none!important}
 .orbitLine{display:none!important}
-.realGlobeShell{position:relative;width:286px;height:286px;z-index:3;display:grid;place-items:center;background:transparent!important;border:0!important;box-shadow:none!important}
-.realGlobeMap{position:absolute;inset:0;width:100%;height:100%;z-index:2;opacity:0;transition:opacity .35s ease;background:transparent!important;border:0!important;box-shadow:none!important}
+.realGlobeShell{position:relative;width:286px;height:286px;z-index:3;display:grid;place-items:center;border-radius:50%;background:transparent!important;box-shadow:0 0 0 1px rgba(65,145,198,.30),0 14px 34px rgba(38,88,122,.12)}
+.realGlobeFallback{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:0;background:radial-gradient(circle at 32% 26%,#f7fdff 0 8%,#c9edff 22%,#69bce8 58%,#145f96 100%);box-shadow:inset -24px -18px 36px rgba(7,64,103,.18),inset 14px 10px 26px rgba(255,255,255,.18)}
+.fallbackLatitudeOne,.fallbackLatitudeTwo,.fallbackLongitudeOne,.fallbackLongitudeTwo{position:absolute;left:50%;top:50%;border:1px solid rgba(255,255,255,.30);border-radius:50%;transform:translate(-50%,-50%)}
+.fallbackLatitudeOne{width:92%;height:36%}
+.fallbackLatitudeTwo{width:86%;height:68%}
+.fallbackLongitudeOne{width:38%;height:94%}
+.fallbackLongitudeTwo{width:70%;height:94%}
+.realGlobeMap{position:absolute;inset:0;width:100%;height:100%;z-index:2;opacity:0;transition:opacity .35s ease;background:transparent!important;border-radius:50%;overflow:hidden}
 .realGlobeMapReady{opacity:1}
-.realGlobeMap:global(.maplibregl-map){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;background:transparent!important}
-.realGlobeMap :global(.maplibregl-canvas-container){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;background:transparent!important}
-.realGlobeMap :global(.maplibregl-canvas){position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;outline:none;background:transparent!important}
+.realGlobeMap:global(.maplibregl-map){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border-radius:50%!important;overflow:hidden!important;background:transparent!important}
+.realGlobeMap :global(.maplibregl-canvas-container){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border-radius:50%!important;overflow:hidden!important}
+.realGlobeMap :global(.maplibregl-canvas){position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;outline:none;border-radius:50%!important}
 .realGlobeMap :global(.maplibregl-canvas-container.maplibregl-interactive){cursor:grab}
 .realGlobeMap :global(.maplibregl-canvas-container.maplibregl-interactive:active){cursor:grabbing}
 .globeHint{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:8;white-space:nowrap;border:1px solid rgba(197,221,235,.9);background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-radius:999px;padding:5px 8px;color:#496f87;font-size:6px;font-weight:900;letter-spacing:.12em;pointer-events:none;box-shadow:0 5px 15px rgba(32,76,105,.08)}
