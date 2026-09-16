@@ -75,7 +75,12 @@ function normalizeRows(rawRows: unknown[]) {
   return { valid, invalid };
 }
 
-async function classifyRows(organizationId: string, rows: NormalizedRow[], duplicateMode: 'SKIP' | 'UPDATE') {
+async function classifyRows(
+  organizationId: string,
+  rows: NormalizedRow[],
+  duplicateMode: 'SKIP' | 'UPDATE',
+  currentMembershipId: string,
+) {
   const emails = rows.map((row) => row.email);
   const users = emails.length
     ? await prisma.user.findMany({
@@ -96,12 +101,24 @@ async function classifyRows(organizationId: string, rows: NormalizedRow[], dupli
     const membership = user?.memberships[0];
 
     if (membership) {
+      const protectedReason =
+        membership.role === 'OWNER'
+          ? 'OWNER accounts cannot be changed by bulk import.'
+          : membership.id === currentMembershipId
+            ? 'The administrator running this import cannot change their own access through bulk import.'
+            : null;
+
       return {
         ...row,
-        classification: duplicateMode === 'UPDATE' ? 'UPDATE_EXISTING' : 'SKIP_EXISTING',
+        classification: protectedReason
+          ? 'SKIP_EXISTING'
+          : duplicateMode === 'UPDATE'
+            ? 'UPDATE_EXISTING'
+            : 'SKIP_EXISTING',
         existingMembershipId: membership.id,
         currentRole: membership.role,
         currentStatus: membership.status,
+        protectedReason,
       };
     }
 
@@ -132,6 +149,7 @@ export async function POST(request: Request) {
     membership.organizationId,
     valid,
     parsedRequest.data.duplicateMode,
+    membership.id,
   );
 
   const summary = {
