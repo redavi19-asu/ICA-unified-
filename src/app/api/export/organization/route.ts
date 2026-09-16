@@ -66,7 +66,17 @@ export async function GET(request: Request) {
   ]);
 
   const rawTables: Record<string, unknown[]> = {};
-  for (const table of ['WorkflowDefinition', 'CourseCreditRule', 'CreditLedger', 'ComplianceRequirement', 'EventAttendance']) {
+  for (const table of [
+    'WorkflowDefinition',
+    'WorkflowSubmission',
+    'CourseCreditRule',
+    'CreditLedger',
+    'ComplianceRequirement',
+    'EventAttendance',
+    'DocumentContent',
+    'OrganizationPaymentAccount',
+    'EmailOutbox',
+  ]) {
     try {
       rawTables[table] = await prisma.$queryRawUnsafe<unknown[]>(
         `SELECT * FROM ${table} WHERE organizationId = ?`,
@@ -77,9 +87,42 @@ export async function GET(request: Request) {
     }
   }
 
+  if (Array.isArray(rawTables.OrganizationPaymentAccount)) {
+    rawTables.OrganizationPaymentAccount = rawTables.OrganizationPaymentAccount.map((row) => {
+      const item = row as Record<string, unknown>;
+      return {
+        organizationId: item.organizationId,
+        provider: item.provider,
+        onboardingStatus: item.onboardingStatus,
+        chargesEnabled: item.chargesEnabled,
+        payoutsEnabled: item.payoutsEnabled,
+        detailsSubmitted: item.detailsSubmitted,
+        updatedAt: item.updatedAt,
+      };
+    });
+  }
+
+  if (Array.isArray(rawTables.EmailOutbox)) {
+    rawTables.EmailOutbox = rawTables.EmailOutbox.map((row) => {
+      const item = row as Record<string, unknown>;
+      return {
+        id: item.id,
+        organizationId: item.organizationId,
+        recipient: item.recipient,
+        subject: item.subject,
+        templateKey: item.templateKey,
+        bodyText: item.bodyText,
+        payloadJson: item.payloadJson,
+        status: item.status,
+        createdAt: item.createdAt,
+        sentAt: item.sentAt,
+      };
+    });
+  }
+
   const backup = {
     schema: 'ica-unified-organization-backup',
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     organization: {
       id: membership.organization.id,
