@@ -91,9 +91,14 @@ export async function getPublicWorkflow(workflowId: string): Promise<PublicWorkf
 
   const organization = await prisma.organization.findUnique({
     where: { id: row.organizationId },
-    select: { name: true, status: true },
+    select: { name: true, status: true, plan: true, trialEndsAt: true },
   });
   if (!organization || ['SUSPENDED', 'CANCELLED'].includes(organization.status)) return null;
+  const localTrialExpired =
+    organization.plan !== 'internal' &&
+    organization.status === 'TRIAL' &&
+    Boolean(organization.trialEndsAt && organization.trialEndsAt.getTime() <= Date.now());
+  if (localTrialExpired) return null;
 
   let config: Record<string, unknown> = {};
   try { config = JSON.parse(row.configJson || '{}'); } catch {}
