@@ -41,7 +41,14 @@ export async function POST(request: Request) {
     });
 
     const membership = user?.memberships[0];
-    const valid = Boolean(user && membership && await bcrypt.compare(body.password, user.passwordHash));
+    const valid = Boolean(user && user.memberships.length > 0 && await bcrypt.compare(body.password, user.passwordHash));
+
+    if (valid && !body.organizationSlug && user && user.memberships.length > 1) {
+      return NextResponse.json({
+        error: 'This email belongs to more than one ICA workspace. Enter the ICA Company ID.',
+        code: 'COMPANY_ID_REQUIRED',
+      }, { status: 409 });
+    }
 
     if (!user || !membership || !valid) {
       return NextResponse.json({ error: 'Invalid company, email, or password.' }, { status: 401 });
