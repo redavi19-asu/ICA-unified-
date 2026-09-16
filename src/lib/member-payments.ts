@@ -455,7 +455,8 @@ export async function handleWorkflowPaymentWebhook(event: {
   }
 
   const session = event.data?.object as CheckoutSession | undefined;
-  const metadata = session?.metadata;
+  if (!session) return false;
+  const metadata = session.metadata;
   const workflowId = String(metadata?.workflowId || '');
   const submissionId = String(metadata?.icaFlowSubmissionId || '');
   const organizationId = String(metadata?.organizationId || '');
