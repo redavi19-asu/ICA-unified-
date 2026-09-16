@@ -82,10 +82,10 @@ export default async function BillingPage() {
         <article className={styles.wide}>
           <p>ACCOUNT ACCESS</p>
           <h2>Subscription + installation controls.</h2>
-          <p className={styles.copy}>Owners and admins can manage the company subscription in Stripe and open the ICA access center for web and desktop clients.</p>
+          <p className={styles.copy}>Owners and admins can manage the company subscription in Stripe and open the ICA access center for the web app and any released ICA clients.</p>
           <div className={styles.billingActions}>
             <form action="/api/billing/portal" method="post"><button type="submit">MANAGE SUBSCRIPTION →</button></form>
-            <a href="/downloads">GET ICA UNIFIED APPS →</a>
+            <a href="/downloads">OPEN ICA ACCESS CENTER →</a>
           </div>
         </article>
       </section>
