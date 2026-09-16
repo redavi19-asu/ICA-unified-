@@ -81,6 +81,7 @@ export async function POST(request: Request) {
     expiresLabel: 'expires in 72 hours',
   });
 
+  let emailStatus = 'QUEUED';
   try {
     await queueEmail({
       organizationId,
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
       payload: { invitationId: invitation.id },
     });
   } catch (error) {
+    emailStatus = 'FAILED';
     console.error('ICA_INVITE_EMAIL_QUEUE_ERROR', error);
   }
 
@@ -106,5 +108,5 @@ export async function POST(request: Request) {
     console.error('ICA_INVITE_WEBHOOK_ERROR', error);
   }
 
-  return NextResponse.json({ inviteUrl, emailStatus: 'QUEUED' }, { status: 201 });
+  return NextResponse.json({ inviteUrl, emailStatus }, { status: 201 });
 }
