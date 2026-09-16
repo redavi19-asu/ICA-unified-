@@ -423,7 +423,7 @@ export default function ToolsClient({ organizationName, role }: Props) {
         <article>
           <div className={styles.cardTop}><span>02</span><b>WEBSITE INTEGRATION</b></div>
           <h3>Connect the company&apos;s existing website.</h3>
-          <p>Registration, member access, enrollment, and other workflows can feed ICA Unified through the platform API.</p>
+          <p>Use the current member API for member registration and member data, plus signed webhooks for ICA member events. Additional external-system connections can be scoped as custom integrations.</p>
           <button onClick={() => router.push('/workspace/integrations#api-access')}>OPEN INTEGRATION AREA →</button>
         </article>
 
@@ -436,8 +436,8 @@ export default function ToolsClient({ organizationName, role }: Props) {
 
         <article>
           <div className={styles.cardTop}><span>04</span><b>DOMAIN / DNS</b></div>
-          <h3>Point a company portal at ICA Unified.</h3>
-          <p>Prepare member, training, or portal subdomains for a branded ICA Unified entry point.</p>
+          <h3>Verify a company portal domain for ICA Unified.</h3>
+          <p>Claim a member, training, or portal hostname and verify DNS ownership. Final custom-host routing is activated when the hosting connection is configured.</p>
           <div className={styles.example}>portal.company.com → ICA Unified</div>
           <button onClick={() => router.push('/workspace/integrations#custom-domain')}>OPEN DOMAIN SETTINGS →</button>
         </article>
