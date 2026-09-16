@@ -70,5 +70,11 @@ export async function readMobileSession(request: Request) {
     membership.organization.status === 'CANCELLED'
   ) return null;
 
+  const localTrialExpired =
+    membership.organization.plan !== 'internal' &&
+    membership.organization.status === 'TRIAL' &&
+    Boolean(membership.organization.trialEndsAt && membership.organization.trialEndsAt.getTime() <= Date.now());
+  if (localTrialExpired) return null;
+
   return { session, membership };
 }
