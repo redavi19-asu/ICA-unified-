@@ -286,7 +286,11 @@ export default function IntegrationsClient({
             <span>OWNERSHIP</span>
             <strong>{domain?.domain?.status || 'NOT CONFIGURED'}</strong>
           </div>
-          <small className={styles.note}>Verification needs no Cloudflare account credentials. Final custom-host routing is the later account-connected step.</small>
+          <div className={styles.statusLine}>
+            <span>ICA HOST RESOLUTION</span>
+            <strong>{domain?.routingReady ? 'READY' : 'WAITING FOR VERIFIED DOMAIN'}</strong>
+          </div>
+          <small className={styles.note}>{domain?.routingNote || 'Verify DNS ownership first.'}</small>
         </article>
 
         <article id="export-backup" className={styles.wide}>
