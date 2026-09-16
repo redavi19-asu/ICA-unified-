@@ -65,7 +65,7 @@ function RealMapGlobe() {
         style,
         center: [-18, 22],
         zoom: 1.18,
-        minZoom: 0.75,
+        minZoom: 0.95,
         maxZoom: 5.5,
         pitch: 0,
         bearing: 0,
@@ -137,17 +137,11 @@ function RealMapGlobe() {
 
   return (
     <div className={styles.realGlobeShell}>
-      <div className={styles.globeColorHalo} aria-hidden="true" />
-      <div className={styles.realGlobeWrap}>
-        <div className={styles.realGlobeFallback} aria-hidden="true">
-          <div className={styles.realGlobeFallbackLand} />
-        </div>
-        <div
-          ref={mapRef}
-          className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
-          aria-label="Interactive ICA Unified MapLibre world globe"
-        />
-      </div>
+      <div
+        ref={mapRef}
+        className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
+        aria-label="Interactive ICA Unified MapLibre world globe"
+      />
       <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
     </div>
   );
@@ -211,7 +205,6 @@ export default function SystemStatusGlobe() {
       </div>
 
       <div className={styles.globeStage}>
-        <div className={styles.orbitLine} aria-hidden="true" />
         <RealMapGlobe />
 
         <div className={styles.coreLabel}>
