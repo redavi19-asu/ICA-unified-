@@ -1,5 +1,6 @@
 import { requireSession } from '../../lib/auth';
 import { prisma } from '../../lib/prisma';
+import { listDocumentContent } from '../../lib/document-content';
 import MyDashboardClient from './MyDashboardClient';
 
 export default async function MyDashboardPage() {
@@ -30,6 +31,9 @@ export default async function MyDashboardPage() {
       },
     }),
   ]);
+
+  const contents = await listDocumentContent(organizationId, documents.map((item) => item.id));
+  const contentMap = new Map(contents.map((item) => [item.documentId, item]));
 
   return (
     <MyDashboardClient
@@ -63,6 +67,9 @@ export default async function MyDashboardPage() {
         version: item.version,
         requiresAck: item.requiresAck,
         acknowledgedAt: item.acknowledgments[0]?.acknowledgedAt?.toISOString() ?? null,
+        bodyText: contentMap.get(item.id)?.bodyText || null,
+        fileName: contentMap.get(item.id)?.fileName || null,
+        fileUrl: contentMap.get(item.id)?.storageKey ? `/api/documents/${item.id}/file` : null,
       }))}
     />
   );
