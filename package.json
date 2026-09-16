@@ -11,7 +11,9 @@
     "db:seed": "prisma db seed",
     "admin:bootstrap": "tsx prisma/bootstrap-platform-admin.ts",
     "test": "tsx --test tests/**/*.test.ts",
-    "db:migrate:remote": "wrangler d1 migrations apply ica-unified --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply ica-unified --remote",
+    "prebuild": "node ./scripts/copy-maplibre-worker.mjs",
+    "predev": "node ./scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {
     "@prisma/adapter-d1": "^6.19.0",
