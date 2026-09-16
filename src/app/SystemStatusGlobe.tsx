@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
+import worldCountries from './world-countries.json';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -40,47 +41,12 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       const style: StyleSpecification = {
         version: 8,
-        sources: {
-          countries: {
-            type: 'geojson',
-            data: '/world-countries.geojson',
-          },
-        },
+        sources: {},
         layers: [
           {
             id: 'ocean',
             type: 'background',
             paint: { 'background-color': '#D8F2FF' },
-          },
-          {
-            id: 'countries-fill',
-            type: 'fill',
-            source: 'countries',
-            paint: {
-              'fill-color': [
-                'match',
-                ['get', 'MAPCOLOR7'],
-                1, '#D6C7FF',
-                2, '#EBCA8A',
-                3, '#C1E599',
-                4, '#E7E58F',
-                5, '#98DDA1',
-                6, '#83D5F4',
-                7, '#B1BBF9',
-                '#EAB38F',
-              ],
-              'fill-opacity': 1,
-            },
-          },
-          {
-            id: 'countries-boundary',
-            type: 'line',
-            source: 'countries',
-            paint: {
-              'line-color': '#FFFFFF',
-              'line-width': 1.15,
-              'line-opacity': 0.95,
-            },
           },
         ],
       };
@@ -119,7 +85,51 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       map.on('style.load', () => {
         if (disposed) return;
+
         map.setProjection({ type: 'globe' });
+
+        if (!map.getSource('countries')) {
+          map.addSource('countries', {
+            type: 'geojson',
+            data: worldCountries as any,
+          });
+
+          map.addLayer({
+            id: 'countries-fill',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': [
+                'match',
+                ['get', 'MAPCOLOR7'],
+                1, '#D6C7FF',
+                2, '#EBCA8A',
+                3, '#C1E599',
+                4, '#E7E58F',
+                5, '#98DDA1',
+                6, '#83D5F4',
+                7, '#B1BBF9',
+                '#EAB38F',
+              ],
+              'fill-opacity': 1,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-boundary',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#FFFFFF',
+              'line-width': 1.15,
+              'line-opacity': 0.95,
+            },
+          });
+        }
+
+        map.once('idle', () => {
+          if (!disposed) setMapReady(true);
+        });
 
         if (!spinStarted) {
           spinStarted = true;
@@ -138,13 +148,6 @@ function RealMapGlobe({ health }: { health: HealthState }) {
           };
 
           frame = requestAnimationFrame(animate);
-        }
-      });
-
-      map.on('sourcedata', (event) => {
-        if (disposed || event.sourceId !== 'countries') return;
-        if (event.isSourceLoaded || map.isSourceLoaded('countries')) {
-          setMapReady(true);
         }
       });
 
