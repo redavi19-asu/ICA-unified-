@@ -424,14 +424,14 @@ export default function ToolsClient({ organizationName, role }: Props) {
           <div className={styles.cardTop}><span>02</span><b>WEBSITE INTEGRATION</b></div>
           <h3>Connect the company&apos;s existing website.</h3>
           <p>Registration, member access, enrollment, and other workflows can feed ICA Unified through the platform API.</p>
-          <button onClick={() => router.push('/workspace/reports')}>OPEN INTEGRATION AREA →</button>
+          <button onClick={() => router.push('/workspace/integrations#api-access')}>OPEN INTEGRATION AREA →</button>
         </article>
 
         <article>
           <div className={styles.cardTop}><span>03</span><b>API + WEBHOOKS</b></div>
           <h3>Connect external systems without duplicating data.</h3>
           <p>Use API and webhook connections for forms, payments, enrollment events, updates, and future third-party integrations.</p>
-          <button onClick={() => router.push('/workspace/reports')}>VIEW INTEGRATIONS →</button>
+          <button onClick={() => router.push('/workspace/integrations#webhooks')}>VIEW INTEGRATIONS →</button>
         </article>
 
         <article>
@@ -439,13 +439,14 @@ export default function ToolsClient({ organizationName, role }: Props) {
           <h3>Point a company portal at ICA Unified.</h3>
           <p>Prepare member, training, or portal subdomains for a branded ICA Unified entry point.</p>
           <div className={styles.example}>portal.company.com → ICA Unified</div>
+          <button onClick={() => router.push('/workspace/integrations#custom-domain')}>OPEN DOMAIN SETTINGS →</button>
         </article>
 
         <article>
           <div className={styles.cardTop}><span>05</span><b>EXPORT / BACKUP</b></div>
           <h3>Keep organization data portable.</h3>
           <p>Download a clean member CSV or a full organization backup for portability, recovery planning, and controlled data handoff.</p>
-          <div className={styles.badge}>COMING NEXT</div>
+          <button onClick={() => router.push('/workspace/integrations#export-backup')}>OPEN EXPORT + BACKUP →</button>
         </article>
       </section>
     </main>
