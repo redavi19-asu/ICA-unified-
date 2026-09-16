@@ -36,45 +36,15 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
-      const style = {
-        version: 8 as const,
-        sky: {
-          'atmosphere-blend': 0,
-        },
-        sources: {
-          basemap: {
-            type: 'raster' as const,
-            tiles: [
-              'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-            ],
-            tileSize: 256,
-            minzoom: 2,
-            maxzoom: 20,
-            attribution: 'CyclOSM style · Tiles hosted by OpenStreetMap France · Map data © OpenStreetMap contributors',
-          },
-        },
-        layers: [
-          {
-            id: 'basemap',
-            type: 'raster' as const,
-            source: 'basemap',
-            paint: {
-              'raster-opacity': 1,
-              'raster-fade-duration': 0,
-              'raster-saturation': 0.62,
-              'raster-contrast': 0.14,
-              'raster-brightness-min': 0.02,
-              'raster-brightness-max': 1,
-            },
-          },
-        ],
-      };
+      // OpenStreetMap Shortbread is an embeddable, no-key vector style.
+      // Use MapLibre's explicit worker URL so vector tiles render correctly in Next.js.
+      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style,
-        center: [-18, 22],
-        zoom: 1.28,
+        style: 'https://vector.openstreetmap.org/styles/svwd/svwd03style.json',
+        center: [-12, 18],
+        zoom: 1.18,
         minZoom: 0.8,
         maxZoom: 5.5,
         pitch: 0,
@@ -102,7 +72,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       let spinStarted = false;
 
-      map.on('load', () => {
+      map.on('style.load', () => {
         if (disposed) return;
 
         map.setProjection({ type: 'globe' });
@@ -242,7 +212,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre globe · CyclOSM style · Tiles via OpenStreetMap France</small>
+        <small className={styles.mapCredit}>MapLibre globe · OpenStreetMap Shortbread vector style</small>
       </div>
     </div>
   );
