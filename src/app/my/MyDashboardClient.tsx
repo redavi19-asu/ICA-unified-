@@ -29,6 +29,9 @@ type DocumentItem = {
   version: string;
   requiresAck: boolean;
   acknowledgedAt: string | null;
+  bodyText: string | null;
+  fileName: string | null;
+  fileUrl: string | null;
 };
 
 export default function MyDashboardClient({ user, organizationName, enrollments, credentials, documents: initialDocuments }: {
@@ -40,6 +43,7 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
 }) {
   const router = useRouter();
   const [documents, setDocuments] = useState(initialDocuments);
+  const [openDocumentId, setOpenDocumentId] = useState<string | null>(null);
   const [message, setMessage] = useState(`Welcome back, ${user.name}.`);
 
   const stats = useMemo(() => ({
@@ -115,12 +119,24 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
 
       <section className={styles.documents}>
         <div className={styles.panelHead}><p className={styles.eyebrow}>MY DOCUMENTS</p><span>Policies & acknowledgments</span></div>
-        {documents.length === 0 ? <p className={styles.empty}>No controlled documents are assigned to this workspace yet.</p> : documents.map((item) => (
-          <article className={styles.document} key={item.id}>
-            <div><strong>{item.title}</strong><span>Version {item.version}</span></div>
-            {item.requiresAck ? item.acknowledgedAt ? <span className={styles.done}>ACKNOWLEDGED</span> : <button onClick={() => acknowledge(item.id)}>ACKNOWLEDGE</button> : <span className={styles.done}>REFERENCE</span>}
-          </article>
-        ))}
+        {documents.length === 0 ? <p className={styles.empty}>No controlled documents are assigned to this workspace yet.</p> : documents.map((item) => {
+          const open = openDocumentId === item.id;
+          return (
+            <article className={styles.document} key={item.id}>
+              <div><strong>{item.title}</strong><span>Version {item.version}{item.fileName ? ` · ${item.fileName}` : ''}</span></div>
+              <button onClick={() => setOpenDocumentId(open ? null : item.id)}>{open ? 'CLOSE REVIEW' : 'REVIEW DOCUMENT'}</button>
+              {item.acknowledgedAt && <span className={styles.done}>ACKNOWLEDGED</span>}
+              {open && (
+                <div className={styles.documentReview}>
+                  {item.bodyText ? <p>{item.bodyText}</p> : <p className={styles.empty}>No inline text was provided for this controlled document.</p>}
+                  {item.fileUrl && <a href={item.fileUrl} target="_blank" rel="noreferrer">OPEN ATTACHED FILE ↗</a>}
+                  {item.requiresAck && !item.acknowledgedAt && <button onClick={() => acknowledge(item.id)}>I REVIEWED THIS DOCUMENT · ACKNOWLEDGE</button>}
+                  {!item.requiresAck && <span className={styles.done}>REFERENCE DOCUMENT</span>}
+                </div>
+              )}
+            </article>
+          );
+        })}
       </section>
 
       <p className={styles.message} aria-live="polite">{message}</p>
