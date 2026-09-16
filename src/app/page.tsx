@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import styles from './landing.module.css';
 import SystemStatusGlobe from './SystemStatusGlobe';
+import { resolveVerifiedCustomDomain } from '../lib/organization-ops';
 
 const modules = [
   ['AMS', 'People, membership, roles, documents, compliance, administration, and reporting in one operational layer.'],
@@ -119,7 +122,13 @@ function iconFor(title: string) {
   return 'web';
 }
 
-export default function Home() {
+export default async function Home() {
+  const host = (await headers()).get('host') || '';
+  const customOrganization = await resolveVerifiedCustomDomain(host);
+  if (customOrganization) {
+    redirect(`/login?company=${encodeURIComponent(customOrganization.slug)}&portal=1`);
+  }
+
   return (
     <main className={styles.page}>
       <header className={styles.nav}>
