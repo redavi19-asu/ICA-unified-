@@ -17,10 +17,15 @@ function NodeIcon({ type }: { type: string }) {
 }
 
 
-function RealMapGlobe() {
+function RealMapGlobe({ health }: { health: HealthState }) {
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const healthRef = useRef<HealthState>(health);
   const mapInstanceRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => {
+    healthRef.current = health;
+  }, [health]);
 
   useEffect(() => {
     let disposed = false;
@@ -104,7 +109,7 @@ function RealMapGlobe() {
           const delta = Math.min(34, now - lastFrame);
           lastFrame = now;
 
-          if (!userInteracting && map.getZoom() < 2.4) {
+          if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
             const center = map.getCenter();
             map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
           }
@@ -136,7 +141,7 @@ function RealMapGlobe() {
   }, []);
 
   return (
-    <div className={styles.realGlobeShell}>
+    <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
       <div className={styles.realGlobeFallback} aria-hidden="true">
         <div className={styles.fallbackLatitudeOne} />
         <div className={styles.fallbackLatitudeTwo} />
@@ -148,7 +153,7 @@ function RealMapGlobe() {
         className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
         aria-label="Interactive ICA Unified MapLibre world globe"
       />
-      <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
+      <div className={styles.globeHint}>{health === 'issue' ? 'SERVICE ISSUE · AUTO-SPIN PAUSED' : 'DRAG · ZOOM · AUTO-SPIN'}</div>
     </div>
   );
 }
@@ -211,7 +216,7 @@ export default function SystemStatusGlobe() {
       </div>
 
       <div className={styles.globeStage}>
-        <RealMapGlobe />
+        <RealMapGlobe health={status} />
 
         <div className={styles.coreLabel}>
           <small>ONE SHARED PLATFORM</small>
