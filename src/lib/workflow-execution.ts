@@ -307,3 +307,59 @@ export async function createMembershipActivation(input: {
 
   return { alreadyMember: false as const, inviteUrl, emailQueued };
 }
+
+
+export async function canUserAttendPaidEvent(input: {
+  organizationId: string;
+  workflowId: string;
+  email: string;
+}) {
+  await ensureWorkflowExecutionTables();
+
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    price: string | number | null;
+    configJson: string;
+  }>>(
+    `SELECT 0 as price, configJson
+     FROM WorkflowDefinition
+     WHERE id = ? AND organizationId = ? AND kind = 'EVENT' AND status = 'ACTIVE'
+     LIMIT 1`,
+    input.workflowId,
+    input.organizationId,
+  );
+
+  const workflow = rows[0];
+  if (!workflow) return { allowed: false, reason: 'EVENT_NOT_ACTIVE' as const };
+
+  let config: Record<string, unknown> = {};
+  try { config = JSON.parse(workflow.configJson || '{}'); } catch {}
+  const configuredPrice = Number(config.price || 0);
+
+  if (!Number.isFinite(configuredPrice) || configuredPrice <= 0) {
+    return { allowed: true, reason: 'FREE_EVENT' as const };
+  }
+
+  const submissions = await prisma.$queryRawUnsafe<Array<{
+    status: string;
+    paymentStatus: string;
+  }>>(
+    `SELECT status, paymentStatus
+     FROM WorkflowSubmission
+     WHERE organizationId = ? AND workflowId = ? AND lower(email) = lower(?)
+     LIMIT 1`,
+    input.organizationId,
+    input.workflowId,
+    input.email,
+  );
+
+  const submission = submissions[0];
+  if (!submission) return { allowed: false, reason: 'REGISTRATION_REQUIRED' as const };
+  if (submission.paymentStatus !== 'PAID') {
+    return { allowed: false, reason: 'PAYMENT_REQUIRED' as const };
+  }
+  if (submission.status !== 'REGISTERED') {
+    return { allowed: false, reason: 'REGISTRATION_NOT_ACTIVE' as const };
+  }
+
+  return { allowed: true, reason: 'PAID_REGISTERED' as const };
+}
