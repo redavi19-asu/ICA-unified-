@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
+import { listDocumentContent } from '../../../lib/document-content';
 import DocumentsClient from './DocumentsClient';
 
 export default async function DocumentsPage() {
@@ -18,6 +19,9 @@ export default async function DocumentsPage() {
     },
   });
 
+  const contents = await listDocumentContent(organizationId, documents.map((document) => document.id));
+  const contentMap = new Map(contents.map((item) => [item.documentId, item]));
+
   return (
     <DocumentsClient
       organizationName={membership.organization.name}
@@ -29,6 +33,8 @@ export default async function DocumentsPage() {
         requiresAck: document.requiresAck,
         createdAt: document.createdAt.toISOString(),
         acknowledged: document.acknowledgments.filter((item) => item.acknowledgedAt).length,
+        bodyText: contentMap.get(document.id)?.bodyText || null,
+        fileName: contentMap.get(document.id)?.fileName || null,
       }))}
     />
   );
