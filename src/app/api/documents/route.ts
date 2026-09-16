@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
+import { upsertDocumentText } from '../../../lib/document-content';
 
 const documentSchema = z.object({
   title: z.string().min(2).max(120),
   version: z.string().min(1).max(20).default('1.0'),
   requiresAck: z.boolean().default(false),
+  bodyText: z.string().trim().max(30000).optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -25,6 +27,12 @@ export async function POST(request: Request) {
         requiresAck: body.requiresAck,
       },
     });
+
+    await upsertDocumentText(
+      membership.organizationId,
+      document.id,
+      body.bodyText || null,
+    );
 
     await prisma.activity.create({
       data: {
