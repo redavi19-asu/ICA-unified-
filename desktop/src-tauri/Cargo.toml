@@ -1,0 +1,13 @@
+[package]
+name = "ica-unified-desktop"
+version = "1.0.0"
+description = "ICA Unified desktop client"
+authors = ["I Computer Anything"]
+edition = "2021"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+url = "2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
