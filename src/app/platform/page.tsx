@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default async function PlatformPage() {
   const admin = await requirePlatformAdmin();
-  const [organizations, organizationCount, userCount, courseCount] = await Promise.all([
+  const [organizations, organizationCount, userCount, courseCount, trialCount] = await Promise.all([
     prisma.organization.findMany({
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { memberships: true, courses: true, credentials: true } } },
@@ -13,6 +13,7 @@ export default async function PlatformPage() {
     prisma.organization.count(),
     prisma.user.count(),
     prisma.course.count(),
+    prisma.organization.count({ where: { status: 'TRIAL' } }),
   ]);
 
   const canControl = admin.role === 'SUPER_ADMIN' || admin.role === 'PLATFORM_ADMIN';
@@ -34,7 +35,7 @@ export default async function PlatformPage() {
         <Metric label="ORGANIZATIONS" value={organizationCount}/>
         <Metric label="USERS" value={userCount}/>
         <Metric label="COURSES" value={courseCount}/>
-        <Metric label="TRIALS" value={organizations.filter((o) => o.status === 'TRIAL').length}/>
+        <Metric label="TRIALS" value={trialCount}/>
         <div style={{borderTop:'1px solid #34373d',padding:'18px 2px'}}>
           <span style={{fontSize:10,letterSpacing:'.14em',color:'#747a80'}}>PLATFORM HEALTH</span>
           <strong style={{display:'flex',alignItems:'center',gap:8,fontSize:16,marginTop:15,color:'#55e69a'}}><i style={{width:8,height:8,borderRadius:'50%',background:'#55e69a',boxShadow:'0 0 12px rgba(85,230,154,.9)'}}/> D1 DATA LOADED</strong>
