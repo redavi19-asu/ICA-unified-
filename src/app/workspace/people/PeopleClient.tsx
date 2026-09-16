@@ -92,7 +92,7 @@ export default function PeopleClient({
       expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
     }, ...current]);
     event.currentTarget.reset();
-    setMessage(`Invitation ready for ${payload.name}.`);
+    setMessage(data.emailStatus === 'FAILED' ? `Invite link created for ${payload.name}, but email delivery could not be queued. Copy the invite link manually.` : `Invitation ready for ${payload.name}. Email status: ${data.emailStatus || 'QUEUED'}.`);
   }
 
   return (
