@@ -169,6 +169,22 @@ export default function IntegrationsClient({
     await refresh();
   }
 
+
+  async function retryQueuedEmail() {
+    const response = await fetch('/api/integrations/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'RETRY' }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error || 'Unable to retry queued email.');
+      return;
+    }
+    setMessage(`Email retry complete: ${data.result?.sent || 0} sent, ${data.result?.failed || 0} failed.`);
+    await refresh();
+  }
+
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
@@ -233,8 +249,8 @@ export default function IntegrationsClient({
 
         <article>
           <div className={styles.cardHead}><span>03</span><b>EMAIL OUTBOX</b></div>
-          <h2>Email system is staged, not self-hosted.</h2>
-          <p>ICA stores transactional messages in its outbox now. A managed provider can be connected later without changing invitations, renewals, courses, events, or credentials.</p>
+          <h2>{email?.readyToSend ? 'Transactional email is connected.' : 'Email outbox is ready for a provider.'}</h2>
+          <p>{email?.readyToSend ? 'ICA sends new transactional messages through the configured provider and keeps delivery status in the organization outbox.' : 'ICA stores transactional messages safely until the managed email provider is connected.'}</p>
           <div className={styles.metrics}>
             <span><b>{email?.counts.queued ?? 0}</b>QUEUED</span>
             <span><b>{email?.counts.sent ?? 0}</b>SENT</span>
@@ -246,8 +262,9 @@ export default function IntegrationsClient({
           </div>
           <form className={styles.stackForm} onSubmit={queueTestEmail}>
             <input name="recipient" type="email" placeholder="test@example.org" required />
-            <button>QUEUE TEST EMAIL</button>
+            <button>{email?.readyToSend ? 'SEND TEST EMAIL' : 'QUEUE TEST EMAIL'}</button>
           </form>
+          <button className={styles.secondary} onClick={retryQueuedEmail} disabled={!email?.readyToSend || ((email?.counts.queued || 0) + (email?.counts.failed || 0) === 0)}>RETRY QUEUED / FAILED EMAIL</button>
         </article>
 
         <article id="custom-domain">
