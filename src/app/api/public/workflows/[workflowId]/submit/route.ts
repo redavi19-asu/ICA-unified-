@@ -67,13 +67,28 @@ export async function POST(
     });
 
     if (result.duplicate) {
-      return NextResponse.json(
-        {
-          error: 'A submission for this email already exists.',
+      try {
+        const checkout = await createWorkflowPaymentCheckout({
+          workflowId: workflow.id,
+          submissionId: result.submissionId,
+          origin: new URL(request.url).origin,
+        });
+        return NextResponse.json({
+          ok: true,
+          duplicate: true,
           status: result.status,
-        },
-        { status: 409 },
-      );
+          checkoutUrl: checkout.checkoutUrl,
+          message: 'Your existing submission was found. Continue to secure payment.',
+        });
+      } catch {
+        return NextResponse.json(
+          {
+            error: 'A submission for this email already exists.',
+            status: result.status,
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const origin = new URL(request.url).origin;
