@@ -22,6 +22,7 @@ type CheckoutSession = {
   status?: string;
   mode?: string;
   metadata?: Record<string, string>;
+  amount_total?: number | null;
 };
 
 let paymentTableReady: Promise<void> | null = null;
@@ -182,6 +183,46 @@ export async function createOrganizationPaymentOnboarding(input: {
   return { url: link.url, state };
 }
 
+async function getPaymentWorkflow(workflowId: string, expectedOrganizationId?: string) {
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    id: string;
+    organizationId: string;
+    kind: string;
+    name: string;
+    status: string;
+    configJson: string;
+  }>>(
+    `SELECT id, organizationId, kind, name, status, configJson
+     FROM WorkflowDefinition
+     WHERE id = ?
+     LIMIT 1`,
+    workflowId,
+  );
+
+  const row = rows[0];
+  if (!row || (row.kind !== 'MEMBERSHIP' && row.kind !== 'EVENT')) return null;
+  if (expectedOrganizationId && row.organizationId !== expectedOrganizationId) return null;
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: row.organizationId },
+    select: { name: true },
+  });
+  if (!organization) return null;
+
+  let config: Record<string, unknown> = {};
+  try { config = JSON.parse(row.configJson || '{}'); } catch {}
+
+  return {
+    id: row.id,
+    organizationId: row.organizationId,
+    organizationName: organization.name,
+    kind: row.kind as 'MEMBERSHIP' | 'EVENT',
+    status: row.status,
+    name: row.name,
+    config,
+  };
+}
+
 export async function createWorkflowPaymentCheckout(input: {
   workflowId: string;
   submissionId: string;
@@ -249,13 +290,102 @@ export async function createWorkflowPaymentCheckout(input: {
   };
 }
 
+async function finalizePaidWorkflow(input: {
+  workflow: {
+    id: string;
+    organizationId: string;
+    organizationName: string;
+    kind: 'MEMBERSHIP' | 'EVENT';
+    name: string;
+    config: Record<string, unknown>;
+  };
+  submission: Awaited<ReturnType<typeof getWorkflowSubmission>> & {};
+  checkoutSessionId: string;
+  origin: string;
+}) {
+  const { workflow, submission } = input;
+  if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
+
+  if (
+    submission.paymentStatus === 'PAID' &&
+    !['PAYMENT_PENDING', 'RECEIVED'].includes(submission.status)
+  ) {
+    return { paid: true, status: submission.status, activationUrl: null };
+  }
+
+  let nextStatus = submission.status;
+  let activationUrl: string | null = null;
+
+  if (workflow.kind === 'EVENT') {
+    nextStatus = submission.status === 'WAITLISTED' ? 'WAITLISTED' : 'REGISTERED';
+  } else {
+    const approvalRequired = Boolean(workflow.config.approvalRequired);
+    nextStatus = approvalRequired ? 'PENDING_REVIEW' : 'APPROVED';
+
+    if (!approvalRequired) {
+      const activation = await createMembershipActivation({
+        organizationId: workflow.organizationId,
+        organizationName: workflow.organizationName,
+        name: submission.name,
+        email: submission.email,
+        origin: input.origin,
+      });
+      activationUrl = activation.inviteUrl;
+    }
+  }
+
+  await ensureWorkflowExecutionTables();
+  await prisma.$executeRawUnsafe(
+    `UPDATE WorkflowSubmission
+     SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
+     WHERE id = ? AND organizationId = ? AND workflowId = ?`,
+    nextStatus,
+    submission.id,
+    workflow.organizationId,
+    workflow.id,
+  );
+
+  try {
+    await queueEmail({
+      organizationId: workflow.organizationId,
+      recipient: submission.email,
+      templateKey: 'PAYMENT_RECEIPT',
+      subject: `${workflow.name} · payment received`,
+      bodyText: [
+        `Hello ${submission.name},`,
+        '',
+        `Payment of $${(submission.amountCents / 100).toFixed(2)} was received for ${workflow.name}.`,
+        `Status: ${nextStatus.replaceAll('_', ' ')}`,
+        workflow.kind === 'EVENT' &&
+        nextStatus === 'REGISTERED' &&
+        typeof workflow.config.meetingLink === 'string' &&
+        workflow.config.meetingLink.trim()
+          ? `Event access: ${workflow.config.meetingLink.trim()}`
+          : '',
+        activationUrl ? `Activate your ICA Unified account: ${activationUrl}` : '',
+        '',
+        `${workflow.organizationName} · ICA Unified`,
+      ].filter(Boolean).join('\n'),
+      payload: {
+        workflowId: workflow.id,
+        submissionId: submission.id,
+        checkoutSessionId: input.checkoutSessionId,
+      },
+    });
+  } catch (error) {
+    console.error('ICA_WORKFLOW_PAYMENT_EMAIL_ERROR', error);
+  }
+
+  return { paid: true, status: nextStatus, activationUrl };
+}
+
 export async function confirmWorkflowPayment(input: {
   workflowId: string;
   submissionId: string;
   sessionId: string;
   origin: string;
 }) {
-  const workflow = await getPublicWorkflow(input.workflowId);
+  const workflow = await getPaymentWorkflow(input.workflowId);
   if (!workflow) throw new Error('WORKFLOW_NOT_AVAILABLE');
 
   const submission = await getWorkflowSubmission(
@@ -282,6 +412,13 @@ export async function confirmWorkflowPayment(input: {
     throw new Error('CHECKOUT_SESSION_MISMATCH');
   }
 
+  if (
+    typeof session.amount_total === 'number' &&
+    session.amount_total !== submission.amountCents
+  ) {
+    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
+  }
+
   const paid =
     session.mode === 'subscription'
       ? session.status === 'complete'
@@ -291,70 +428,72 @@ export async function confirmWorkflowPayment(input: {
     return { paid: false, status: submission.status, activationUrl: null };
   }
 
-  await ensureWorkflowExecutionTables();
-  await prisma.$executeRawUnsafe(
-    `UPDATE WorkflowSubmission
-     SET paymentStatus = 'PAID', updatedAt = CURRENT_TIMESTAMP
-     WHERE id = ? AND organizationId = ? AND workflowId = ?`,
-    submission.id,
-    workflow.organizationId,
-    workflow.id,
-  );
+  return finalizePaidWorkflow({
+    workflow,
+    submission,
+    checkoutSessionId: session.id,
+    origin: input.origin,
+  });
+}
 
-  let nextStatus = submission.status;
-  let activationUrl: string | null = null;
-
-  if (workflow.kind === 'EVENT') {
-    nextStatus = submission.status === 'WAITLISTED' ? 'WAITLISTED' : 'REGISTERED';
-  } else {
-    const approvalRequired = Boolean(workflow.config.approvalRequired);
-    nextStatus = approvalRequired ? 'PENDING_REVIEW' : 'APPROVED';
-    if (!approvalRequired) {
-      const activation = await createMembershipActivation({
-        organizationId: workflow.organizationId,
-        organizationName: workflow.organizationName,
-        name: submission.name,
-        email: submission.email,
-        origin: input.origin,
-      });
-      activationUrl = activation.inviteUrl;
-    }
+export async function handleWorkflowPaymentWebhook(event: {
+  type?: string;
+  account?: string;
+  data?: { object?: unknown };
+}) {
+  const type = String(event.type || '');
+  if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(type)) {
+    return false;
   }
 
-  await setWorkflowSubmissionStatus(
-    workflow.organizationId,
-    workflow.id,
-    submission.id,
-    nextStatus,
-  );
+  const session = event.data?.object as CheckoutSession | undefined;
+  const metadata = session?.metadata;
+  const workflowId = String(metadata?.workflowId || '');
+  const submissionId = String(metadata?.icaFlowSubmissionId || '');
+  const organizationId = String(metadata?.organizationId || '');
 
-  try {
-    await queueEmail({
-      organizationId: workflow.organizationId,
-      recipient: submission.email,
-      templateKey: 'PAYMENT_RECEIPT',
-      subject: `${workflow.name} · payment received`,
-      bodyText: [
-        `Hello ${submission.name},`,
-        '',
-        `Payment of ${(submission.amountCents / 100).toFixed(2)} was received for ${workflow.name}.`,
-        `Status: ${nextStatus.replaceAll('_', ' ')}`,
-        workflow.kind === 'EVENT' && nextStatus === 'REGISTERED' && typeof workflow.config.meetingLink === 'string' && workflow.config.meetingLink.trim()
-          ? `Event access: ${workflow.config.meetingLink.trim()}`
-          : '',
-        activationUrl ? `Activate your ICA Unified account: ${activationUrl}` : '',
-        '',
-        `${workflow.organizationName} · ICA Unified`,
-      ].filter(Boolean).join('\n'),
-      payload: {
-        workflowId: workflow.id,
-        submissionId: submission.id,
-        checkoutSessionId: session.id,
-      },
-    });
-  } catch (error) {
-    console.error('ICA_WORKFLOW_PAYMENT_EMAIL_ERROR', error);
+  if (!workflowId || !submissionId || !organizationId) return false;
+
+  const workflow = await getPaymentWorkflow(workflowId, organizationId);
+  if (!workflow) throw new Error('WORKFLOW_NOT_AVAILABLE');
+
+  const submission = await getWorkflowSubmission(
+    organizationId,
+    workflowId,
+    submissionId,
+  );
+  if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
+
+  const account = await getOrganizationPaymentAccount(organizationId);
+  if (!account?.connectedAccountId) throw new Error('ORGANIZATION_PAYMENT_NOT_READY');
+  if (event.account && event.account !== account.connectedAccountId) {
+    throw new Error('CONNECTED_ACCOUNT_MISMATCH');
   }
 
-  return { paid: true, status: nextStatus, activationUrl };
+  if (
+    typeof session.amount_total === 'number' &&
+    session.amount_total !== submission.amountCents
+  ) {
+    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
+  }
+
+  const paid =
+    session.mode === 'subscription'
+      ? session.status === 'complete'
+      : session.payment_status === 'paid';
+
+  if (!paid) return true;
+
+  await finalizePaidWorkflow({
+    workflow,
+    submission,
+    checkoutSessionId: session.id,
+    origin: String(
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.APP_BASE_URL ||
+      'https://unified.icomputeranything.com'
+    ).trim(),
+  });
+
+  return true;
 }
