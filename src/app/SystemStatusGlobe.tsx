@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -38,36 +38,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
-      const style: StyleSpecification = {
-        version: 8,
-        sources: {
-          osm: {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            minzoom: 0,
-            maxzoom: 19,
-            attribution: '© OpenStreetMap contributors',
-          },
-        },
-        layers: [
-          {
-            id: 'osm',
-            type: 'raster',
-            source: 'osm',
-            paint: {
-              'raster-saturation': 0.2,
-              'raster-contrast': 0.12,
-              'raster-brightness-min': 0.08,
-              'raster-brightness-max': 1,
-            },
-          },
-        ],
-      };
-
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style,
+        style: 'https://demotiles.maplibre.org/globe.json',
         center: [-18, 22],
         zoom: 1.18,
         minZoom: 0.95,
@@ -142,12 +115,14 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
   return (
     <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
-      <div className={styles.realGlobeFallback} aria-hidden="true">
-        <div className={styles.fallbackLatitudeOne} />
-        <div className={styles.fallbackLatitudeTwo} />
-        <div className={styles.fallbackLongitudeOne} />
-        <div className={styles.fallbackLongitudeTwo} />
-      </div>
+      {!mapReady && (
+        <div className={styles.realGlobeFallback} aria-hidden="true">
+          <div className={styles.fallbackLatitudeOne} />
+          <div className={styles.fallbackLatitudeTwo} />
+          <div className={styles.fallbackLongitudeOne} />
+          <div className={styles.fallbackLongitudeTwo} />
+        </div>
+      )}
       <div
         ref={mapRef}
         className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
@@ -236,7 +211,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre rendering · Map data © OpenStreetMap contributors</small>
+        <small className={styles.mapCredit}>MapLibre rendering · Map data: Natural Earth</small>
       </div>
     </div>
   );
