@@ -1,4 +1,4 @@
-const API_URL = process.env.EXPO_PUBLIC_ICA_API_URL || 'https://ica-unified.ryanedavis.workers.dev';
+const API_URL = process.env.EXPO_PUBLIC_ICA_API_URL || 'https://unified.icomputeranything.com';
 
 async function request(path: string, token?: string, init: RequestInit = {}) {
   const response = await fetch(`${API_URL}${path}`, {
