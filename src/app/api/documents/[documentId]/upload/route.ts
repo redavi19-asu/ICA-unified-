@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { requireSession } from '../../../../../../lib/auth';
-import { prisma } from '../../../../../../lib/prisma';
-import { attachDocumentFile } from '../../../../../../lib/document-content';
+import { requireSession } from '../../../../../lib/auth';
+import { prisma } from '../../../../../lib/prisma';
+import { attachDocumentFile } from '../../../../../lib/document-content';
 
 type StorageBucket = {
   put: (key: string, value: ArrayBuffer, options?: unknown) => Promise<unknown>;
