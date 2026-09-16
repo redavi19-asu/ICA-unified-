@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireSession } from '../../../../../../lib/auth';
-import { prisma } from '../../../../../../lib/prisma';
+import { requireSession } from '../../../../../lib/auth';
+import { prisma } from '../../../../../lib/prisma';
 import {
   createMembershipActivation,
   getWorkflowSubmission,
   listWorkflowSubmissions,
   setWorkflowSubmissionStatus,
-} from '../../../../../../lib/workflow-execution';
-import { emitOrganizationEvent, queueEmail } from '../../../../../../lib/organization-ops';
+} from '../../../../../lib/workflow-execution';
+import { emitOrganizationEvent, queueEmail } from '../../../../../lib/organization-ops';
 
 const updateSchema = z.object({
   submissionId: z.string().min(1),
