@@ -9,13 +9,20 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   const { membership } = await requireSession();
 
   if (
-    isStripeCheckoutConfigured() &&
     membership.organization.plan !== 'internal' &&
     membership.organization.slug !== 'ica-master'
   ) {
     const billing = await ensureBillingProfile(membership.organizationId);
-    if (!isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
-      redirect('/setup/billing');
+    const localTrialExpired =
+      membership.organization.status === 'TRIAL' &&
+      Boolean(membership.organization.trialEndsAt && membership.organization.trialEndsAt.getTime() <= Date.now());
+
+    if (isStripeCheckoutConfigured()) {
+      if (!isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
+        redirect('/setup/billing');
+      }
+    } else if (localTrialExpired) {
+      redirect('/setup/billing?trial=expired');
     }
   }
 
