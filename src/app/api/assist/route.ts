@@ -16,8 +16,8 @@ ICA Unified is an association operating system combining AMS, LMS, credentials, 
 Current navigation and behavior:
 - Dashboard: organization overview and association operations metrics.
 - Workflows: Workflow Studio for membership programs and events/webinars.
-- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, and draft/publish status.
-- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, and draft/publish status.
+- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, and draft/active configuration status. Public application/payment execution is not wired yet.
+- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, and draft/active configuration status. Public event registration/payment execution is not wired yet.
 - Learning: course creation, text/video/document/live lessons, quizzes, assignments, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
 - People: member/user records and organization membership.
 - Credentials: organization credential/certificate records and verification.
@@ -48,7 +48,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('membership') || q.includes('member level') || q.includes('associate')) {
-    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or publish it.';
+    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or mark the configuration active. Public application/payment execution is a separate connection step.';
   }
 
   if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz')) {
