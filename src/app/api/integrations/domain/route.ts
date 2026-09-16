@@ -23,8 +23,10 @@ export async function GET() {
       name: `_ica-unified.${domain.hostname}`,
       value: `ica-domain-verification=${domain.verificationToken}`,
     } : null,
-    routingReady: false,
-    routingNote: 'DNS ownership verification works now. Final custom-host routing is activated when Cloudflare custom-host credentials are connected.',
+    routingReady: domain?.status === 'VERIFIED',
+    routingNote: domain?.status === 'VERIFIED'
+      ? 'ICA host resolution is ready. Route this verified hostname to the ICA Unified Worker in Cloudflare to activate the portal.'
+      : 'Verify DNS ownership first. After verification, ICA can resolve this hostname to the correct organization.',
   });
 }
 
