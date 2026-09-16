@@ -67,6 +67,11 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
       return;
     }
 
+    if (data.checkoutUrl) {
+      window.location.assign(data.checkoutUrl);
+      return;
+    }
+
     setSuccess(true);
     setMessage(data.message || 'Submitted successfully.');
     setActivationUrl(data.activationUrl || '');
