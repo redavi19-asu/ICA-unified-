@@ -15,20 +15,20 @@ ICA Unified is an association operating system combining AMS, LMS, credentials, 
 
 Current navigation and behavior:
 - Dashboard: organization overview and association operations metrics.
-- Workflows: Workflow Studio for membership programs and events/webinars.
-- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, and draft/active configuration status. Public application/payment execution is not wired yet.
-- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, and draft/active configuration status. Public event registration/payment execution is not wired yet.
+- Workflows: Workflow Studio for membership programs and events/webinars, including live public application/registration pages, submissions, review states, capacity/waitlist behavior, and organization payment handoff.
+- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, draft/active status, live public application URL, staff review, and secure ICA activation after approval. Paid memberships use the organization Stripe Connect account when it is ready.
+- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, draft/active status, live public registration URL, capacity/waitlist handling, and Stripe Connect payment when the organization account is ready.
 - Learning: course creation, text/video/document/live lessons, quizzes, assignments, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
 - People: member/user records and organization membership.
 - Credentials: organization credential/certificate records and verification.
 - Compliance: license/certification CE requirements, course credit rules, QR event check-in generation, and renewal/compliance controls.
 - My Credential + CE Wallet: a member view combining digital membership identity, credentials, CE transcript, renewal readiness, and recommended courses.
 - QR attendance: members scan an event QR, sign in, confirm attendance, and configured event credits are posted to the same CE ledger. Attendance certificate rules can issue a credential automatically.
-- Documents: controlled documents and acknowledgments.
+- Documents: controlled document text/file content, secure member review, version tracking, and acknowledgments.
 - Reports: organization reporting.
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
-- Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, email outbox staging, custom-domain DNS ownership verification, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
-- Billing: Owner/Admin subscription flow for ICA Unified Professional at $249/month. Stripe Checkout, subscription sync, webhooks, and the billing portal activate when production Stripe credentials are configured. The company subscription is separate from member dues/event payments. Stripe Connect for dues/event money remains a separate future account layer.
+- Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
+- Billing: Owner/Admin subscription flow for ICA Unified Professional at $249/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
 - Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
 Help style:
@@ -48,7 +48,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('membership') || q.includes('member level') || q.includes('associate')) {
-    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or mark the configuration active. Public application/payment execution is a separate connection step.';
+    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or mark it active. ACTIVE workflows get a public ICA application page and appear in Workflow Studio with submission review controls.';
   }
 
   if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz')) {
@@ -76,7 +76,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('billing') || q.includes('stripe') || q.includes('249') || q.includes('subscription')) {
-    return 'Go to Billing. ICA Unified Professional is $249/month for the company subscription. Stripe Checkout, subscription sync, and the billing portal work when production Stripe credentials are configured. Member dues and event payments remain a separate future Stripe Connect money flow.';
+    return 'Go to Billing. ICA Unified Professional is $249/month for the company subscription. Member dues and event payments stay separate and use the organization Stripe Connect account. Complete Connect onboarding there to activate paid public workflows.';
   }
 
   if (q.includes('backup') || q.includes('export')) {
@@ -84,7 +84,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('invoice')) {
-    return 'ICA Unified does not have the registration-invoice flow wired yet. Event price and registration setup live under Workflows → Event / Webinar; payment collection will be activated after the member-payment processor account is connected.';
+    return 'Event and membership workflow payments use the organization Stripe Connect account. Go to Billing to complete Connect onboarding, then ACTIVE paid workflows can open Stripe Checkout from their public registration/application page.';
   }
 
   return 'I can help with memberships, events, QR attendance, CE/compliance, learning, credentials, people, documents, reports, migration, API/webhooks, domain verification, email staging, billing, exports, or platform administration.';
