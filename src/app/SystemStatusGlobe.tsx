@@ -36,23 +36,20 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
-      const tracestrackKey = process.env.NEXT_PUBLIC_TRACESTRACK_API_KEY?.trim();
-      const topoTileUrl = tracestrackKey
-        ? `https://tile.tracestrack.com/topo__/{z}/{x}/{y}.webp?key=${encodeURIComponent(tracestrackKey)}`
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
       const style = {
         version: 8 as const,
         sources: {
           basemap: {
             type: 'raster' as const,
-            tiles: [topoTileUrl],
+            tiles: [
+              'https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+              'https://tile-b.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+              'https://tile-c.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+            ],
             tileSize: 256,
             minzoom: 0,
-            maxzoom: 19,
-            attribution: tracestrackKey
-              ? 'Tiles © Tracestrack · Map data © OpenStreetMap contributors'
-              : '© OpenStreetMap contributors',
+            maxzoom: 20,
+            attribution: 'Humanitarian style © HOT · Tiles hosted by OpenStreetMap France · Map data © OpenStreetMap contributors',
           },
         },
         layers: [
@@ -61,9 +58,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
             type: 'raster' as const,
             source: 'basemap',
             paint: {
-              'raster-saturation': tracestrackKey ? 0.08 : 0.18,
-              'raster-contrast': tracestrackKey ? 0.08 : 0.12,
-              'raster-brightness-min': 0.04,
+              'raster-saturation': 0.22,
+              'raster-contrast': 0.1,
+              'raster-brightness-min': 0.03,
               'raster-brightness-max': 1,
             },
           },
@@ -242,7 +239,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre globe · Tracestrack Topo when configured · OpenStreetMap fallback</small>
+        <small className={styles.mapCredit}>MapLibre globe · Humanitarian OpenStreetMap style · Tiles via OpenStreetMap France</small>
       </div>
     </div>
   );
