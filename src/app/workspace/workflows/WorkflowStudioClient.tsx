@@ -122,6 +122,15 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
     loadWorkflows();
   }, []);
 
+  function changeTab(next: 'MEMBERSHIP' | 'EVENT') {
+    if (next === tab) return;
+    setEditingWorkflowId(null);
+    setMessage('');
+    setMembership(initialMembership);
+    setEvent(initialEvent);
+    setTab(next);
+  }
+
   function editWorkflow(workflow: Workflow) {
     setMessage('');
     setEditingWorkflowId(workflow.id);
@@ -256,10 +265,10 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
       </section>
 
       <section className={styles.tabs}>
-        <button className={tab === 'MEMBERSHIP' ? styles.activeTab : ''} onClick={() => setTab('MEMBERSHIP')}>
+        <button type="button" className={tab === 'MEMBERSHIP' ? styles.activeTab : ''} onClick={() => changeTab('MEMBERSHIP')}>
           MEMBERSHIP PROGRAM
         </button>
-        <button className={tab === 'EVENT' ? styles.activeTab : ''} onClick={() => setTab('EVENT')}>
+        <button type="button" className={tab === 'EVENT' ? styles.activeTab : ''} onClick={() => changeTab('EVENT')}>
           EVENT / WEBINAR
         </button>
       </section>
