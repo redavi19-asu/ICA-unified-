@@ -127,31 +127,30 @@ function RealMapGlobe({ health }: { health: HealthState }) {
           });
         }
 
-        map.once('render', () => {
-          if (disposed) return;
-          setMapReady(true);
+        setMapReady(true);
 
-          if (!spinStarted) {
-            spinStarted = true;
-            lastFrame = performance.now();
+        if (!spinStarted) {
+          spinStarted = true;
+          lastFrame = performance.now();
 
-            const animate = (now: number) => {
-              if (disposed || !mapInstanceRef.current) return;
+          const animate = (now: number) => {
+            if (disposed || !mapInstanceRef.current) return;
 
-              const delta = Math.min(34, now - lastFrame);
-              lastFrame = now;
+            const delta = Math.min(34, now - lastFrame);
+            lastFrame = now;
 
-              if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-                const center = map.getCenter();
-                map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-              }
-
-              frame = requestAnimationFrame(animate);
-            };
+            if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
+              const center = map.getCenter();
+              map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+            }
 
             frame = requestAnimationFrame(animate);
-          }
-        });
+          };
+
+          window.setTimeout(() => {
+            if (!disposed) frame = requestAnimationFrame(animate);
+          }, 120);
+        }
 
         map.triggerRepaint();
       });
@@ -182,14 +181,6 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
   return (
     <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
-      {!mapReady && (
-        <div className={styles.realGlobeFallback} aria-hidden="true">
-          <div className={styles.fallbackLatitudeOne} />
-          <div className={styles.fallbackLatitudeTwo} />
-          <div className={styles.fallbackLongitudeOne} />
-          <div className={styles.fallbackLongitudeTwo} />
-        </div>
-      )}
       <div
         ref={mapRef}
         className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
