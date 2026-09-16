@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { queueEmail, renderInvitationEmail } from './organization-ops';
+import { deriveWorkflowSubmissionStatus, localTrialExpired } from './workflow-policy';
 
 export type PublicWorkflow = {
   id: string;
@@ -94,11 +95,11 @@ export async function getPublicWorkflow(workflowId: string): Promise<PublicWorkf
     select: { name: true, status: true, plan: true, trialEndsAt: true },
   });
   if (!organization || ['SUSPENDED', 'CANCELLED'].includes(organization.status)) return null;
-  const localTrialExpired =
-    organization.plan !== 'internal' &&
-    organization.status === 'TRIAL' &&
-    Boolean(organization.trialEndsAt && organization.trialEndsAt.getTime() <= Date.now());
-  if (localTrialExpired) return null;
+  if (localTrialExpired({
+    plan: organization.plan,
+    status: organization.status,
+    trialEndsAt: organization.trialEndsAt,
+  })) return null;
 
   let config: Record<string, unknown> = {};
   try { config = JSON.parse(row.configJson || '{}'); } catch {}
@@ -187,29 +188,25 @@ export async function createWorkflowSubmission(input: {
   const price = Number(input.workflow.config.price || 0);
   const amountCents = Number.isFinite(price) && price > 0 ? Math.round(price * 100) : 0;
 
-  let status = 'RECEIVED';
-  if (input.workflow.kind === 'MEMBERSHIP') {
-    const approvalRequired = Boolean(input.workflow.config.approvalRequired);
-    status = approvalRequired ? 'PENDING_REVIEW' : amountCents > 0 ? 'PAYMENT_PENDING' : 'APPROVED';
-  } else {
-    const capacity = Number(input.workflow.config.capacity || 0);
-    let occupied = 0;
-    if (Number.isFinite(capacity) && capacity > 0) {
-      const countRows = await prisma.$queryRawUnsafe<Array<{ count: number }>>(
-        `SELECT COUNT(*) as count
-         FROM WorkflowSubmission
-         WHERE workflowId = ? AND status NOT IN ('REJECTED','CANCELLED','WAITLISTED')`,
-        input.workflow.id,
-      );
-      occupied = Number(countRows[0]?.count || 0);
-    }
-
-    if (Number.isFinite(capacity) && capacity > 0 && occupied >= capacity) {
-      status = 'WAITLISTED';
-    } else {
-      status = amountCents > 0 ? 'PAYMENT_PENDING' : 'REGISTERED';
-    }
+  const capacity = Number(input.workflow.config.capacity || 0);
+  let occupied = 0;
+  if (input.workflow.kind === 'EVENT' && Number.isFinite(capacity) && capacity > 0) {
+    const countRows = await prisma.$queryRawUnsafe<Array<{ count: number }>>(
+      `SELECT COUNT(*) as count
+       FROM WorkflowSubmission
+       WHERE workflowId = ? AND status NOT IN ('REJECTED','CANCELLED','WAITLISTED')`,
+      input.workflow.id,
+    );
+    occupied = Number(countRows[0]?.count || 0);
   }
+
+  const status = deriveWorkflowSubmissionStatus({
+    kind: input.workflow.kind,
+    approvalRequired: Boolean(input.workflow.config.approvalRequired),
+    amountCents,
+    capacity: Number.isFinite(capacity) ? capacity : 0,
+    occupied,
+  });
 
   const id = randomUUID();
   await prisma.$executeRawUnsafe(
