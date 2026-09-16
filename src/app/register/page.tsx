@@ -67,7 +67,7 @@ export default function RegisterPage() {
           <label>Company name<input name="organizationName" placeholder="Northstar Services" required minLength={2} /></label>
           <label>Your name<input name="name" placeholder="Jordan Brooks" required minLength={2} /></label>
           <label>Work email<input name="email" type="email" placeholder="you@company.com" required /></label>
-          <label>Password<input name="password" type="password" minLength={8} required /></label>
+          <label>Password<input name="password" type="password" minLength={12} required /><small>Use at least 12 characters.</small></label>
           <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'BUILDING WORKSPACE…' : 'CREATE ICA UNIFIED →'}</button>
         </form>
