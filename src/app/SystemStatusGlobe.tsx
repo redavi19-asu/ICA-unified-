@@ -43,7 +43,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         sources: {
           countries: {
             type: 'geojson',
-            data: 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson',
+            data: '/world-countries.geojson',
           },
         },
         layers: [
