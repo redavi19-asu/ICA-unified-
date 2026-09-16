@@ -29,6 +29,15 @@ export default function DocumentsClient({ organizationName, role, documents: ini
   async function createDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const bodyText = String(form.get('bodyText') || '').trim();
+    const selectedFile = form.get('file');
+    const hasFile = selectedFile instanceof File && selectedFile.size > 0;
+
+    if (!bodyText && !hasFile) {
+      setMessage('Add document text or attach a file before creating the controlled record.');
+      return;
+    }
+
     const response = await fetch('/api/documents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -36,7 +45,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
         title: form.get('title'),
         version: form.get('version'),
         requiresAck: form.get('requiresAck') === 'on',
-        bodyText: form.get('bodyText'),
+        bodyText,
       }),
     });
     const data = await response.json();
@@ -44,7 +53,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
       setMessage(data.error || 'Unable to create document.');
       return;
     }
-    const file = form.get('file');
+    const file = selectedFile;
     let fileName: string | null = null;
 
     if (file instanceof File && file.size > 0) {
@@ -66,7 +75,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
       ...data.document,
       createdAt: data.document.createdAt,
       acknowledged: 0,
-      bodyText: String(form.get('bodyText') || '').trim() || null,
+      bodyText: bodyText || null,
       fileName,
     }, ...current]);
     setOpen(false);
@@ -111,7 +120,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
             <div className={styles.title}><strong>{document.title}</strong><span>Version {document.version} · {new Date(document.createdAt).toLocaleDateString()}</span></div>
             <div><small>MODE</small><b>{document.requiresAck ? 'ACK REQUIRED' : 'REFERENCE'}</b></div>
             <div><small>ACKNOWLEDGED</small><b>{document.acknowledged}</b></div>
-            <div><small>CONTENT</small><b>{document.fileName ? 'TEXT + FILE' : document.bodyText ? 'TEXT' : 'EMPTY'}</b></div>
+            <div><small>CONTENT</small><b>{document.fileName && document.bodyText ? 'TEXT + FILE' : document.fileName ? 'FILE' : document.bodyText ? 'TEXT' : 'EMPTY'}</b></div>
           </article>
         ))}
       </section>
