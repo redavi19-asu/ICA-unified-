@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -17,116 +17,116 @@ function NodeIcon({ type }: { type: string }) {
 
 
 function RealMapGlobe({ health }: { health: HealthState }) {
-  const frameRef = useRef<HTMLIFrameElement | null>(null);
-
-  const srcDoc = useMemo(() => `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<link href="https://unpkg.com/maplibre-gl@6.9.1/dist/maplibre-gl.css" rel="stylesheet" />
-<style>
-html,body,#map{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
-body{background:transparent}
-.maplibregl-map,.maplibregl-canvas-container,.maplibregl-canvas{width:100%!important;height:100%!important}
-.maplibregl-control-container{display:none!important}
-</style>
-</head>
-<body>
-<div id="map"></div>
-<script src="https://unpkg.com/maplibre-gl@6.9.1/dist/maplibre-gl.js"></script>
-<script>
-(() => {
-  let health = 'checking';
-  let userInteracting = false;
-  let resumeTimer = null;
-  let raf = 0;
-  let last = performance.now();
-
-  const map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://demotiles.maplibre.org/style.json',
-    center: [0, 12],
-    zoom: 1.05,
-    minZoom: 0.7,
-    maxZoom: 5.5,
-    pitch: 0,
-    bearing: 0,
-    attributionControl: false,
-    canvasContextAttributes: { antialias: true }
-  });
-
-  const pause = () => {
-    userInteracting = true;
-    if (resumeTimer) clearTimeout(resumeTimer);
-  };
-
-  const resumeSoon = () => {
-    if (resumeTimer) clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { userInteracting = false; }, 3200);
-  };
-
-  map.on('style.load', () => {
-    map.setProjection({ type: 'globe' });
-
-    const animate = (now) => {
-      const delta = Math.min(34, now - last);
-      last = now;
-
-      if (health !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-        const center = map.getCenter();
-        map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-      }
-
-      raf = requestAnimationFrame(animate);
-    };
-
-    cancelAnimationFrame(raf);
-    last = performance.now();
-    raf = requestAnimationFrame(animate);
-  });
-
-  map.on('load', () => {
-    parent.postMessage({ type: 'ica-maplibre-ready' }, '*');
-  });
-
-  map.on('error', (event) => {
-    parent.postMessage({
-      type: 'ica-maplibre-error',
-      message: event && event.error ? String(event.error.message || event.error) : 'Unknown MapLibre error'
-    }, '*');
-  });
-
-  const canvas = map.getCanvasContainer();
-  ['mousedown','touchstart','wheel'].forEach((name) => canvas.addEventListener(name, pause, { passive: true }));
-  map.on('moveend', resumeSoon);
-  map.on('zoomend', resumeSoon);
-
-  addEventListener('message', (event) => {
-    if (!event.data || event.data.type !== 'ica-health') return;
-    health = event.data.health;
-  });
-})();
-</script>
-</body>
-</html>`, []);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const healthRef = useRef<HealthState>(health);
+  const mapInstanceRef = useRef<import('maplibre-gl').Map | null>(null);
 
   useEffect(() => {
-    frameRef.current?.contentWindow?.postMessage({ type: 'ica-health', health }, '*');
+    healthRef.current = health;
   }, [health]);
+
+  useEffect(() => {
+    let disposed = false;
+    let frame = 0;
+    let resumeTimer: number | undefined;
+
+    async function initMap() {
+      if (!mapRef.current || mapInstanceRef.current || disposed) return;
+
+      const maplibregl = await import('maplibre-gl');
+      if (!mapRef.current || disposed) return;
+
+      // Required for Next.js/Turbopack so vector-tile workers load correctly.
+      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+
+      const map = new maplibregl.Map({
+        container: mapRef.current,
+        style: 'https://demotiles.maplibre.org/style.json',
+        center: [8, 14],
+        zoom: 1.25,
+        minZoom: 0.7,
+        maxZoom: 5.5,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false,
+        canvasContextAttributes: { antialias: true },
+      });
+
+      mapInstanceRef.current = map;
+
+      let userInteracting = false;
+      let lastFrame = performance.now();
+
+      const pauseSpin = () => {
+        userInteracting = true;
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+      };
+
+      const resumeSpinSoon = () => {
+        if (resumeTimer) window.clearTimeout(resumeTimer);
+        resumeTimer = window.setTimeout(() => {
+          userInteracting = false;
+        }, 3200);
+      };
+
+      let spinStarted = false;
+
+      map.on('style.load', () => {
+        if (disposed) return;
+
+        map.setProjection({ type: 'globe' });
+
+        if (spinStarted) return;
+        spinStarted = true;
+        lastFrame = performance.now();
+
+        const animate = (now: number) => {
+          if (disposed || !mapInstanceRef.current) return;
+
+          const delta = Math.min(34, now - lastFrame);
+          lastFrame = now;
+
+          if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
+            const center = map.getCenter();
+            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+          }
+
+          frame = requestAnimationFrame(animate);
+        };
+
+        frame = requestAnimationFrame(animate);
+      });
+
+      map.on('error', (event) => {
+        console.error('ICA_MAPLIBRE_GLOBE_ERROR', event.error);
+      });
+
+      const canvas = map.getCanvasContainer();
+      ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
+        canvas.addEventListener(eventName, pauseSpin, { passive: true });
+      });
+
+      map.on('moveend', resumeSpinSoon);
+      map.on('zoomend', resumeSpinSoon);
+    }
+
+    void initMap();
+
+    return () => {
+      disposed = true;
+      cancelAnimationFrame(frame);
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      mapInstanceRef.current?.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
 
   return (
     <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
-      <iframe
-        ref={frameRef}
-        className={styles.realGlobeFrame}
-        title="Interactive ICA Unified MapLibre world globe"
-        srcDoc={srcDoc}
-        scrolling="no"
-        sandbox="allow-scripts allow-same-origin"
-        onLoad={() => {
-          frameRef.current?.contentWindow?.postMessage({ type: 'ica-health', health }, '*');
-        }}
+      <div
+        ref={mapRef}
+        className={styles.realGlobeMap}
+        aria-label="Interactive ICA Unified MapLibre world globe"
       />
       <div className={styles.globeHint}>{health === 'issue' ? 'SERVICE ISSUE · AUTO-SPIN PAUSED' : 'DRAG · ZOOM · AUTO-SPIN'}</div>
     </div>
