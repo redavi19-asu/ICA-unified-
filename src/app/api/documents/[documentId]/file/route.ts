@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { requireSession } from '../../../../../../lib/auth';
-import { prisma } from '../../../../../../lib/prisma';
-import { getDocumentContent } from '../../../../../../lib/document-content';
+import { requireSession } from '../../../../../lib/auth';
+import { prisma } from '../../../../../lib/prisma';
+import { getDocumentContent } from '../../../../../lib/document-content';
 
 type StoredObject = {
   body: BodyInit | null;
