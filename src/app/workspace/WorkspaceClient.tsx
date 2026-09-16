@@ -158,9 +158,9 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           </div>
           <div className="workflow-summary-grid">
             <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.membershipPrograms}</b><span>Membership Programs</span><small>Configured tiers & applications</small></button>
-            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.activeEvents}</b><span>Active Events / Webinars</span><small>Published registration workflows</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.activeEvents}</b><span>Active Events / Webinars</span><small>Active workflow configurations</small></button>
             <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.upcomingEvents}</b><span>Upcoming Events</span><small>Future-dated workflows</small></button>
-            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.draftWorkflows}</b><span>Draft Workflows</span><small>Not published yet</small></button>
+            <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.draftWorkflows}</b><span>Draft Workflows</span><small>Not active yet</small></button>
             <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.ceuConfiguredEvents}</b><span>CEU-Configured Events</span><small>Events with credit values</small></button>
             <button onClick={() => router.push('/workspace/workflows')}><b>{workflowStats.total}</b><span>Total Workflows</span><small>Membership + event workflows</small></button>
           </div>
