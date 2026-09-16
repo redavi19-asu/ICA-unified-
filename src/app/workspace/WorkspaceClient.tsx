@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -24,6 +24,34 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
   const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
   const compliant = Math.max(0, Math.min(100, stats.documents ? 85 : 0));
   const firstName = userName.split(' ')[0] || userName;
+  const [systemHealth, setSystemHealth] = useState<'checking' | 'connected' | 'issue'>('checking');
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkHealth() {
+      try {
+        const response = await fetch('/api/health', { cache: 'no-store' });
+        const data = await response.json().catch(() => null);
+        const connected =
+          response.ok &&
+          data?.ok === true &&
+          data?.databaseReady === true &&
+          data?.centralDatabaseReady === true;
+        if (mounted) setSystemHealth(connected ? 'connected' : 'issue');
+      } catch {
+        if (mounted) setSystemHealth('issue');
+      }
+    }
+
+    void checkHealth();
+    const timer = window.setInterval(checkHealth, 60000);
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -53,28 +81,30 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <p>COMPANY SETTINGS</p>
           <button onClick={() => router.push('/workspace/people')}>◈ <span>Roles & Permissions</span></button>
           {(role === 'OWNER' || role === 'ADMIN') && (
-            <button className="tools-nav-button" onClick={() => router.push('/workspace/tools')}>⚙ <span>Tools</span></button>
+            <>
+              <button className="tools-nav-button" onClick={() => router.push('/workspace/tools')}>⚙ <span>Tools</span></button>
+              <button onClick={() => router.push('/workspace/integrations')}>⌁ <span>Integrations</span></button>
+              <button onClick={() => router.push('/workspace/billing')}>▣ <span>Billing</span></button>
+            </>
           )}
-          <button onClick={() => router.push('/workspace/integrations')}>⌁ <span>Integrations</span></button>
-          <button onClick={() => router.push('/workspace/billing')}>▣ <span>Billing</span></button>
-          <p>PLATFORM</p>
-          {platformRole ? (
-            <button className="super-admin-nav-button" onClick={() => router.push('/platform')}>
-              ⚡
-              <span>
-                <strong>{platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control'}</strong>
-                <small>{platformRole === 'SUPER_ADMIN' ? 'FULL PLATFORM PRIVILEGES' : platformRole.replaceAll('_', ' ')}</small>
-              </span>
-            </button>
-          ) : (
-            <button onClick={() => router.push('/platform')}>◇ <span>Platform Admin</span></button>
+          {platformRole && (
+            <>
+              <p>PLATFORM</p>
+              <button className="super-admin-nav-button" onClick={() => router.push('/platform')}>
+                ⚡
+                <span>
+                  <strong>{platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control'}</strong>
+                  <small>{platformRole === 'SUPER_ADMIN' ? 'FULL PLATFORM PRIVILEGES' : platformRole.replaceAll('_', ' ')}</small>
+                </span>
+              </button>
+            </>
           )}
         </nav>
 
         <div className="dashboard-help">
           <strong>Need Help?</strong>
-          <span>Open reports, people, or training controls from this workspace.</span>
-          <button onClick={() => router.push('/workspace/reports')}>Get Help</button>
+          <span>Need product or account help from I Computer Anything?</span>
+          <button onClick={() => window.open('https://icomputeranything.com/#contact', '_blank', 'noopener,noreferrer')}>Contact Support</button>
         </div>
       </aside>
 
@@ -82,7 +112,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
         <header className="dashboard-topbar">
           <div className="company-switcher">
             <span>Company Workspace</span>
-            <button>{organizationName} <b>⌄</b></button>
+            <button type="button" disabled title="Current organization">{organizationName}</button>
             <i>● Active</i>
           </div>
           <div className="dashboard-user">
@@ -183,7 +213,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           <button onClick={() => router.push('/workspace/learning')}><i>▥</i><span>Create Course</span></button>
           <button onClick={() => router.push('/workspace/documents')}><i>▤</i><span>Upload Document</span></button>
           <button onClick={() => router.push('/workspace/workflows')}><i>↯</i><span>New Workflow</span></button>
-          <div className="system-status"><small>SYSTEM STATUS</small><strong>● All Systems Operational</strong></div>
+          <div className="system-status"><small>SYSTEM STATUS</small><strong>{systemHealth === 'connected' ? '● All Systems Operational' : systemHealth === 'checking' ? '● Checking Systems' : '● Service Issue'}</strong></div>
         </section>
       </section>
 
