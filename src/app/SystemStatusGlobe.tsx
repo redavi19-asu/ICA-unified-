@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Map as MapLibreMap } from 'maplibre-gl';
+import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -33,9 +33,36 @@ function RealMapGlobe() {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
+      const style: StyleSpecification = {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            minzoom: 0,
+            maxzoom: 19,
+            attribution: '© OpenStreetMap contributors',
+          },
+        },
+        layers: [
+          {
+            id: 'osm',
+            type: 'raster',
+            source: 'osm',
+            paint: {
+              'raster-saturation': 0.2,
+              'raster-contrast': 0.12,
+              'raster-brightness-min': 0.08,
+              'raster-brightness-max': 1,
+            },
+          },
+        ],
+      };
+
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style: 'https://demotiles.maplibre.org/style.json',
+        style,
         center: [-18, 22],
         zoom: 1.18,
         minZoom: 0.95,
@@ -110,6 +137,12 @@ function RealMapGlobe() {
 
   return (
     <div className={styles.realGlobeShell}>
+      <div className={styles.realGlobeFallback} aria-hidden="true">
+        <div className={styles.fallbackLatitudeOne} />
+        <div className={styles.fallbackLatitudeTwo} />
+        <div className={styles.fallbackLongitudeOne} />
+        <div className={styles.fallbackLongitudeTwo} />
+      </div>
       <div
         ref={mapRef}
         className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
