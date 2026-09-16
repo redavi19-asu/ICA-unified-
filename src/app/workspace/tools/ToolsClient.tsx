@@ -25,6 +25,7 @@ type PreviewRow = ImportRow & {
   classification: 'UPDATE_EXISTING' | 'SKIP_EXISTING' | 'INVITE_EXISTING_ICA_USER' | 'INVITE_NEW_USER';
   currentRole: string | null;
   currentStatus: string | null;
+  protectedReason?: string | null;
 };
 
 type PreviewResponse = {
@@ -383,7 +384,7 @@ export default function ToolsClient({ organizationName, role }: Props) {
                   <span>ROW {row.rowNumber}</span>
                   <strong>{row.name}</strong>
                   <span>{row.email}</span>
-                  <b>{classificationLabel(row.classification)}</b>
+                  <b title={row.protectedReason || undefined}>{row.protectedReason ? 'PROTECTED · SKIPPED' : classificationLabel(row.classification)}</b>
                 </div>
               ))}
             </div>
@@ -391,7 +392,8 @@ export default function ToolsClient({ organizationName, role }: Props) {
             <div className={styles.confirmBar}>
               <p>
                 New people receive secure activation records. Existing organization members
-                are only changed when “Update existing record” is selected.
+                are only changed when “Update existing record” is selected. OWNER accounts and
+                the administrator running the import are always protected and skipped.
               </p>
               <button disabled={working || preview.summary.valid === 0} onClick={commitImport}>
                 {working ? 'IMPORTING…' : 'CONFIRM + IMPORT'}
