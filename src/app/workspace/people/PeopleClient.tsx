@@ -38,7 +38,7 @@ export default function PeopleClient({
   const [people, setPeople] = useState(initialPeople);
   const [invitations, setInvitations] = useState(initialInvitations);
   const [showInvite, setShowInvite] = useState(false);
-  const [message, setMessage] = useState('Select a person to adjust their access or onboarding state.');
+  const [message, setMessage] = useState(currentRole === 'OWNER' || currentRole === 'ADMIN' ? 'Select a person to adjust their access or onboarding state.' : 'People access is view-only for your role.');
   const [inviteUrl, setInviteUrl] = useState('');
   const canManage = currentRole === 'OWNER' || currentRole === 'ADMIN';
 
