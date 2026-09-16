@@ -264,5 +264,5 @@
 .capabilityCard:nth-child(4n+2) .capabilityTop>i{background:#edf5ff;color:#3b82f6}
 .capabilityCard:nth-child(4n+3) .capabilityTop>i{background:#f4efff;color:#8b5cf6}
 .capabilityCard:nth-child(4n+4) .capabilityTop>i{background:#fff8e8;color:#f59e0b}
-@media(max-width:900px){.capabilityGrid{grid-template-columns:1fr}.capabilitySection{padding-left:clamp(20px,5vw,72px);padding-right:clamp(20px,5vw,72px)}}
+@media(max-width:900px){.capabilityGrid{grid-template-columns:1fr}.capabilitySection{padding-left:24px!important;padding-right:24px!important;box-sizing:border-box;overflow:hidden}.capabilitySection .sectionHead{padding-left:0!important;padding-right:0!important;box-sizing:border-box}.capabilityGrid{width:100%;box-sizing:border-box}}
 @media(max-width:650px){.capabilityCard{padding:20px}.capabilityTop h3{font-size:20px}.capabilityCard li{font-size:12px}}
