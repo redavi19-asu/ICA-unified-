@@ -56,9 +56,9 @@ export default async function BillingPage({
       <section className={styles.grid}>
         <article className={styles.primary}>
           <p>PRICING FOUNDATION</p>
-          <h2>$249 is now the system price.</h2>
+          <h2>$299 is now the system price.</h2>
           <p className={styles.copy}>
-            ICA Unified uses Stripe for the organization&apos;s $249/month Professional subscription.
+            ICA Unified uses Stripe for the organization&apos;s $299/month Professional subscription.
             Trial, active, past-due, and cancellation status are stored against this organization so access
             follows the company account instead of any single device.
           </p>
@@ -72,13 +72,13 @@ export default async function BillingPage({
           <p>SEPARATE MONEY FLOW</p>
           <h2>Company subscription</h2>
           <p className={styles.copy}>This is the organization paying I Computer Anything for ICA Unified.</p>
-          <div className={styles.flow}>COMPANY → $249/MO → ICA UNIFIED</div>
+          <div className={styles.flow}>COMPANY → $299/MO → ICA UNIFIED</div>
         </article>
 
         <article>
           <p>MEMBER MONEY</p>
           <h2>Dues + event payments</h2>
-          <p className={styles.copy}>Member dues and event fees stay separate from ICA&apos;s $249 SaaS revenue. Stripe Connect routes workflow payments directly through this organization&apos;s connected account.</p>
+          <p className={styles.copy}>Member dues and event fees stay separate from ICA&apos;s $299 SaaS revenue. Stripe Connect routes workflow payments directly through this organization&apos;s connected account.</p>
           <div className={styles.flow}>MEMBER → ORGANIZATION STRIPE ACCOUNT</div>
           <div className={styles.line}><span>Connect status</span><strong>{memberPayments?.onboardingStatus || 'NOT CONNECTED'}</strong></div>
           <div className={styles.line}><span>Charges</span><strong>{connectReady ? 'ENABLED' : 'NOT READY'}</strong></div>
