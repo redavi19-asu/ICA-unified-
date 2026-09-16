@@ -36,6 +36,10 @@ jobs:
         run: npm --prefix mobile install
       - name: Typecheck ICA Mobile
         run: npm --prefix mobile run typecheck
+      - name: Validate desktop wrapper metadata
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('desktop/package.json','utf8')); JSON.parse(require('fs').readFileSync('desktop/src-tauri/tauri.conf.json','utf8'));"
+          cargo metadata --manifest-path desktop/src-tauri/Cargo.toml --format-version 1 --no-deps > /dev/null
       - name: Build Next.js app
         run: npm run build
 
