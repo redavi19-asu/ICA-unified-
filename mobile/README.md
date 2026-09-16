@@ -16,9 +16,15 @@ The desktop/web product operates the organization. The mobile app is optimized f
 3. Run `npx expo start`.
 4. Set `EXPO_PUBLIC_ICA_API_URL` only if testing against a non-production ICA backend.
 
-The default backend is `https://ica-unified.ryanedavis.workers.dev`.
+The default production backend is `https://unified.icomputeranything.com`.
 
 ## Security
 The mobile login returns the same signed ICA session token format used by the web platform and the app stores it with Expo SecureStore. Mobile APIs are organization-scoped and validate membership on every request.
 
-Before public App Store release, add the remaining production controls: native login abuse/rate limiting, App Store privacy metadata, production icons/splash assets, push-notification credentials, and Apple signing/App Store Connect configuration.
+Production controls already in the codebase include native login rate limiting, SecureStore session storage, iOS privacy/export metadata, production API targeting, and EAS build profiles.
+
+Remaining release operations require external credentials/accounts rather than application feature work:
+- Apple signing + App Store Connect submission for iPhone/iPad.
+- Google Play signing/submission for Android if Android is released.
+- Production icon/splash artwork should be finalized before store submission.
+- Push credentials are only required when push delivery is enabled; the current Notifications screen reads ICA cloud activity directly.
