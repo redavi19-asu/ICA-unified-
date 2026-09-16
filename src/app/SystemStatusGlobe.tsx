@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Map as MapLibreMap } from 'maplibre-gl';
+import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -38,9 +38,56 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const maplibregl = await import('maplibre-gl');
       if (!mapRef.current || disposed) return;
 
+      const style: StyleSpecification = {
+        version: 8,
+        sources: {
+          countries: {
+            type: 'geojson',
+            data: 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson',
+          },
+        },
+        layers: [
+          {
+            id: 'ocean',
+            type: 'background',
+            paint: { 'background-color': '#D8F2FF' },
+          },
+          {
+            id: 'countries-fill',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': [
+                'match',
+                ['get', 'MAPCOLOR7'],
+                1, '#D6C7FF',
+                2, '#EBCA8A',
+                3, '#C1E599',
+                4, '#E7E58F',
+                5, '#98DDA1',
+                6, '#83D5F4',
+                7, '#B1BBF9',
+                '#EAB38F',
+              ],
+              'fill-opacity': 1,
+            },
+          },
+          {
+            id: 'countries-boundary',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#FFFFFF',
+              'line-width': 1.15,
+              'line-opacity': 0.95,
+            },
+          },
+        ],
+      };
+
       const map = new maplibregl.Map({
         container: mapRef.current,
-        style: 'https://demotiles.maplibre.org/style.json',
+        style,
         center: [-18, 22],
         zoom: 1.18,
         minZoom: 0.95,
@@ -68,26 +115,37 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         }, 3200);
       };
 
+      let spinStarted = false;
+
       map.on('style.load', () => {
         if (disposed) return;
         map.setProjection({ type: 'globe' });
-        setMapReady(true);
 
-        const animate = (now: number) => {
-          if (disposed || !mapInstanceRef.current) return;
+        if (!spinStarted) {
+          spinStarted = true;
+          const animate = (now: number) => {
+            if (disposed || !mapInstanceRef.current) return;
 
-          const delta = Math.min(34, now - lastFrame);
-          lastFrame = now;
+            const delta = Math.min(34, now - lastFrame);
+            lastFrame = now;
 
-          if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-            const center = map.getCenter();
-            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-          }
+            if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
+              const center = map.getCenter();
+              map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+            }
+
+            frame = requestAnimationFrame(animate);
+          };
 
           frame = requestAnimationFrame(animate);
-        };
+        }
+      });
 
-        frame = requestAnimationFrame(animate);
+      map.on('sourcedata', (event) => {
+        if (disposed || event.sourceId !== 'countries') return;
+        if (event.isSourceLoaded || map.isSourceLoaded('countries')) {
+          setMapReady(true);
+        }
       });
 
       map.on('error', (event) => {
