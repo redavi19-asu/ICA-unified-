@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
+import type { GeoJSONSourceSpecification, Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import worldCountries from './world-countries.json';
 import styles from './landing.module.css';
 
@@ -91,7 +91,7 @@ function RealMapGlobe({ health }: { health: HealthState }) {
         if (!map.getSource('countries')) {
           map.addSource('countries', {
             type: 'geojson',
-            data: worldCountries as any,
+            data: worldCountries as GeoJSONSourceSpecification['data'],
           });
 
           map.addLayer({
