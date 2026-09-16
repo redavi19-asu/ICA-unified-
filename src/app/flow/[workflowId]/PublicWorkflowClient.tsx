@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { FormEvent, useMemo, useState } from 'react';
 import TurnstileWidget from '../../TurnstileWidget';
 import styles from './public-workflow.module.css';
@@ -85,7 +86,7 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
     <main className={styles.shell}>
       <div className={styles.glow} />
       <header className={styles.brand}>
-        <a href="/">ICA <span>UNIFIED</span></a>
+        <Link href="/">ICA <span>UNIFIED</span></Link>
         <small>{workflow.organizationName}</small>
       </header>
 
