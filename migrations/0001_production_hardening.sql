@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS OrganizationBillingProfile (
   organizationId TEXT PRIMARY KEY NOT NULL,
   plan TEXT NOT NULL DEFAULT 'professional',
-  priceCents INTEGER NOT NULL DEFAULT 24900,
+  priceCents INTEGER NOT NULL DEFAULT 29900,
   currency TEXT NOT NULL DEFAULT 'usd',
   subscriptionStatus TEXT NOT NULL DEFAULT 'NOT_CONNECTED',
   provider TEXT NOT NULL DEFAULT 'STRIPE',
