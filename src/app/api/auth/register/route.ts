@@ -17,7 +17,7 @@ const schema = z.object({
   organizationName: z.string().trim().min(2).max(100),
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().transform((value) => value.toLowerCase()),
-  password: z.string().min(8).max(200),
+  password: z.string().min(12).max(200),
   turnstileToken: z.string().optional(),
 });
 
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Check the company name, email, password, and security verification.' },
+        { error: 'Check the company name, email, 12+ character password, and security verification.' },
         { status: 400 },
       );
     }
