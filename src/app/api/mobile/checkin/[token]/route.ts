@@ -11,6 +11,10 @@ export async function POST(
   if (!auth) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
 
   const { membership } = auth;
+  if (membership.status !== 'ACTIVE') {
+    return NextResponse.json({ error: 'Your membership is not active for event check-in.' }, { status: 403 });
+  }
+
   const { token } = await context.params;
   const event = await getEventForToken(token);
 
