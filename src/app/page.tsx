@@ -5,7 +5,7 @@ import SystemStatusGlobe from './SystemStatusGlobe';
 const modules = [
   ['AMS', 'People, membership, roles, documents, compliance, administration, and reporting in one operational layer.'],
   ['LMS', 'Courses, lessons, progress, quizzes, credentials, certificates, and continuing education tied to the same member record.'],
-  ['Website Integration', 'Keep your existing website and connect registration, member access, enrollment, and business workflows to ICA Unified.'],
+  ['Website Integration', 'Keep your existing website and connect member registration and member data through ICA Unified\'s current API and signed webhooks. Broader custom integrations can be added when needed.'],
   ['Unified Data', 'One organization record connects people, learning, credentials, documents, activity, and permissions without duplicate accounts.'],
 ];
 
@@ -228,8 +228,9 @@ export default function Home() {
             <small>OPTION B</small>
             <h3>Existing Website + ICA Unified</h3>
             <p>
-              Keep the website your organization already uses. ICA Unified becomes the connected backend
-              for member registration, learning, business workflows, permissions, and data.
+              Keep the website your organization already uses. The current ICA API connects member registration
+              and member data, while signed webhooks push ICA member events outward. Learning, workflow, CRM,
+              accounting, SSO, and other custom connections are scoped separately when needed.
             </p>
             <div>YOUR WEBSITE → API → ICA UNIFIED → ORGANIZATION DATA</div>
           </article>
