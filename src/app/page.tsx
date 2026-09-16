@@ -248,7 +248,7 @@ function PlatformIcon({ type }: { type: 'web' | 'windows' | 'mac' | 'iphone' | '
 
 function iconFor(title: string) {
   const key = title.toLowerCase();
-  if (key.includes('member') || key.includes('people') || key.includes('ams')) return 'people';
+  if (key.includes('member') || key.includes('people') || key.includes('ams') || key.includes('association')) return 'people';
   if (key.includes('learn') || key.includes('lms')) return 'learning';
   if (key.includes('credential') || key.includes('ce')) return 'credential';
   if (key.includes('document')) return 'document';
@@ -259,7 +259,7 @@ function iconFor(title: string) {
   if (key.includes('domain') || key.includes('export')) return 'domain';
   if (key.includes('support')) return 'support';
   if (key.includes('mobile')) return 'mobile';
-  if (key.includes('data') || key.includes('platform')) return 'data';
+  if (key.includes('data') || key.includes('platform') || key.includes('payment')) return 'data';
   return 'web';
 }
 
