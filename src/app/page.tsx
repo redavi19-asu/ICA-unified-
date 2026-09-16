@@ -6,10 +6,10 @@ import SystemStatusGlobe from './SystemStatusGlobe';
 import { resolveVerifiedCustomDomain } from '../lib/organization-ops';
 
 const modules = [
-  ['AMS', 'People, membership, roles, documents, compliance, administration, and reporting in one operational layer.'],
-  ['LMS', 'Courses, lessons, progress, quizzes, credentials, certificates, and continuing education tied to the same member record.'],
-  ['Website Integration', 'Keep your existing website and connect member registration and member data through ICA Unified\'s current API and signed webhooks. Broader custom integrations can be added when needed.'],
-  ['Unified Data', 'One organization record connects people, learning, credentials, documents, activity, and permissions without duplicate accounts.'],
+  ['Association Operations', 'Run people, memberships, roles, events, controlled documents, reporting, and organization administration from one workspace.'],
+  ['Learning + Compliance', 'Build training, track progress, award credentials, post CE credits, and measure renewal readiness against the same member record.'],
+  ['Executable Workflows', 'Turn membership programs and events into live public application and registration flows instead of leaving them as back-office configuration.'],
+  ['Connected Operations', 'Connect websites, APIs, webhooks, email, custom domains, payments, imports, exports, backups, mobile operations, and platform support around the same data.'],
 ];
 
 const workflow = [
@@ -17,6 +17,152 @@ const workflow = [
   ['02', 'One database', 'Business, membership, learning, credential, and activity data stay connected instead of being split across tools.'],
   ['03', 'One login', 'Members, employees, managers, and administrators enter through one identity and receive the correct role-based view.'],
   ['04', 'One member record', 'Training, status, documents, credentials, and organizational activity follow the same person throughout the platform.'],
+];
+
+const capabilityGroups = [
+  {
+    title: 'People + Organization',
+    icon: 'people',
+    summary: 'The AMS side of Unified.',
+    items: [
+      'Role-based organization access for Owners, Admins, Managers, and Members.',
+      'Member records with status, job title, invitations, activation, suspension, and organization access.',
+      'One identity can belong to more than one ICA workspace; Company ID selects the correct organization when needed.',
+      'Real dashboard metrics for people, learning, credentials, documents, compliance, and workflow activity.',
+    ],
+  },
+  {
+    title: 'Learning Management',
+    icon: 'learning',
+    summary: 'Courses and progress tied directly to the member record.',
+    items: [
+      'Create courses with text, video, document, live-session, quiz, and assignment content.',
+      'Assign training, set due dates, track lesson/course progress, enforce passing scores, and record completion.',
+      'Issue credentials automatically when configured course requirements are completed.',
+      'Post configured continuing-education credit to the same member CE ledger.',
+    ],
+  },
+  {
+    title: 'Credentials + CE Compliance',
+    icon: 'credential',
+    summary: 'Training, attendance, renewal, and verification in one ledger.',
+    items: [
+      'Digital credentials and verification records tied to each member.',
+      'Member CE + credential wallet with transcript, earned credits, outstanding requirements, expiration, and renewal readiness.',
+      'Organization compliance rules for credit categories and renewal requirements.',
+      'Event attendance can post CE credits and automatically issue attendance credentials.',
+    ],
+  },
+  {
+    title: 'Membership Workflows',
+    icon: 'workflow',
+    summary: 'A configured membership becomes a real public application flow.',
+    items: [
+      'Membership tiers with price, billing cadence, application rules, qualifications, benefits, renewal reminders, and CE requirements.',
+      'Activate a workflow to create a live public ICA application page.',
+      'Collect submissions, review applicants, approve or reject them, and preserve workflow status inside the organization.',
+      'Approved members can receive secure ICA activation invitations automatically.',
+    ],
+  },
+  {
+    title: 'Events + Registration',
+    icon: 'workflow',
+    summary: 'Registration, payment, attendance, and credits stay connected.',
+    items: [
+      'Configure event/webinar type, date/time, capacity, ticket price, meeting link, CE credit, certificate rules, and confirmations.',
+      'Activate a workflow to create a live public registration page.',
+      'Capacity enforcement, waitlists, duplicate protection, submission review, and registration status management.',
+      'Self-scan event QR and staff-scan member QR modes feed the same attendance and CE records.',
+    ],
+  },
+  {
+    title: 'Organization Payments',
+    icon: 'data',
+    summary: 'ICA subscription money and customer organization money stay separate.',
+    items: [
+      'ICA Unified Professional billing uses Stripe for the organization’s $249/month software subscription.',
+      'Each customer organization can connect its own Stripe account through Stripe Connect.',
+      'Paid membership and event workflows can open secure Stripe Checkout for that organization.',
+      'Payment return and Stripe webhook verification update the exact workflow submission before paid access is granted.',
+    ],
+  },
+  {
+    title: 'Controlled Documents',
+    icon: 'document',
+    summary: 'Members can actually review what they are acknowledging.',
+    items: [
+      'Create versioned controlled documents with real document text and optional private file attachments.',
+      'Members open a document review area before the acknowledgment action is presented.',
+      'Secure organization-scoped file delivery for controlled document attachments.',
+      'Acknowledgment counts feed document-control and organization reporting.',
+    ],
+  },
+  {
+    title: 'Reports + Data Tools',
+    icon: 'report',
+    summary: 'See the organization and move its data safely.',
+    items: [
+      'Organization reporting for learning, credentials, compliance, and document-control activity.',
+      'Self-service CSV member importer with field mapping, preview, validation, duplicate handling, and controlled commit.',
+      'Member CSV export plus full organization JSON backup.',
+      'Backups include workflow execution and controlled-document data as part of the organization record.',
+    ],
+  },
+  {
+    title: 'API + Webhooks',
+    icon: 'api',
+    summary: 'Use the portal or connect an existing website/system.',
+    items: [
+      'Tenant-scoped organization API keys and versioned member API access.',
+      'Signed HTTPS webhooks with delivery status for outbound ICA events.',
+      'Existing websites can use ICA for member registration/data without replacing the public site.',
+      'Custom CRM, accounting, SSO, proprietary-system, and specialized integrations can be scoped as professional services.',
+    ],
+  },
+  {
+    title: 'Email + Custom Domains',
+    icon: 'domain',
+    summary: 'Customer-facing communications and branded portal entry.',
+    items: [
+      'Transactional email outbox for invitations, workflow confirmations, status updates, and payment messages.',
+      'When the managed provider is connected, ICA sends new mail and can retry queued or failed messages.',
+      'Custom-domain DNS ownership verification and verified-host organization resolution.',
+      'A verified customer hostname can route visitors into the correct organization login automatically.',
+    ],
+  },
+  {
+    title: 'Security + Access',
+    icon: 'compliance',
+    summary: 'Organization boundaries and access controls are enforced throughout the product.',
+    items: [
+      'Tenant-scoped database access and role checks across organization operations.',
+      'Turnstile and rate limiting on public authentication and workflow submission paths.',
+      'Email verification when delivery is configured, secure password reset, and 12-character passwords for new registrations.',
+      'Local trial-expiration fallback closes workspace/mobile/public-flow access even if Stripe is temporarily unavailable.',
+    ],
+  },
+  {
+    title: 'Mobile + Event Floor',
+    icon: 'mobile',
+    summary: 'The same cloud record follows staff and members away from the desk.',
+    items: [
+      'Native ICA Mobile app code for iPhone/iPad with production build profiles and secure token storage.',
+      'Member QR, staff QR scanning, event check-in, member lookup, CE/credential wallet, and organization notifications.',
+      'Web and mobile use the same organization, member, attendance, CE, credential, and permission data.',
+      'Windows/macOS Tauri desktop wrapper is built; signed installer release remains the external release step.',
+    ],
+  },
+  {
+    title: 'Platform Operations + ICA Assist',
+    icon: 'support',
+    summary: 'ICA can support the companies running on the platform.',
+    items: [
+      'Platform/Super Admin controls for organization health, diagnostics, account state, analytics, and support actions.',
+      'Live Worker/database health signaling on the public ICA system-status globe.',
+      'ICA Assist provides in-product guidance using the product’s current workflows, billing, compliance, and integration model.',
+      'Owner/Admin access center separates organization operations, billing, integrations, tools, and released client access.',
+    ],
+  },
 ];
 
 const plans = [
@@ -49,18 +195,12 @@ const plans = [
 ];
 
 const includedWithProfessional = [
-  ['Platform', 'AMS + LMS access in one organization workspace.'],
-  ['Members', 'Member records, roles, status, job titles, invitations, activation, and organization access.'],
-  ['Learning', 'Courses, lessons, quizzes, assignments, progress, completion, and automatic credentials.'],
-  ['CE + Compliance', 'Credit rules, requirements, transcripts, renewal readiness, QR event attendance, and credential wallet.'],
-  ['Workflows', 'Live membership applications and event registrations with pricing, approvals, capacity/waitlists, CE rules, confirmations, and submission review.'],
-  ['Documents + Reports', 'Controlled document text/files, member review + acknowledgments, organization reporting, and compliance snapshots.'],
-  ['Data Import', 'Self-service CSV importer with field mapping, preview, duplicate detection, validation, and controlled commit.'],
-  ['API + Webhooks', 'Organization API keys, standard ICA API endpoints, and signed HTTPS webhooks.'],
-  ['Domains + Export', 'Custom-domain verification + organization host resolution, member CSV export, and full organization backup export.'],
-  ['Payments', 'Company SaaS billing stays separate from organization dues/event money through Stripe Connect.'],
-  ['Product Support', 'Standard support for using and operating existing ICA Unified features.'],
-  ['Mobile Access', 'ICA Unified Mobile native app code is included with Professional; signed store distribution activates when the mobile release is published.'],
+  ['Complete Core Platform', 'People, learning, workflows, compliance, credentials, documents, reports, and member workspace access under one organization subscription.'],
+  ['Self-Service Operations', 'Customer-run setup tools including invitations, workflow creation, course management, imports, exports, backups, API keys, webhooks, and domain verification.'],
+  ['Organization Payment Layer', 'Stripe Connect architecture for the customer organization’s own membership dues and event fees, kept separate from ICA SaaS billing.'],
+  ['Standard Product Support', 'Help using and troubleshooting existing ICA Unified features during the published support window.'],
+  ['Cloud Access', 'The live web workspace plus access to released ICA native clients using the same organization identity and cloud data.'],
+  ['14-Day Trial', 'A new organization can evaluate the Professional workspace before recurring software billing begins.'],
 ];
 
 const standardSupport = [
@@ -139,10 +279,10 @@ export default async function Home() {
         </Link>
         <nav>
           <a href="#platform">Platform</a>
+          <a href="#capabilities">Capabilities</a>
           <a href="#integrations">Integrations</a>
-          <a href="#plans">Plans</a>
-          <a href="#included">What&apos;s Included</a>
           <a href="#mobile">Mobile</a>
+          <a href="#plans">Plans</a>
           <a href="/downloads">Apps</a>
           <a href="/login">Customer Login</a>
         </nav>
@@ -178,10 +318,6 @@ export default async function Home() {
         <SystemStatusGlobe />
       </section>
 
-      <section className={styles.mantra}>
-        <span>ONE COMPANY</span><b>+</b><span>ONE DATABASE</span><b>+</b><span>ONE LOGIN</span><b>+</b><span>ONE MEMBER RECORD</span>
-      </section>
-
       <section id="platform" className={styles.section}>
         <div className={styles.sectionHead}>
           <p className={styles.eyebrow}>THE PLATFORM</p>
@@ -203,10 +339,38 @@ export default async function Home() {
         </div>
       </section>
 
+      <section id="capabilities" className={styles.capabilitySection}>
+        <div className={styles.sectionHead}>
+          <p className={styles.eyebrow}>COMPLETE CAPABILITY MAP</p>
+          <h2>What ICA Unified actually does.</h2>
+          <p>
+            This is the customer-facing feature map of the platform today. Each area below is tied to
+            the same organization and member record, so operations do not break apart as the organization grows.
+          </p>
+        </div>
+
+        <div className={styles.capabilityGrid}>
+          {capabilityGroups.map((group) => (
+            <article key={group.title} className={styles.capabilityCard}>
+              <div className={styles.capabilityTop}>
+                <i><MiniIcon type={group.icon} /></i>
+                <div>
+                  <span>{group.summary}</span>
+                  <h3>{group.title}</h3>
+                </div>
+              </div>
+              <ul>
+                {group.items.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className={styles.workflowSection}>
         <div className={styles.sectionHead}>
-          <p className={styles.eyebrow}>THE ICA UNIFIED RULE</p>
-          <h2>Everything follows the organization and the person.</h2>
+          <p className={styles.eyebrow}>HOW THE DATA MODEL WORKS</p>
+          <h2>Every feature above follows the organization and the person.</h2>
         </div>
         <div className={styles.workflowGrid}>
           {workflow.map(([number, title, copy]) => (
@@ -247,27 +411,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section id="plans" className={styles.section}>
-        <div className={styles.sectionHead}>
-          <p className={styles.eyebrow}>PLANS & ONBOARDING</p>
-          <h2>$249/month for the platform. Add implementation only when the organization needs it.</h2>
-          <p>ICA Unified Professional is $249 per month. Data migration, custom integrations, and larger implementation work are scoped separately. Every new organization can begin with the 14-day trial workspace.</p>
-        </div>
-        <div className={styles.planGrid}>
-          {plans.map((plan) => (
-            <article key={plan.name} className={plan.featured ? styles.planFeatured : styles.planCard}>
-              <small>{plan.tag}</small>
-              <h3>{plan.name}</h3>
-              <p>{plan.description}</p>
-              <ul>
-                {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
-              </ul>
-              <a href={plan.href} {...(plan.external ? { target: '_blank', rel: 'noreferrer' } : {})}>{plan.cta} →</a>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section id="mobile" className={styles.mobileSection}>
         <div className={styles.mobileIntro}>
           <div>
@@ -305,14 +448,35 @@ export default async function Home() {
         </div>
       </section>
 
+      <section id="plans" className={styles.section}>
+        <div className={styles.sectionHead}>
+          <p className={styles.eyebrow}>PLANS & ONBOARDING</p>
+          <h2>$249/month for the platform. Add implementation only when the organization needs it.</h2>
+          <p>ICA Unified Professional is $249 per month. Data migration, custom integrations, and larger implementation work are scoped separately. Every new organization can begin with the 14-day trial workspace.</p>
+        </div>
+        <div className={styles.planGrid}>
+          {plans.map((plan) => (
+            <article key={plan.name} className={plan.featured ? styles.planFeatured : styles.planCard}>
+              <small>{plan.tag}</small>
+              <h3>{plan.name}</h3>
+              <p>{plan.description}</p>
+              <ul>
+                {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+              </ul>
+              <a href={plan.href} {...(plan.external ? { target: '_blank', rel: 'noreferrer' } : {})}>{plan.cta} →</a>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section id="included" className={styles.transparencySection}>
         <div className={styles.sectionHead}>
-          <p className={styles.eyebrow}>CLEAR PRICING / CLEAR SUPPORT</p>
-          <h2>Know exactly what the $249/month subscription includes.</h2>
+          <p className={styles.eyebrow}>WHAT THE SUBSCRIPTION COVERS</p>
+          <h2>The capability map is the product. This section explains the commercial boundary.</h2>
           <p>
-            Standard Support covers the use and operation of existing ICA Unified features.
-            Custom development, implementation, migration, training, and third-party integration
-            work are professional services and are quoted separately.
+            Professional includes the current ICA Unified platform and Standard Support. Hands-on implementation,
+            managed migration, custom development, dedicated training, and new third-party integrations are separate
+            professional services quoted before work begins.
           </p>
         </div>
 
