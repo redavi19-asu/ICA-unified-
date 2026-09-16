@@ -36,7 +36,7 @@ export default async function PlatformPage() {
         <Metric label="TRIALS" value={organizations.filter((o) => o.status === 'TRIAL').length}/>
         <div style={{borderTop:'1px solid #34373d',padding:'18px 2px'}}>
           <span style={{fontSize:10,letterSpacing:'.14em',color:'#747a80'}}>PLATFORM HEALTH</span>
-          <strong style={{display:'flex',alignItems:'center',gap:8,fontSize:16,marginTop:15,color:'#55e69a'}}><i style={{width:8,height:8,borderRadius:'50%',background:'#55e69a',boxShadow:'0 0 12px rgba(85,230,154,.9)'}}/> D1 CONNECTED</strong>
+          <strong style={{display:'flex',alignItems:'center',gap:8,fontSize:16,marginTop:15,color:'#55e69a'}}><i style={{width:8,height:8,borderRadius:'50%',background:'#55e69a',boxShadow:'0 0 12px rgba(85,230,154,.9)'}}/> D1 DATA LOADED</strong>
         </div>
       </section>
 
@@ -60,16 +60,18 @@ export default async function PlatformPage() {
           ))}
         </div>
       </section>
-      <section style={{marginTop:42,borderTop:'1px solid #2d3035',paddingTop:28}}>
-        <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>SECURITY & ACCESS</p>
-        <h2 style={{fontSize:28,margin:'10px 0 18px'}}>Change Super Admin password</h2>
-        <form action="/api/platform/password" method="post" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr)) auto',gap:10,maxWidth:900}}>
-          <input name="currentPassword" type="password" minLength={8} required placeholder="Current password" autoComplete="current-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
-          <input name="newPassword" type="password" minLength={12} required placeholder="New password (12+ characters)" autoComplete="new-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
-          <button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>CHANGE PASSWORD</button>
-        </form>
-        <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:10}}>Your existing password is never displayed. Changing it requires the current password.</p>
-      </section>
+      {admin.role === 'SUPER_ADMIN' && (
+        <section style={{marginTop:42,borderTop:'1px solid #2d3035',paddingTop:28}}>
+          <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>SECURITY & ACCESS</p>
+          <h2 style={{fontSize:28,margin:'10px 0 18px'}}>Change Super Admin password</h2>
+          <form action="/api/platform/password" method="post" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr)) auto',gap:10,maxWidth:900}}>
+            <input name="currentPassword" type="password" minLength={8} required placeholder="Current password" autoComplete="current-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
+            <input name="newPassword" type="password" minLength={12} required placeholder="New password (12+ characters)" autoComplete="new-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
+            <button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>CHANGE PASSWORD</button>
+          </form>
+          <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:10}}>Your existing password is never displayed. Changing it requires the current password.</p>
+        </section>
+      )}
 
       <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:34}}>
         <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
