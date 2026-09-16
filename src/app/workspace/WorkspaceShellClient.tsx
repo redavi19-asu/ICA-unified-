@@ -44,30 +44,45 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
   }, [role]);
 
   const tips = useMemo(() => {
-    const steps = [
-      {
-        title: 'Dashboard',
-        body: 'Your organization overview lives here. It shows people, learning, credentials, documents, and association workflow activity.',
-      },
-      {
-        title: 'Workflows',
-        body: 'Create memberships, registrations, events, webinars, prices, CEU rules, certificates, and confirmation details from one workflow instead of jumping between modules.',
-      },
-      {
-        title: 'Learning + Credentials',
-        body: 'Learning manages education and progress. Credentials keeps certificates and verification records tied to the same member record.',
-      },
-      {
-        title: 'Compliance',
-        body: 'Compliance connects LMS course credits, AMS event attendance, CE requirements, renewal readiness, QR check-ins, and the member credential wallet through one credit ledger.',
-      },
-      {
-        title: 'People + Tools',
-        body: role === 'OWNER' || role === 'ADMIN'
-          ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Billing holds the $249 plan foundation. Tools handles data migration and organization setup.'
-          : 'People is where member records live. Organization setup tools are available to owners and admins.',
-      },
-    ];
+    const steps = role === 'MEMBER'
+      ? [
+          {
+            title: 'My Workspace',
+            body: 'Your personal workspace keeps assigned training, credentials, required document acknowledgments, and items needing attention in one place.',
+          },
+          {
+            title: 'Learning',
+            body: 'Open assigned courses, complete lessons and quizzes, and keep your progress tied to the same ICA member record.',
+          },
+          {
+            title: 'Credential + CE Wallet',
+            body: 'Your wallet combines credentials, CE credits, renewal requirements, transcript history, and recommended courses.',
+          },
+        ]
+      : [
+          {
+            title: 'Dashboard',
+            body: 'Your organization overview lives here. It shows people, learning, credentials, documents, and association workflow activity.',
+          },
+          {
+            title: 'Workflows',
+            body: 'Configure membership programs and event/webinar operations, including pricing fields, CE rules, certificates, check-in direction, and confirmations.',
+          },
+          {
+            title: 'Learning + Credentials',
+            body: 'Learning manages education and progress. Credentials keeps certificates and verification records tied to the same member record.',
+          },
+          {
+            title: 'Compliance',
+            body: 'Compliance connects LMS course credits, AMS event attendance, CE requirements, renewal readiness, QR check-ins, and the member credential wallet through one credit ledger.',
+          },
+          {
+            title: 'People + Tools',
+            body: role === 'OWNER' || role === 'ADMIN'
+              ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Billing manages the company subscription. Tools handles data migration and organization setup.'
+              : 'People gives managers a read-only organization view. Owner/admin-only setup controls stay hidden.',
+          },
+        ];
     if (platformRole) {
       steps.push({
         title: platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control',
