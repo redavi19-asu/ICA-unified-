@@ -109,16 +109,20 @@ function RealMapGlobe() {
   }, []);
 
   return (
-    <div className={styles.realGlobeWrap}>
-      <div className={styles.realGlobeFallback} aria-hidden="true">
-        <div className={styles.realGlobeFallbackLand} />
+    <div className={styles.realGlobeShell}>
+      <div className={styles.globeColorHalo} aria-hidden="true" />
+      <div className={styles.realGlobeWrap}>
+        <div className={styles.realGlobeFallback} aria-hidden="true">
+          <div className={styles.realGlobeFallbackLand} />
+        </div>
+        <div
+          ref={mapRef}
+          className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
+          aria-label="Interactive ICA Unified MapLibre world globe"
+        />
+        <div className={styles.globeColorWash} aria-hidden="true" />
+        <div className={styles.globeAttribution}>MAPLIBRE · OPENSTREETMAP</div>
       </div>
-      <div
-        ref={mapRef}
-        className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
-        aria-label="Interactive ICA Unified MapLibre world globe"
-      />
-      <div className={styles.globeAttribution}>MAPLIBRE · OPENSTREETMAP</div>
       <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
     </div>
   );
