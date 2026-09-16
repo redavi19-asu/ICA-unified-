@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
-import { listEmailOutbox, queueEmail } from '../../../../lib/organization-ops';
+import { listEmailOutbox, queueEmail, retryEmailOutbox } from '../../../../lib/organization-ops';
 import { emailDeliveryConfigured } from '../../../../lib/email-delivery';
 
 const previewSchema = z.object({
@@ -41,7 +41,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Owner or admin access is required.' }, { status: 403 });
   }
 
-  const parsed = previewSchema.safeParse(await request.json());
+  const body = await request.json();
+  if (body?.action === 'RETRY') {
+    if (!emailDeliveryConfigured()) {
+      return NextResponse.json({ error: 'Connect the email provider before retrying queued messages.' }, { status: 409 });
+    }
+    const result = await retryEmailOutbox(membership.organizationId);
+    return NextResponse.json({ ok: true, result });
+  }
+
+  const parsed = previewSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Enter a valid test recipient.' }, { status: 400 });
   }
