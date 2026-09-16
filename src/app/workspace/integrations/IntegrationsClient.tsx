@@ -188,7 +188,7 @@ export default function IntegrationsClient({
       <p className={styles.message} aria-live="polite">{message}</p>
 
       <section className={styles.grid}>
-        <article className={styles.wide}>
+        <article id="api-access" className={styles.wide}>
           <div className={styles.cardHead}><span>01</span><b>API ACCESS</b></div>
           <h2>Connect websites and external systems.</h2>
           <p>ICA API keys are tenant-scoped and stored as one-way hashes. Use them as Bearer tokens with the versioned API.</p>
@@ -209,7 +209,7 @@ export default function IntegrationsClient({
           </div>
         </article>
 
-        <article className={styles.wide}>
+        <article id="webhooks" className={styles.wide}>
           <div className={styles.cardHead}><span>02</span><b>WEBHOOKS</b></div>
           <h2>Push ICA events to another system.</h2>
           <p>Each delivery is HMAC-SHA256 signed. Subscribe to “*” or comma-separated events such as member.invited, member.activated, integration.test.</p>
@@ -250,7 +250,7 @@ export default function IntegrationsClient({
           </form>
         </article>
 
-        <article>
+        <article id="custom-domain">
           <div className={styles.cardHead}><span>04</span><b>CUSTOM DOMAIN</b></div>
           <h2>Verify ownership before routing.</h2>
           <form className={styles.stackForm} onSubmit={saveDomain}>
@@ -272,7 +272,7 @@ export default function IntegrationsClient({
           <small className={styles.note}>Verification needs no Cloudflare account credentials. Final custom-host routing is the later account-connected step.</small>
         </article>
 
-        <article className={styles.wide}>
+        <article id="export-backup" className={styles.wide}>
           <div className={styles.cardHead}><span>05</span><b>EXPORT + BACKUP</b></div>
           <h2>The customer’s data stays portable.</h2>
           <p>Download a clean member CSV for handoff or a full organization JSON backup containing member data, learning, credentials, documents, workflows, CE records, and activity history. Password hashes are never exported.</p>
