@@ -7,8 +7,14 @@ export default async function CertificatePage(props: { params: Promise<{ credent
   const params = await props.params;
   const { membership } = await requireSession();
 
+  const canManage = ['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role);
+
   const credential = await prisma.credential.findFirst({
-    where: { id: params.credentialId, organizationId: membership.organizationId },
+    where: {
+      id: params.credentialId,
+      organizationId: membership.organizationId,
+      ...(canManage ? {} : { userId: membership.userId }),
+    },
     include: {
       user: { select: { name: true } },
       enrollment: { include: { course: { select: { title: true, passingScore: true } } } },
