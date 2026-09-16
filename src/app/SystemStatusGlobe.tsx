@@ -38,6 +38,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
       const style = {
         version: 8 as const,
+        sky: {
+          'atmosphere-blend': 0,
+        },
         sources: {
           basemap: {
             type: 'raster' as const,
@@ -58,6 +61,8 @@ function RealMapGlobe({ health }: { health: HealthState }) {
             type: 'raster' as const,
             source: 'basemap',
             paint: {
+              'raster-opacity': 1,
+              'raster-fade-duration': 0,
               'raster-saturation': 0.55,
               'raster-contrast': 0.16,
               'raster-brightness-min': 0.02,
