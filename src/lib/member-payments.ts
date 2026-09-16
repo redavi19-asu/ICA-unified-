@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import {
   createMembershipActivation,
+  ensureWorkflowExecutionTables,
   getPublicWorkflow,
   getWorkflowSubmission,
   setWorkflowSubmissionStatus,
@@ -295,7 +296,7 @@ export async function confirmWorkflowPayment(input: {
     return { paid: false, status: submission.status, activationUrl: null };
   }
 
-  await ensureWorkflowExecutionTablesCompat();
+  await ensureWorkflowExecutionTables();
   await prisma.$executeRawUnsafe(
     `UPDATE WorkflowSubmission
      SET paymentStatus = 'PAID', updatedAt = CURRENT_TIMESTAMP
@@ -341,8 +342,11 @@ export async function confirmWorkflowPayment(input: {
       bodyText: [
         `Hello ${submission.name},`,
         '',
-        `Payment of $${(submission.amountCents / 100).toFixed(2)} was received for ${workflow.name}.`,
+        `Payment of ${(submission.amountCents / 100).toFixed(2)} was received for ${workflow.name}.`,
         `Status: ${nextStatus.replaceAll('_', ' ')}`,
+        workflow.kind === 'EVENT' && nextStatus === 'REGISTERED' && typeof workflow.config.meetingLink === 'string' && workflow.config.meetingLink.trim()
+          ? `Event access: ${workflow.config.meetingLink.trim()}`
+          : '',
         activationUrl ? `Activate your ICA Unified account: ${activationUrl}` : '',
         '',
         `${workflow.organizationName} · ICA Unified`,
@@ -358,29 +362,4 @@ export async function confirmWorkflowPayment(input: {
   }
 
   return { paid: true, status: nextStatus, activationUrl };
-}
-
-// Keeps the execution table creation private to the workflow module while allowing
-// payment confirmation to operate safely if this is the first paid workflow action.
-async function ensureWorkflowExecutionTablesCompat() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS WorkflowSubmission (
-      id TEXT PRIMARY KEY NOT NULL,
-      organizationId TEXT NOT NULL,
-      workflowId TEXT NOT NULL,
-      kind TEXT NOT NULL,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT,
-      company TEXT,
-      notes TEXT,
-      answersJson TEXT NOT NULL DEFAULT '{}',
-      status TEXT NOT NULL,
-      paymentStatus TEXT NOT NULL DEFAULT 'NOT_REQUIRED',
-      amountCents INTEGER NOT NULL DEFAULT 0,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE (workflowId, email)
-    )
-  `);
 }
