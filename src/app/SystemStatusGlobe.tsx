@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import maplibregl from 'maplibre-gl';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -16,155 +17,108 @@ function NodeIcon({ type }: { type: string }) {
 }
 
 
-type MapLibreMap = {
-  on: (event: string, callback: () => void) => void;
-  setProjection: (projection: { type: 'globe' }) => void;
-  getZoom: () => number;
-  getCenter: () => { lng: number; lat: number };
-  jumpTo: (options: { center: [number, number] }) => void;
-  getCanvasContainer: () => HTMLElement;
-  remove: () => void;
-};
-
-type MapLibreGlobal = {
-  Map: new (options: Record<string, unknown>) => MapLibreMap;
-};
-
-declare global {
-  interface Window {
-    maplibregl?: MapLibreGlobal;
-  }
-}
-
 function RealMapGlobe() {
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    let map: MapLibreMap | null = null;
-    let raf = 0;
-    let disposed = false;
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-    const cssId = 'ica-maplibre-css';
-    if (!document.getElementById(cssId)) {
-      const link = document.createElement('link');
-      link.id = cssId;
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.css';
-      document.head.appendChild(link);
-    }
-
-    const startMap = () => {
-      if (disposed || !mapRef.current || !window.maplibregl || map) return;
-
-      map = new window.maplibregl.Map({
-        container: mapRef.current,
-        style: {
-          version: 8,
-          sources: {
-            osm: {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              minzoom: 0,
-              maxzoom: 19,
-              attribution: '© OpenStreetMap contributors'
-            }
-          },
-          layers: [
-            {
-              id: 'osm',
-              type: 'raster',
-              source: 'osm',
-              paint: {
-                'raster-saturation': 0.42,
-                'raster-contrast': 0.14,
-                'raster-brightness-min': 0.05,
-                'raster-brightness-max': 1
-              }
-            }
-          ]
+    const style: maplibregl.StyleSpecification = {
+      version: 8,
+      sources: {
+        osm: {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          minzoom: 0,
+          maxzoom: 19,
+          attribution: '© OpenStreetMap contributors',
         },
-        center: [-18, 22],
-        zoom: 1.18,
-        minZoom: 0.75,
-        maxZoom: 5.5,
-        pitch: 0,
-        bearing: 0,
-        attributionControl: true,
-        canvasContextAttributes: { antialias: true }
-      });
-
-      let userInteracting = false;
-      let resumeTimer = 0;
-      let lastFrame = performance.now();
-
-      const pauseSpin = () => {
-        userInteracting = true;
-        window.clearTimeout(resumeTimer);
-      };
-
-      const resumeSpinSoon = () => {
-        window.clearTimeout(resumeTimer);
-        resumeTimer = window.setTimeout(() => {
-          userInteracting = false;
-        }, 3200);
-      };
-
-      map.on('style.load', () => {
-        map?.setProjection({ type: 'globe' });
-      });
-
-      map.on('load', () => {
-        setMapReady(true);
-
-        const animate = (now: number) => {
-          if (disposed || !map) return;
-
-          const delta = Math.min(34, now - lastFrame);
-          lastFrame = now;
-
-          if (!userInteracting && map.getZoom() < 2.4) {
-            const center = map.getCenter();
-            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-          }
-
-          raf = requestAnimationFrame(animate);
-        };
-
-        raf = requestAnimationFrame(animate);
-      });
-
-      const canvas = map.getCanvasContainer();
-      ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
-        canvas.addEventListener(eventName, pauseSpin, { passive: true });
-      });
-      map.on('moveend', resumeSpinSoon);
-      map.on('zoomend', resumeSpinSoon);
+      },
+      layers: [
+        {
+          id: 'osm',
+          type: 'raster',
+          source: 'osm',
+          paint: {
+            'raster-saturation': 0.58,
+            'raster-contrast': 0.18,
+            'raster-brightness-min': 0.03,
+            'raster-brightness-max': 1,
+          },
+        },
+      ],
     };
 
-    if (window.maplibregl) {
-      startMap();
-    } else {
-      const scriptId = 'ica-maplibre-script';
-      const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
+    const map = new maplibregl.Map({
+      container: mapRef.current,
+      style,
+      center: [-18, 22],
+      zoom: 1.18,
+      minZoom: 0.75,
+      maxZoom: 5.5,
+      pitch: 0,
+      bearing: 0,
+      attributionControl: false,
+      canvasContextAttributes: { antialias: true },
+    });
 
-      if (existing) {
-        existing.addEventListener('load', startMap, { once: true });
-      } else {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = 'https://unpkg.com/maplibre-gl@6.9.0/dist/maplibre-gl.js';
-        script.async = true;
-        script.addEventListener('load', startMap, { once: true });
-        document.head.appendChild(script);
-      }
-    }
+    mapInstanceRef.current = map;
+
+    let userInteracting = false;
+    let resumeTimer: ReturnType<typeof setTimeout> | undefined;
+    let frame = 0;
+    let lastFrame = performance.now();
+
+    const pauseSpin = () => {
+      userInteracting = true;
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+    };
+
+    const resumeSpinSoon = () => {
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(() => {
+        userInteracting = false;
+      }, 3200);
+    };
+
+    map.on('style.load', () => {
+      map.setProjection({ type: 'globe' });
+    });
+
+    map.on('load', () => {
+      setMapReady(true);
+
+      const animate = (now: number) => {
+        const delta = Math.min(34, now - lastFrame);
+        lastFrame = now;
+
+        if (!userInteracting && map.getZoom() < 2.4) {
+          const center = map.getCenter();
+          map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
+        }
+
+        frame = requestAnimationFrame(animate);
+      };
+
+      frame = requestAnimationFrame(animate);
+    });
+
+    const canvas = map.getCanvasContainer();
+    ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
+      canvas.addEventListener(eventName, pauseSpin, { passive: true });
+    });
+
+    map.on('moveend', resumeSpinSoon);
+    map.on('zoomend', resumeSpinSoon);
 
     return () => {
-      disposed = true;
-      cancelAnimationFrame(raf);
-      map?.remove();
+      cancelAnimationFrame(frame);
+      if (resumeTimer) window.clearTimeout(resumeTimer);
+      map.remove();
+      mapInstanceRef.current = null;
     };
   }, []);
 
@@ -178,6 +132,7 @@ function RealMapGlobe() {
         className={`${styles.realGlobeMap} ${mapReady ? styles.realGlobeMapReady : ''}`}
         aria-label="Interactive ICA Unified MapLibre world globe"
       />
+      <div className={styles.globeAttribution}>© OpenStreetMap</div>
       <div className={styles.globeHint}>DRAG · ZOOM · AUTO-SPIN</div>
     </div>
   );
