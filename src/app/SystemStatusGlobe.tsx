@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import worldCountries from './world-countries.json';
 import styles from './landing.module.css';
 
 type HealthState = 'checking' | 'connected' | 'issue';
@@ -16,120 +17,289 @@ function NodeIcon({ type }: { type: string }) {
 }
 
 
+type Position = [number, number];
+type PolygonCoordinates = Position[][];
+type MultiPolygonCoordinates = Position[][][];
+type CountryGeometry =
+  | { type: 'Polygon'; coordinates: PolygonCoordinates }
+  | { type: 'MultiPolygon'; coordinates: MultiPolygonCoordinates };
+type CountryFeature = {
+  type: 'Feature';
+  properties: { MAPCOLOR7?: number; NAME?: string };
+  geometry: CountryGeometry;
+};
+type CountryCollection = {
+  type: 'FeatureCollection';
+  features: CountryFeature[];
+};
+
+const COUNTRY_COLORS = [
+  '#d8c7ff',
+  '#f4c56f',
+  '#9edb84',
+  '#f3df79',
+  '#78d5a1',
+  '#73c7f4',
+  '#a9b8ff',
+  '#f0a98b',
+];
+
 function RealMapGlobe({ health }: { health: HealthState }) {
-  const mapRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const healthRef = useRef<HealthState>(health);
-  const mapInstanceRef = useRef<import('maplibre-gl').Map | null>(null);
+  const rotationRef = useRef(-20);
 
   useEffect(() => {
     healthRef.current = health;
   }, [health]);
 
   useEffect(() => {
-    let disposed = false;
-    let frame = 0;
-    let resumeTimer: number | undefined;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    async function initMap() {
-      if (!mapRef.current || mapInstanceRef.current || disposed) return;
+    const size = 320;
+    const textureWidth = 1024;
+    const textureHeight = 512;
+    const radius = size / 2 - 3;
+    const center = size / 2;
+    const centerLat = 12 * Math.PI / 180;
+    const sinCenterLat = Math.sin(centerLat);
+    const cosCenterLat = Math.cos(centerLat);
 
-      const maplibregl = await import('maplibre-gl');
-      if (!mapRef.current || disposed) return;
+    canvas.width = size;
+    canvas.height = size;
 
-      // OpenStreetMap Shortbread is an embeddable, no-key vector style.
-      // Use MapLibre's explicit worker URL so vector tiles render correctly in Next.js.
-      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+    const context = canvas.getContext('2d', { alpha: true });
+    if (!context) return;
 
-      const map = new maplibregl.Map({
-        container: mapRef.current,
-        style: 'https://vector.openstreetmap.org/styles/svwd/svwd03style.json',
-        center: [-12, 18],
-        zoom: 1.18,
-        minZoom: 0.8,
-        maxZoom: 5.5,
-        pitch: 0,
-        bearing: 0,
-        attributionControl: false,
-        canvasContextAttributes: { antialias: true },
-      });
+    const texture = document.createElement('canvas');
+    texture.width = textureWidth;
+    texture.height = textureHeight;
+    const textureContext = texture.getContext('2d', { alpha: false });
+    if (!textureContext) return;
 
-      mapInstanceRef.current = map;
+    textureContext.fillStyle = '#56c8eb';
+    textureContext.fillRect(0, 0, textureWidth, textureHeight);
+    textureContext.lineJoin = 'round';
+    textureContext.lineCap = 'round';
 
-      let userInteracting = false;
-      let lastFrame = performance.now();
+    const countries = worldCountries as unknown as CountryCollection;
 
-      const pauseSpin = () => {
-        userInteracting = true;
-        if (resumeTimer) window.clearTimeout(resumeTimer);
+    function projectTexturePoint(position: Position) {
+      return {
+        x: ((position[0] + 180) / 360) * textureWidth,
+        y: ((90 - position[1]) / 180) * textureHeight,
       };
-
-      const resumeSpinSoon = () => {
-        if (resumeTimer) window.clearTimeout(resumeTimer);
-        resumeTimer = window.setTimeout(() => {
-          userInteracting = false;
-        }, 3200);
-      };
-
-      let spinStarted = false;
-
-      map.on('style.load', () => {
-        if (disposed) return;
-
-        map.setProjection({ type: 'globe' });
-
-        if (spinStarted) return;
-        spinStarted = true;
-        lastFrame = performance.now();
-
-        const animate = (now: number) => {
-          if (disposed || !mapInstanceRef.current) return;
-
-          const delta = Math.min(34, now - lastFrame);
-          lastFrame = now;
-
-          if (healthRef.current !== 'issue' && !userInteracting && map.getZoom() < 2.4) {
-            const center = map.getCenter();
-            map.jumpTo({ center: [center.lng - delta * 0.0065, center.lat] });
-          }
-
-          frame = requestAnimationFrame(animate);
-        };
-
-        frame = requestAnimationFrame(animate);
-      });
-
-      map.on('error', (event) => {
-        console.error('ICA_MAPLIBRE_GLOBE_ERROR', event.error);
-      });
-
-      const canvas = map.getCanvasContainer();
-      ['mousedown', 'touchstart', 'wheel'].forEach((eventName) => {
-        canvas.addEventListener(eventName, pauseSpin, { passive: true });
-      });
-
-      map.on('moveend', resumeSpinSoon);
-      map.on('zoomend', resumeSpinSoon);
     }
 
-    void initMap();
+    function drawPolygon(polygon: PolygonCoordinates, fill: string) {
+      for (const wrapShift of [-textureWidth, 0, textureWidth]) {
+        textureContext.beginPath();
+
+        for (const ring of polygon) {
+          let previousUnwrappedX: number | null = null;
+
+          ring.forEach((position, index) => {
+            const projected = projectTexturePoint(position);
+            let unwrappedX = projected.x;
+
+            if (previousUnwrappedX !== null) {
+              while (unwrappedX - previousUnwrappedX > textureWidth / 2) unwrappedX -= textureWidth;
+              while (unwrappedX - previousUnwrappedX < -textureWidth / 2) unwrappedX += textureWidth;
+            }
+
+            previousUnwrappedX = unwrappedX;
+            const x = unwrappedX + wrapShift;
+
+            if (index === 0) textureContext.moveTo(x, projected.y);
+            else textureContext.lineTo(x, projected.y);
+          });
+
+          textureContext.closePath();
+        }
+
+        textureContext.fillStyle = fill;
+        textureContext.fill('evenodd');
+        textureContext.strokeStyle = 'rgba(255,255,255,.92)';
+        textureContext.lineWidth = 1.25;
+        textureContext.stroke();
+      }
+    }
+
+    countries.features.forEach((feature, featureIndex) => {
+      const colorIndex = typeof feature.properties.MAPCOLOR7 === 'number'
+        ? Math.max(0, Math.min(COUNTRY_COLORS.length - 1, feature.properties.MAPCOLOR7 - 1))
+        : featureIndex % COUNTRY_COLORS.length;
+      const fill = COUNTRY_COLORS[colorIndex];
+
+      if (feature.geometry.type === 'Polygon') {
+        drawPolygon(feature.geometry.coordinates, fill);
+      } else {
+        feature.geometry.coordinates.forEach((polygon) => drawPolygon(polygon, fill));
+      }
+    });
+
+    const texturePixels = textureContext.getImageData(0, 0, textureWidth, textureHeight).data;
+    const frame = context.createImageData(size, size);
+    const framePixels = frame.data;
+
+    const destinationIndexes: number[] = [];
+    const relativeLongitudes: number[] = [];
+    const textureRows: number[] = [];
+
+    for (let py = 0; py < size; py += 1) {
+      for (let px = 0; px < size; px += 1) {
+        const nx = (px + 0.5 - center) / radius;
+        const ny = -(py + 0.5 - center) / radius;
+        const rhoSquared = nx * nx + ny * ny;
+
+        if (rhoSquared > 1) continue;
+
+        const rho = Math.sqrt(rhoSquared);
+        let latitude: number;
+        let relativeLongitude: number;
+
+        if (rho < 0.000001) {
+          latitude = centerLat;
+          relativeLongitude = 0;
+        } else {
+          const angularDistance = Math.asin(rho);
+          const sinAngular = Math.sin(angularDistance);
+          const cosAngular = Math.cos(angularDistance);
+
+          latitude = Math.asin(
+            cosAngular * sinCenterLat +
+            (ny * sinAngular * cosCenterLat) / rho,
+          );
+
+          relativeLongitude = Math.atan2(
+            nx * sinAngular,
+            rho * cosCenterLat * cosAngular -
+            ny * sinCenterLat * sinAngular,
+          );
+        }
+
+        const latitudeDegrees = latitude * 180 / Math.PI;
+        const row = Math.max(
+          0,
+          Math.min(
+            textureHeight - 1,
+            Math.floor(((90 - latitudeDegrees) / 180) * textureHeight),
+          ),
+        );
+
+        destinationIndexes.push((py * size + px) * 4);
+        relativeLongitudes.push(relativeLongitude * 180 / Math.PI);
+        textureRows.push(row);
+      }
+    }
+
+    const destinationIndexArray = Int32Array.from(destinationIndexes);
+    const longitudeArray = Float32Array.from(relativeLongitudes);
+    const textureRowArray = Uint16Array.from(textureRows);
+
+    let animationFrame = 0;
+    let lastTime = performance.now();
+    let lastPaint = 0;
+    let dragging = false;
+    let lastPointerX = 0;
+    let resumeAt = 0;
+
+    function render() {
+      const centerLongitude = rotationRef.current;
+
+      for (let i = 0; i < destinationIndexArray.length; i += 1) {
+        let longitude = longitudeArray[i] + centerLongitude;
+        longitude = ((longitude + 180) % 360 + 360) % 360 - 180;
+
+        const sourceX = Math.max(
+          0,
+          Math.min(
+            textureWidth - 1,
+            Math.floor(((longitude + 180) / 360) * textureWidth),
+          ),
+        );
+
+        const sourceIndex = (textureRowArray[i] * textureWidth + sourceX) * 4;
+        const destinationIndex = destinationIndexArray[i];
+
+        framePixels[destinationIndex] = texturePixels[sourceIndex];
+        framePixels[destinationIndex + 1] = texturePixels[sourceIndex + 1];
+        framePixels[destinationIndex + 2] = texturePixels[sourceIndex + 2];
+        framePixels[destinationIndex + 3] = 255;
+      }
+
+      context.clearRect(0, 0, size, size);
+      context.putImageData(frame, 0, 0);
+
+      context.beginPath();
+      context.arc(center, center, radius, 0, Math.PI * 2);
+      context.strokeStyle = 'rgba(80,156,202,.42)';
+      context.lineWidth = 2;
+      context.stroke();
+    }
+
+    function animate(now: number) {
+      const delta = Math.min(50, now - lastTime);
+      lastTime = now;
+
+      if (healthRef.current !== 'issue' && !dragging && now >= resumeAt) {
+        rotationRef.current = (rotationRef.current - delta * 0.0065) % 360;
+      }
+
+      if (now - lastPaint >= 33) {
+        render();
+        lastPaint = now;
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    function pointerDown(event: PointerEvent) {
+      dragging = true;
+      lastPointerX = event.clientX;
+      canvas.setPointerCapture(event.pointerId);
+    }
+
+    function pointerMove(event: PointerEvent) {
+      if (!dragging) return;
+      const deltaX = event.clientX - lastPointerX;
+      lastPointerX = event.clientX;
+      rotationRef.current = (rotationRef.current + deltaX * 0.45) % 360;
+      render();
+    }
+
+    function pointerUp(event: PointerEvent) {
+      dragging = false;
+      resumeAt = performance.now() + 1800;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    }
+
+    canvas.addEventListener('pointerdown', pointerDown);
+    canvas.addEventListener('pointermove', pointerMove);
+    canvas.addEventListener('pointerup', pointerUp);
+    canvas.addEventListener('pointercancel', pointerUp);
+
+    render();
+    animationFrame = requestAnimationFrame(animate);
 
     return () => {
-      disposed = true;
-      cancelAnimationFrame(frame);
-      if (resumeTimer) window.clearTimeout(resumeTimer);
-      mapInstanceRef.current?.remove();
-      mapInstanceRef.current = null;
+      cancelAnimationFrame(animationFrame);
+      canvas.removeEventListener('pointerdown', pointerDown);
+      canvas.removeEventListener('pointermove', pointerMove);
+      canvas.removeEventListener('pointerup', pointerUp);
+      canvas.removeEventListener('pointercancel', pointerUp);
     };
   }, []);
 
   return (
     <div className={`${styles.realGlobeShell} ${health === 'issue' ? styles.realGlobeIssue : ''}`}>
-      <div
-        ref={mapRef}
-        className={styles.realGlobeMap}
-        aria-label="Interactive ICA Unified MapLibre world globe"
+      <canvas
+        ref={canvasRef}
+        className={styles.localGlobeCanvas}
+        aria-label="Interactive colorful ICA Unified world globe"
       />
-      <div className={styles.globeHint}>{health === 'issue' ? 'SERVICE ISSUE · AUTO-SPIN PAUSED' : 'DRAG · ZOOM · AUTO-SPIN'}</div>
+      <div className={styles.globeHint}>{health === 'issue' ? 'SERVICE ISSUE · AUTO-SPIN PAUSED' : 'DRAG · AUTO-SPIN'}</div>
     </div>
   );
 }
@@ -212,7 +382,7 @@ export default function SystemStatusGlobe() {
 
       <div className={styles.systemBottom}>
         <strong>WEBSITE ↔ API ↔ ICA UNIFIED ↔ ORGANIZATION WORKSPACE</strong>
-        <small className={styles.mapCredit}>MapLibre globe · OpenStreetMap Shortbread vector style</small>
+        <small className={styles.mapCredit}>Local canvas globe · Map data: Natural Earth</small>
       </div>
     </div>
   );
