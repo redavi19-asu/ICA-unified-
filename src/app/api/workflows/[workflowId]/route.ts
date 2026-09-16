@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireSession } from '../../../../../lib/auth';
-import { prisma } from '../../../../../lib/prisma';
+import { requireSession } from '../../../../lib/auth';
+import { prisma } from '../../../../lib/prisma';
 
 const updateSchema = z.object({
   name: z.string().trim().min(2).max(160).optional(),
