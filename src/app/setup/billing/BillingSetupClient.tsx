@@ -11,6 +11,7 @@ export default function BillingSetupClient({
   stripeReady,
   cancelled,
   confirmationFailed,
+  trialExpired,
 }: {
   organizationName: string;
   companyId: string;
@@ -18,6 +19,7 @@ export default function BillingSetupClient({
   stripeReady: boolean;
   cancelled: boolean;
   confirmationFailed: boolean;
+  trialExpired: boolean;
 }) {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
@@ -86,6 +88,7 @@ export default function BillingSetupClient({
           <div className={styles.line}><span>Standard support</span><strong>Included</strong></div>
           <div className={styles.line}><span>Platform access</span><strong>Web now · apps as released</strong></div>
 
+          {trialExpired && <p className={styles.notice}>Your 14-day ICA trial has ended. Add or restore the company subscription to reopen the workspace.</p>}
           {cancelled && <p className={styles.notice}>Checkout was cancelled. Your ICA company record is still safe.</p>}
           {confirmationFailed && <p className={styles.error}>Stripe returned to ICA, but the subscription could not be confirmed. Please try again.</p>}
           {error && <p className={styles.error}>{error}</p>}
