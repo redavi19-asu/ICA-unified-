@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -8,7 +8,21 @@ type Props = {
   role: string;
   organizationName: string;
   platformRole: string | null;
-  stats: { members: number; courses: number; credentials: number; documents: number };
+  stats: {
+    members: number;
+    courses: number;
+    credentials: number;
+    documents: number;
+    assignments: number;
+    averageCompletion: number;
+    overdueTraining: number;
+    credentialActive: number;
+    credentialExpiringSoon: number;
+    credentialExpired: number;
+    documentCompliance: number;
+    pendingAcknowledgments: number;
+    roleCounts: { owners: number; admins: number; managers: number; members: number };
+  };
   workflowStats: {
     total: number;
     membershipPrograms: number;
@@ -21,8 +35,6 @@ type Props = {
 
 export default function WorkspaceClient({ userName, role, organizationName, platformRole, stats, workflowStats }: Props) {
   const router = useRouter();
-  const completion = useMemo(() => Math.max(0, Math.min(100, stats.courses ? Math.round((stats.credentials / Math.max(stats.courses, 1)) * 68) : 0)), [stats.courses, stats.credentials]);
-  const compliant = Math.max(0, Math.min(100, stats.documents ? 85 : 0));
   const firstName = userName.split(' ')[0] || userName;
   const [systemHealth, setSystemHealth] = useState<'checking' | 'connected' | 'issue'>('checking');
 
@@ -158,8 +170,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
             <div className="card-heading"><h2>Learning Overview</h2><button onClick={() => router.push('/workspace/learning')}>View all courses</button></div>
             <div className="learning-layout">
               <div className="donut-wrap">
-                <div className="donut" style={{'--value': `${completion}%`} as React.CSSProperties}><span><b>{completion}%</b><small>Average<br/>Completion</small></span></div>
-                <div className="legend-stack"><span><i className="dot blue"/> {stats.courses} <small>Active Courses</small></span><span><i className="dot green"/> {stats.credentials} <small>Credentials Earned</small></span><span><i className="dot amber"/> {Math.max(stats.courses - stats.credentials, 0)} <small>Needs Attention</small></span></div>
+                <div className="donut" style={{'--value': `${stats.averageCompletion}%`} as React.CSSProperties}><span><b>{stats.averageCompletion}%</b><small>Average<br/>Completion</small></span></div>
+                <div className="legend-stack"><span><i className="dot blue"/> {stats.courses} <small>Active Courses</small></span><span><i className="dot green"/> {stats.assignments} <small>Assignments</small></span><span><i className="dot amber"/> {stats.overdueTraining} <small>Needs Attention</small></span></div>
               </div>
               <div className="activity-list">
                 <h3>Recent Activity</h3>
@@ -175,10 +187,10 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
             <div className="people-overview-content">
               <div className="people-donut"><span><b>{stats.members}</b><small>Total People</small></span></div>
               <div className="people-role-list">
-                <span><i className="dot purple"/> Owners <b>{role === 'OWNER' ? 1 : 0}</b></span>
-                <span><i className="dot blue"/> Managers <b>{role === 'MANAGER' ? 1 : 0}</b></span>
-                <span><i className="dot cyan"/> Admins <b>{role === 'ADMIN' ? 1 : 0}</b></span>
-                <span><i className="dot green"/> Members <b>{Math.max(stats.members - 1, 0)}</b></span>
+                <span><i className="dot purple"/> Owners <b>{stats.roleCounts.owners}</b></span>
+                <span><i className="dot blue"/> Managers <b>{stats.roleCounts.managers}</b></span>
+                <span><i className="dot cyan"/> Admins <b>{stats.roleCounts.admins}</b></span>
+                <span><i className="dot green"/> Members <b>{stats.roleCounts.members}</b></span>
               </div>
             </div>
             <div className="people-footer"><button onClick={() => router.push('/workspace/people')}>+ Quick Invite</button><button onClick={() => router.push('/workspace/people')}>View onboarding</button><button onClick={() => router.push('/workspace/people')}>Manage people</button></div>
@@ -188,22 +200,22 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
         <section className="dashboard-grid-three">
           <article className="dashboard-card mini-card">
             <div className="card-heading"><h2>Credential Status</h2><button onClick={() => router.push('/workspace/credentials')}>View all credentials</button></div>
-            <div className="triple-metric"><span><b>{stats.credentials}</b><small>Active</small></span><span><b>{Math.min(stats.credentials, 3)}</b><small>Expiring Soon</small></span><span><b>0</b><small>Expired</small></span></div>
+            <div className="triple-metric"><span><b>{stats.credentialActive}</b><small>Active</small></span><span><b>{stats.credentialExpiringSoon}</b><small>Expiring Soon</small></span><span><b>{stats.credentialExpired}</b><small>Expired</small></span></div>
             <div className="mini-list"><span>Credential records <b>{stats.credentials}</b></span><span>Verification system <b>Active</b></span><span>Public verification <b>Ready</b></span></div>
           </article>
 
           <article className="dashboard-card mini-card">
             <div className="card-heading"><h2>Document Compliance</h2><button onClick={() => router.push('/workspace/documents')}>View all documents</button></div>
-            <div className="compliance-score"><b>{compliant}%</b><span>Overall Compliance</span><div><i style={{width:`${compliant}%`}}/></div></div>
-            <div className="mini-list"><span>Controlled documents <b>{stats.documents}</b></span><span>Acknowledgment tracking <b>On</b></span><span>Tenant isolation <b>Active</b></span></div>
+            <div className="compliance-score"><b>{stats.documentCompliance}%</b><span>Overall Compliance</span><div><i style={{width:`${stats.documentCompliance}%`}}/></div></div>
+            <div className="mini-list"><span>Controlled documents <b>{stats.documents}</b></span><span>Acknowledgments due <b>{stats.pendingAcknowledgments}</b></span><span>Tenant isolation <b>Active</b></span></div>
           </article>
 
           <article className="dashboard-card mini-card">
             <div className="card-heading"><h2>Reports Snapshot</h2><button onClick={() => router.push('/workspace/reports')}>View all reports</button></div>
             <div className="report-list">
-              <button onClick={() => router.push('/workspace/reports')}><i>▣</i><span><b>Training Completion</b><small>See organization progress</small></span><strong>{stats.courses}</strong></button>
-              <button onClick={() => router.push('/workspace/reports')}><i>◈</i><span><b>Credential Watch</b><small>Expiring credentials</small></span><strong>{Math.min(stats.credentials, 3)}</strong></button>
-              <button onClick={() => router.push('/workspace/reports')}><i>▤</i><span><b>Document Compliance</b><small>Acknowledgment status</small></span><strong>{stats.documents}</strong></button>
+              <button onClick={() => router.push('/workspace/reports')}><i>▣</i><span><b>Training Completion</b><small>Average assignment progress</small></span><strong>{stats.averageCompletion}%</strong></button>
+              <button onClick={() => router.push('/workspace/reports')}><i>◈</i><span><b>Credential Watch</b><small>Expiring within 30 days</small></span><strong>{stats.credentialExpiringSoon}</strong></button>
+              <button onClick={() => router.push('/workspace/reports')}><i>▤</i><span><b>Document Compliance</b><small>Acknowledgments due</small></span><strong>{stats.pendingAcknowledgments}</strong></button>
             </div>
           </article>
         </section>
