@@ -11,6 +11,8 @@ type DocumentItem = {
   requiresAck: boolean;
   createdAt: string;
   acknowledged: number;
+  bodyText: string | null;
+  fileName: string | null;
 };
 
 export default function DocumentsClient({ organizationName, role, documents: initialDocuments }: {
@@ -34,6 +36,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
         title: form.get('title'),
         version: form.get('version'),
         requiresAck: form.get('requiresAck') === 'on',
+        bodyText: form.get('bodyText'),
       }),
     });
     const data = await response.json();
@@ -41,9 +44,33 @@ export default function DocumentsClient({ organizationName, role, documents: ini
       setMessage(data.error || 'Unable to create document.');
       return;
     }
-    setDocuments((current) => [{ ...data.document, createdAt: data.document.createdAt, acknowledged: 0 }, ...current]);
+    const file = form.get('file');
+    let fileName: string | null = null;
+
+    if (file instanceof File && file.size > 0) {
+      const upload = new FormData();
+      upload.set('file', file);
+      const uploadResponse = await fetch(`/api/documents/${data.document.id}/upload`, {
+        method: 'POST',
+        body: upload,
+      });
+      const uploadData = await uploadResponse.json();
+      if (!uploadResponse.ok) {
+        setMessage(`${data.document.title} was created, but the attachment failed: ${uploadData.error || 'Upload failed.'}`);
+      } else {
+        fileName = uploadData.fileName || file.name;
+      }
+    }
+
+    setDocuments((current) => [{
+      ...data.document,
+      createdAt: data.document.createdAt,
+      acknowledged: 0,
+      bodyText: String(form.get('bodyText') || '').trim() || null,
+      fileName,
+    }, ...current]);
     setOpen(false);
-    setMessage(`${data.document.title} added to controlled documents.`);
+    if (!fileName) setMessage(`${data.document.title} added to controlled documents.`);
     event.currentTarget.reset();
   }
 
@@ -70,6 +97,8 @@ export default function DocumentsClient({ organizationName, role, documents: ini
         <form className={styles.builder} onSubmit={createDocument}>
           <label>DOCUMENT TITLE<input name="title" placeholder="Employee Conduct Policy" required /></label>
           <label>VERSION<input name="version" defaultValue="1.0" required /></label>
+          <label>DOCUMENT TEXT<textarea name="bodyText" rows={7} placeholder="Paste the policy, procedure, instructions, or controlled text members must review." /></label>
+          <label>ATTACH FILE (OPTIONAL)<input name="file" type="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp,application/pdf,image/*" /></label>
           <label className={styles.check}><input name="requiresAck" type="checkbox" /> Require employee acknowledgment</label>
           <button>CREATE CONTROLLED RECORD →</button>
         </form>
@@ -82,6 +111,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
             <div className={styles.title}><strong>{document.title}</strong><span>Version {document.version} · {new Date(document.createdAt).toLocaleDateString()}</span></div>
             <div><small>MODE</small><b>{document.requiresAck ? 'ACK REQUIRED' : 'REFERENCE'}</b></div>
             <div><small>ACKNOWLEDGED</small><b>{document.acknowledged}</b></div>
+            <div><small>CONTENT</small><b>{document.fileName ? 'TEXT + FILE' : document.bodyText ? 'TEXT' : 'EMPTY'}</b></div>
           </article>
         ))}
       </section>
