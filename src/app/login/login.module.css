@@ -30,6 +30,6 @@ radial-gradient(circle at 90% 22%,rgba(139,92,246,.07),transparent 25%),
 
 .icaMark{display:inline-flex;align-items:baseline;letter-spacing:-.075em}
 .icaMark span{display:inline-block}
-.icaI{background:linear-gradient(to bottom,#fca5a5,#ef4444,#991b1b);-webkit-background-clip:text;background-clip:text;color:transparent}
-.icaC{background:linear-gradient(to bottom,#fed7aa,#f97316,#c2410c);-webkit-background-clip:text;background-clip:text;color:transparent}
-.icaA{background:linear-gradient(to bottom,#e5e7eb,#9ca3af,#4b5563);-webkit-background-clip:text;background-clip:text;color:transparent}
+.icaI{color:#ef4444!important;-webkit-text-fill-color:#ef4444!important}
+.icaC{color:#f97316!important;-webkit-text-fill-color:#f97316!important}
+.icaA{color:#9ca3af!important;-webkit-text-fill-color:#9ca3af!important}
