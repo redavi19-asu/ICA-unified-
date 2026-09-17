@@ -55,7 +55,6 @@ const initialEvent = {
   eventType: 'WEBINAR',
   startAt: '',
   price: '',
-  memberDiscount: '',
   capacity: '',
   meetingLink: '',
   ceuCredits: '',
@@ -90,7 +89,6 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
       setLoading(false);
     }
   }
-
 
   async function loadSubmissions(workflow: Workflow) {
     setSelectedWorkflow(workflow);
@@ -318,9 +316,8 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               <label>Type<select value={event.eventType} onChange={(e) => setEvent({...event, eventType:e.target.value})}><option value="WEBINAR">Webinar</option><option value="CONFERENCE">Conference</option><option value="COURSE">Course</option><option value="MEETING">Board / Committee Meeting</option></select></label>
               <label>Date / time<input type="datetime-local" value={event.startAt} onChange={(e) => setEvent({...event, startAt:e.target.value})} /></label>
             </div>
-            <div className={styles.threeCol}>
+            <div className={styles.twoCol}>
               <label>Ticket price<input value={event.price} onChange={(e) => setEvent({...event, price:e.target.value})} placeholder="75.00" /></label>
-              <label>Member discount<input value={event.memberDiscount} onChange={(e) => setEvent({...event, memberDiscount:e.target.value})} placeholder="25.00" /></label>
               <label>Capacity<input value={event.capacity} onChange={(e) => setEvent({...event, capacity:e.target.value})} placeholder="250" /></label>
             </div>
           </section>
@@ -331,7 +328,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
             <div className={styles.threeCol}>
               <label>CEU / credit value<input value={event.ceuCredits} onChange={(e) => setEvent({...event, ceuCredits:e.target.value})} placeholder="1.5" inputMode="decimal" /></label>
               <label>Credit category<input value={event.creditCategory} onChange={(e) => setEvent({...event, creditCategory:e.target.value})} placeholder="GENERAL" /></label>
-              <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="COMPLETE_EVENT">Issue after completion</option><option value="PASS_QUIZ">Issue after passing quiz</option><option value="ATTENDANCE">Issue after attendance</option><option value="NONE">No certificate</option></select></label>
+              <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="COMPLETE_EVENT">Issue after completion</option><option value="ATTENDANCE">Issue after attendance</option><option value="NONE">No certificate</option></select></label>
             </div>
             <label>Event check-in mode
               <select value={event.checkinMode} onChange={(e) => setEvent({...event, checkinMode:e.target.value})}>
