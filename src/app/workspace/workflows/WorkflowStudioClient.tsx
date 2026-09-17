@@ -290,7 +290,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
             <p className={styles.step}>02 / APPLICATION + RENEWAL</p>
             <Toggle label="Application required" value={membership.applicationRequired} onChange={(value) => setMembership({...membership, applicationRequired:value})} />
             <Toggle label="Admin approval required" value={membership.approvalRequired} onChange={(value) => setMembership({...membership, approvalRequired:value})} />
-            <label>Renewal reminder window (days)<input value={membership.renewalWindowDays} onChange={(e) => setMembership({...membership, renewalWindowDays:e.target.value})} inputMode="numeric" /></label>
+            <label>Renewal planning window (days)<input value={membership.renewalWindowDays} onChange={(e) => setMembership({...membership, renewalWindowDays:e.target.value})} inputMode="numeric" /></label>
             <div className={styles.twoCol}>
               <label>CE credits required for renewal<input value={membership.ceCreditsRequired} onChange={(e) => setMembership({...membership, ceCreditsRequired:e.target.value})} placeholder="20" inputMode="decimal" /></label>
               <label>CE category<input value={membership.ceCategory} onChange={(e) => setMembership({...membership, ceCategory:e.target.value})} placeholder="GENERAL" /></label>
