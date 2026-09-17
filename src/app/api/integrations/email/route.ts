@@ -25,12 +25,16 @@ export async function GET() {
     counts: { queued, sent, failed },
     messages,
     templates: [
+      'SYSTEM_TEST',
       'MEMBER_INVITATION',
-      'COURSE_ASSIGNED',
-      'EVENT_CONFIRMATION',
-      'RENEWAL_REMINDER',
-      'CREDENTIAL_ISSUED',
+      'EMAIL_VERIFICATION',
+      'PASSWORD_RESET',
+      'MEMBERSHIP_APPLICATION',
+      'EVENT_REGISTRATION',
+      'WORKFLOW_STATUS_UPDATE',
+      'WORKFLOW_MEMBERSHIP_ACTIVATION',
       'PAYMENT_RECEIPT',
+      'MIGRATION_ACTIVATION',
     ],
   });
 }
