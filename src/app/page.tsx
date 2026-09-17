@@ -274,7 +274,9 @@ export default async function Home() {
     <main className={styles.page}>
       <header className={styles.nav}>
         <Link className={styles.brand} href="/">
-          <span>ICA</span>
+          <span className={styles.icaMark} aria-label="ICA">
+            <em className={styles.icaI}>I</em><em className={styles.icaC}>C</em><em className={styles.icaA}>A</em>
+          </span>
           <strong>UNIFIED</strong>
         </Link>
         <nav>
