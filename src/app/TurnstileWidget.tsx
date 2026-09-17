@@ -25,7 +25,7 @@ type Props = {
   theme?: 'light' | 'dark' | 'auto';
 };
 
-const SITE_KEY = '0x4AAAAAAEpl_r2LJcL18Dn5';
+const SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAEpl_r2LJcL18Dn5').trim();
 
 export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
