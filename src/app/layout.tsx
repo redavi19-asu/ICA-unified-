@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import CookieNotice from './CookieNotice';
+import LegalFooter from './LegalFooter';
 
 export const metadata: Metadata = {
   title: 'ICA Unified | AMS + LMS Business Platform',
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}<CookieNotice /></body>
+      <body>{children}<LegalFooter /><CookieNotice /></body>
     </html>
   );
 }
