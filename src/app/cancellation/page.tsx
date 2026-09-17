@@ -10,7 +10,7 @@ export default function CancellationPage() {
         <p>After the trial, ICA Unified Professional renews monthly at the subscription price shown at checkout. The current standard Professional price is $299 per month.</p>
       </LegalSection>
       <LegalSection title="How to cancel">
-        <p>An organization Owner or Admin can open Workspace → Billing → Manage or Cancel Subscription. ICA then opens the organization's secure Stripe customer billing portal.</p>
+        <p>An organization Owner or Admin can open Workspace → Billing → Manage or Cancel Subscription. ICA then opens the secure Stripe customer billing portal for that organization.</p>
       </LegalSection>
       <LegalSection title="When cancellation takes effect">
         <p>For a paid monthly subscription, cancellation is scheduled for the end of the current paid billing period. Access remains available through that paid period unless the account is suspended for security, misuse, or another valid account-control reason.</p>
