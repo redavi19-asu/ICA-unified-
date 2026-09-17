@@ -16,8 +16,8 @@ ICA Unified is an association operating system combining AMS, LMS, credentials, 
 Current navigation and behavior:
 - Dashboard: organization overview and association operations metrics.
 - Workflows: Workflow Studio for membership programs and events/webinars, including live public application/registration pages, submissions, review states, capacity/waitlist behavior, and organization payment handoff.
-- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal planning window, CE credits/category required for renewal, confirmation email, draft/active status, live public application URL, staff review, and secure ICA activation after approval. Paid memberships use the organization Stripe Connect account when it is ready.
-- Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, draft/active status, live public registration URL, capacity/waitlist handling, and Stripe Connect payment when the organization account is ready.
+- Membership Program workflow: membership name/tier, price, billing cadence, approval requirement, qualifications, member benefits, renewal planning window, CE credits/category required for renewal, confirmation email, draft/active status, live public application URL, staff review, and secure ICA activation after approval. Paid memberships use the organization Stripe Connect account when it is ready.
+- Event / Webinar workflow: event title/type, date/time, ticket price, capacity, meeting link, CE credit value/category, attendance certificate rule, confirmation email, draft/active status, live public registration URL, capacity/waitlist handling, and Stripe Connect payment when the organization account is ready.
 - Learning: course creation, text/video/document/live lessons, quizzes, course assignment, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
 - People: member/user records and organization membership.
 - Credentials: organization credential/certificate records and verification.
@@ -44,11 +44,11 @@ function fallbackAnswer(question: string) {
   const q = question.toLowerCase();
 
   if (q.includes('event') || q.includes('webinar') || q.includes('registration')) {
-    return 'Go to Workflows → Event / Webinar. Enter the event details, CE credit value and category, certificate rule, and confirmation settings. After saving the event, admins can go to Compliance → QR Event Attendance to generate its check-in QR.';
+    return 'Go to Workflows → Event / Webinar. Enter the event details, CE credit value and category, attendance certificate rule, and confirmation settings. After saving the event, admins can go to Compliance → QR Event Attendance to generate its check-in QR.';
   }
 
   if (q.includes('membership') || q.includes('member level') || q.includes('associate')) {
-    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal planning window, and the CE credits/category required for renewal. Save it as a draft or mark it active. ACTIVE workflows get a public ICA application page and appear in Workflow Studio with submission review controls.';
+    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, approval rules, renewal planning window, and the CE credits/category required for renewal. Save it as a draft or mark it active. ACTIVE workflows get a public ICA application page and appear in Workflow Studio with submission review controls.';
   }
 
   if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz')) {
