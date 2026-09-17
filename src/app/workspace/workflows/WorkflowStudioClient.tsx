@@ -38,7 +38,6 @@ const initialMembership = {
   name: '',
   price: '',
   billingCadence: 'YEARLY',
-  applicationRequired: true,
   approvalRequired: true,
   qualifications: '',
   benefits: '',
@@ -59,7 +58,7 @@ const initialEvent = {
   meetingLink: '',
   ceuCredits: '',
   creditCategory: 'GENERAL',
-  certificateRule: 'COMPLETE_EVENT',
+  certificateRule: 'ATTENDANCE',
   checkinMode: 'SELF_SCAN',
   confirmationSubject: 'Registration confirmed',
   confirmationMessage: 'You are registered. Your event details and access link are included below.',
@@ -280,13 +279,12 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               <label>Price<input value={membership.price} onChange={(e) => setMembership({...membership, price:e.target.value})} placeholder="150.00" inputMode="decimal" /></label>
               <label>Billing<select value={membership.billingCadence} onChange={(e) => setMembership({...membership, billingCadence:e.target.value})}><option value="YEARLY">Yearly</option><option value="MONTHLY">Monthly</option><option value="ONE_TIME">One time</option></select></label>
             </div>
-            <label>Required qualifications<textarea value={membership.qualifications} onChange={(e) => setMembership({...membership, qualifications:e.target.value})} placeholder="Degree, certification, years of experience, uploaded proof..." /></label>
-            <label>Member benefits<textarea value={membership.benefits} onChange={(e) => setMembership({...membership, benefits:e.target.value})} placeholder="Course discounts, board access, members-only resources..." /></label>
+            <label>Required qualifications<textarea value={membership.qualifications} onChange={(e) => setMembership({...membership, qualifications:e.target.value})} placeholder="Degree, certification, years of experience, or other eligibility requirements..." /></label>
+            <label>Member benefits<textarea value={membership.benefits} onChange={(e) => setMembership({...membership, benefits:e.target.value})} placeholder="Board access, members-only resources, voting access, events..." /></label>
           </section>
 
           <section>
             <p className={styles.step}>02 / APPLICATION + RENEWAL</p>
-            <Toggle label="Application required" value={membership.applicationRequired} onChange={(value) => setMembership({...membership, applicationRequired:value})} />
             <Toggle label="Admin approval required" value={membership.approvalRequired} onChange={(value) => setMembership({...membership, approvalRequired:value})} />
             <label>Renewal planning window (days)<input value={membership.renewalWindowDays} onChange={(e) => setMembership({...membership, renewalWindowDays:e.target.value})} inputMode="numeric" /></label>
             <div className={styles.twoCol}>
@@ -328,7 +326,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
             <div className={styles.threeCol}>
               <label>CEU / credit value<input value={event.ceuCredits} onChange={(e) => setEvent({...event, ceuCredits:e.target.value})} placeholder="1.5" inputMode="decimal" /></label>
               <label>Credit category<input value={event.creditCategory} onChange={(e) => setEvent({...event, creditCategory:e.target.value})} placeholder="GENERAL" /></label>
-              <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="COMPLETE_EVENT">Issue after completion</option><option value="ATTENDANCE">Issue after attendance</option><option value="NONE">No certificate</option></select></label>
+              <label>Certificate rule<select value={event.certificateRule} onChange={(e) => setEvent({...event, certificateRule:e.target.value})}><option value="ATTENDANCE">Issue at attendance / check-in</option><option value="NONE">No certificate</option></select></label>
             </div>
             <label>Event check-in mode
               <select value={event.checkinMode} onChange={(e) => setEvent({...event, checkinMode:e.target.value})}>
