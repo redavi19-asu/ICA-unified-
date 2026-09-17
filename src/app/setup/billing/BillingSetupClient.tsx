@@ -66,7 +66,7 @@ export default function BillingSetupClient({
 
           <div className={styles.trust}>
             <span>✓ Standard Support included</span>
-            <span>✓ Cancel before trial ends to avoid charge</span>
+            <span>✓ Cancel anytime from Workspace → Billing → Manage or Cancel Subscription</span>
             <span>✓ One organization subscription across supported devices</span>
             <span>✓ Payment information handled by Stripe</span>
           </div>
@@ -106,6 +106,7 @@ export default function BillingSetupClient({
 
           <p className={styles.fine}>
             Stripe securely collects and stores payment details. ICA Unified does not store raw card numbers.
+            Cancel before the 14-day trial ends to avoid the first charge. After the trial, Professional is ${monthlyPrice}/month until canceled.
           </p>
         </aside>
       </section>
