@@ -1,0 +1,72 @@
+name: Configure ICA Unified Resend DNS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/configure-resend-dns.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Resend DNS records in Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "CLOUDFLARE_API_TOKEN is not configured."
+            exit 1
+          fi
+
+          CF_API="https://api.cloudflare.com/client/v4"
+          AUTH=(-H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json")
+
+          zone_json=$(curl -fsS "${AUTH[@]}" --get "${CF_API}/zones" --data-urlencode "name=icomputeranything.com" --data-urlencode "status=active")
+          zone_id=$(echo "$zone_json" | jq -r '.result[0].id // empty')
+          if [ -z "$zone_id" ]; then
+            echo "Cloudflare token cannot resolve the icomputeranything.com zone. Ensure Zone:Read permission is enabled."
+            exit 1
+          fi
+
+          upsert_record() {
+            local type="$1"
+            local name="$2"
+            local content="$3"
+            local priority="${4:-}"
+            local existing_json record_id payload response
+
+            existing_json=$(curl -fsS "${AUTH[@]}" --get "${CF_API}/zones/${zone_id}/dns_records" \
+              --data-urlencode "type=${type}" --data-urlencode "name=${name}")
+            record_id=$(echo "$existing_json" | jq -r '.result[0].id // empty')
+
+            if [ "$type" = "MX" ]; then
+              payload=$(jq -n --arg type "$type" --arg name "$name" --arg content "$content" --argjson priority "$priority" \
+                '{type:$type,name:$name,content:$content,ttl:1,proxied:false,priority:$priority}')
+            else
+              payload=$(jq -n --arg type "$type" --arg name "$name" --arg content "$content" \
+                '{type:$type,name:$name,content:$content,ttl:1,proxied:false}')
+            fi
+
+            if [ -n "$record_id" ]; then
+              response=$(curl -fsS "${AUTH[@]}" -X PUT "${CF_API}/zones/${zone_id}/dns_records/${record_id}" --data "$payload")
+              echo "$response" | jq -e '.success == true' >/dev/null
+              echo "Updated ${type} ${name}"
+            else
+              response=$(curl -fsS "${AUTH[@]}" -X POST "${CF_API}/zones/${zone_id}/dns_records" --data "$payload")
+              echo "$response" | jq -e '.success == true' >/dev/null
+              echo "Created ${type} ${name}"
+            fi
+          }
+
+          upsert_record TXT "resend._domainkey.unified.icomputeranything.com" "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDKJF3IFOb9A4fXh749qFIbL5gSHDU//t6w7c/YM4yS2i0Ek1u5S1D+rkbMhRVhIpPul7+6/bQNgKMaxgn+BNQzVho6nxEW9idCDpbp9rH5EjiGcmtmKBi8prpp5BN02gTFHA63NMaCRLPYgYtQVYe1pOrRSCyzM1DNeJfchGmESQIDAQAB"
+          upsert_record MX "send.unified.icomputeranything.com" "feedback-smtp.us-east-1.amazonses.com" 10
+          upsert_record TXT "send.unified.icomputeranything.com" "v=spf1 include:amazonses.com ~all"
+          upsert_record CNAME "rsend.unified.icomputeranything.com" "send.forge.rmta.net"
+
+          echo "ICA Unified Resend DNS records are configured in Cloudflare."
