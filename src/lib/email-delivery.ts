@@ -5,11 +5,26 @@ type TransactionalEmailInput = {
   idempotencyKey: string;
 };
 
+const DEFAULT_EMAIL_PROVIDER = 'resend';
+const DEFAULT_EMAIL_FROM = 'ICA Unified <no-reply@unified.icomputeranything.com>';
+
+export function emailProvider() {
+  return String(process.env.EMAIL_PROVIDER || DEFAULT_EMAIL_PROVIDER).trim().toLowerCase();
+}
+
+export function emailApiKey() {
+  return String(process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY || '').trim();
+}
+
+export function emailFromAddress() {
+  return String(process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM).trim();
+}
+
 export function emailDeliveryConfigured() {
   return (
-    String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase() === 'resend' &&
-    Boolean(String(process.env.EMAIL_API_KEY || '').trim()) &&
-    Boolean(String(process.env.EMAIL_FROM || '').trim())
+    emailProvider() === 'resend' &&
+    Boolean(emailApiKey()) &&
+    Boolean(emailFromAddress())
   );
 }
 
@@ -21,12 +36,12 @@ export async function sendTransactionalEmail(input: TransactionalEmailInput) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${String(process.env.EMAIL_API_KEY).trim()}`,
+      Authorization: `Bearer ${emailApiKey()}`,
       'Content-Type': 'application/json',
       'Idempotency-Key': input.idempotencyKey,
     },
     body: JSON.stringify({
-      from: String(process.env.EMAIL_FROM).trim(),
+      from: emailFromAddress(),
       to: [input.recipient],
       subject: input.subject,
       text: input.bodyText,
