@@ -20,7 +20,7 @@ export default function TermsPage() {
         <p>Customers may not use ICA Unified to break the law, access another organization without authorization, distribute malware, interfere with platform security, abuse service resources, or intentionally submit fraudulent or harmful content.</p>
       </LegalSection>
       <LegalSection title="Third-party services">
-        <p>Features that connect to third-party services depend on those providers remaining available and properly configured. I Computer Anything is not responsible for outages, policy changes, or failures caused solely by an external provider outside ICA Unified's control.</p>
+        <p>Features that connect to third-party services depend on those providers remaining available and properly configured. I Computer Anything is not responsible for outages, policy changes, or failures caused solely by an external provider outside ICA Unified control.</p>
       </LegalSection>
       <LegalSection title="Availability and changes">
         <p>I Computer Anything may maintain, secure, repair, update, or improve ICA Unified as needed. Reasonable efforts are made to preserve customer access and data, but uninterrupted or error-free operation cannot be guaranteed.</p>
