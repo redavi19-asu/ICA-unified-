@@ -36,7 +36,7 @@ const capabilityGroups = [
     icon: 'learning',
     summary: 'Courses and progress tied directly to the member record.',
     items: [
-      'Create courses with text, video, document, live-session, quiz, and assignment content.',
+      'Create courses with text, video, document, live-session, and quiz content.',
       'Assign training, set due dates, track lesson/course progress, enforce passing scores, and record completion.',
       'Issue credentials automatically when configured course requirements are completed.',
       'Post configured continuing-education credit to the same member CE ledger.',
@@ -58,7 +58,7 @@ const capabilityGroups = [
     icon: 'workflow',
     summary: 'A configured membership becomes a real public application flow.',
     items: [
-      'Membership tiers with price, billing cadence, application rules, qualifications, benefits, renewal reminders, and CE requirements.',
+      'Membership tiers with price, billing cadence, approval rules, qualifications, benefits, renewal planning windows, and CE requirements.',
       'Activate a workflow to create a live public ICA application page.',
       'Collect submissions, review applicants, approve or reject them, and preserve workflow status inside the organization.',
       'Approved members can receive secure ICA activation invitations automatically.',
@@ -69,7 +69,7 @@ const capabilityGroups = [
     icon: 'workflow',
     summary: 'Registration, payment, attendance, and credits stay connected.',
     items: [
-      'Configure event/webinar type, date/time, capacity, ticket price, meeting link, CE credit, certificate rules, and confirmations.',
+      'Configure event/webinar type, date/time, capacity, ticket price, meeting link, CE credit, attendance-certificate rules, and confirmations.',
       'Activate a workflow to create a live public registration page.',
       'Capacity enforcement, waitlists, duplicate protection, submission review, and registration status management.',
       'Self-scan event QR and staff-scan member QR modes feed the same attendance and CE records.',
@@ -104,7 +104,7 @@ const capabilityGroups = [
     items: [
       'Organization reporting for learning, credentials, compliance, and document-control activity.',
       'Self-service CSV member importer with field mapping, preview, validation, duplicate handling, and controlled commit.',
-      'Member CSV export plus full organization JSON backup.',
+      'Member CSV export plus organization JSON backup.',
       'Backups include workflow execution and controlled-document data as part of the organization record.',
     ],
   },
@@ -127,7 +127,7 @@ const capabilityGroups = [
       'Transactional email outbox for invitations, workflow confirmations, status updates, and payment messages.',
       'When the managed provider is connected, ICA sends new mail and can retry queued or failed messages.',
       'Custom-domain DNS ownership verification and verified-host organization resolution.',
-      'A verified customer hostname can route visitors into the correct organization login automatically.',
+      'A verified customer hostname can route visitors into the correct organization login after DNS/Worker routing is configured.',
     ],
   },
   {
@@ -147,7 +147,7 @@ const capabilityGroups = [
     summary: 'The same cloud record follows staff and members away from the desk.',
     items: [
       'Native ICA Mobile app code for iPhone/iPad with production build profiles and secure token storage.',
-      'Member QR, staff QR scanning, event check-in, member lookup, CE/credential wallet, and organization notifications.',
+      'Member QR, staff QR scanning, event check-in, member lookup, CE/credential wallet, and organization activity notifications.',
       'Web and mobile use the same organization, member, attendance, CE, credential, and permission data.',
       'Windows/macOS Tauri desktop wrapper is built; signed installer release remains the external release step.',
     ],
@@ -219,7 +219,6 @@ const professionalServices = [
   ['Custom development', 'Custom quote', 'Customer-specific workflows, reports, software features, website work, or special infrastructure requirements.'],
   ['Training + live consulting', 'Custom quote', 'Dedicated staff training, live implementation sessions, after-hours help, or on-site work.'],
 ];
-
 
 function MiniIcon({ type }: { type: string }) {
   const common = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -438,7 +437,7 @@ export default async function Home() {
           <article><span>02</span><i><MiniIcon type="people" /></i><h3>Member Lookup</h3><p>Find a member quickly and view their current membership status, role, and organization record.</p></article>
           <article><span>03</span><i><MiniIcon type="workflow" /></i><h3>Attendance</h3><p>Confirm event attendance against the existing ICA event workflow and preserve the activity in the same organization record.</p></article>
           <article><span>04</span><i><MiniIcon type="credential" /></i><h3>CE + Wallet</h3><p>Show earned CE, remaining requirements, credentials, verification status, and attendance certificates from the same ledger.</p></article>
-          <article><span>05</span><i><MiniIcon type="support" /></i><h3>Notifications</h3><p>Surface event, credential, renewal, learning, and organization alerts without requiring the full desktop dashboard.</p></article>
+          <article><span>05</span><i><MiniIcon type="support" /></i><h3>Notifications</h3><p>Surface organization activity and event, credential, and learning updates without requiring the full desktop dashboard.</p></article>
           <article><span>06</span><i><MiniIcon type="data" /></i><h3>Same Cloud Account</h3><p>No second member database and no separate mobile account. Mobile, web, and future desktop clients use the same ICA Unified organization data.</p></article>
         </div>
 
