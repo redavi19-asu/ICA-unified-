@@ -119,10 +119,10 @@ export default async function BillingPage({
         <article className={styles.wide}>
           <p>ACCOUNT ACCESS</p>
           <h2>Subscription + installation controls.</h2>
-          <p className={styles.copy}>Owners and admins can manage the company subscription in Stripe and open the ICA access center for the web app and any released ICA clients.</p>
+          <p className={styles.copy}>Company owners and admins can manage or cancel the ICA Unified subscription here. During the 14-day trial, cancel before the trial ends to avoid the first charge. After billing begins, use the same control to cancel the subscription in Stripe.</p>
           <div className={styles.billingActions}>
             {billingPortalReady
-              ? <form action="/api/billing/portal" method="post"><button type="submit">MANAGE SUBSCRIPTION →</button></form>
+              ? <form action="/api/billing/portal" method="post"><button type="submit">MANAGE OR CANCEL SUBSCRIPTION →</button></form>
               : <span className={styles.disabledAction}>STRIPE CUSTOMER NOT CONNECTED</span>}
             <a href="/downloads">OPEN ICA ACCESS CENTER →</a>
           </div>
