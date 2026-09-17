@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './workflow-brand-font.css';
 import CookieNotice from './CookieNotice';
 import LegalFooter from './LegalFooter';
 
