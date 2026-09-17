@@ -53,8 +53,8 @@ jobs:
             echo "Cloudflare deploy skipped: repository secrets are not configured yet."
             exit 0
           fi
-          if ! npx wrangler d1 migrations apply ica-unified --remote; then
-            echo "::warning::D1 migration command was not authorized by the current Cloudflare API token. ICA will use its idempotent runtime table bootstrap until D1 migration permission is added."
-          fi
+          echo "Applying required ICA Unified D1 migrations..."
+          npx wrangler d1 migrations apply ica-unified --remote
+          echo "D1 migrations complete. Building Cloudflare package..."
           npx opennextjs-cloudflare build
           npx wrangler deploy
