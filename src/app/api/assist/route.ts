@@ -16,9 +16,9 @@ ICA Unified is an association operating system combining AMS, LMS, credentials, 
 Current navigation and behavior:
 - Dashboard: organization overview and association operations metrics.
 - Workflows: Workflow Studio for membership programs and events/webinars, including live public application/registration pages, submissions, review states, capacity/waitlist behavior, and organization payment handoff.
-- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal reminder window, CE credits/category required for renewal, confirmation email, draft/active status, live public application URL, staff review, and secure ICA activation after approval. Paid memberships use the organization Stripe Connect account when it is ready.
+- Membership Program workflow: membership name/tier, price, billing cadence, application requirement, approval requirement, qualifications, member benefits, renewal planning window, CE credits/category required for renewal, confirmation email, draft/active status, live public application URL, staff review, and secure ICA activation after approval. Paid memberships use the organization Stripe Connect account when it is ready.
 - Event / Webinar workflow: event title/type, date/time, ticket price, member discount, capacity, meeting link, CE credit value/category, certificate rule, confirmation email, draft/active status, live public registration URL, capacity/waitlist handling, and Stripe Connect payment when the organization account is ready.
-- Learning: course creation, text/video/document/live lessons, quizzes, assignments, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
+- Learning: course creation, text/video/document/live lessons, quizzes, course assignment, due dates, completion progress, passing scores, and automatic credentials. Course completion can also post configured CE credits.
 - People: member/user records and organization membership.
 - Credentials: organization credential/certificate records and verification.
 - Compliance: license/certification CE requirements, course credit rules, QR event check-in generation, and renewal/compliance controls.
@@ -27,7 +27,7 @@ Current navigation and behavior:
 - Documents: controlled document text/file content, secure member review, version tracking, and acknowledgments.
 - Reports: organization reporting.
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
-- Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and full organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
+- Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
 - Billing: Owner/Admin subscription flow for ICA Unified Professional at $299/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
 - Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
 
@@ -48,7 +48,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('membership') || q.includes('member level') || q.includes('associate')) {
-    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal reminder window, and the CE credits/category required for renewal. Save it as a draft or mark it active. ACTIVE workflows get a public ICA application page and appear in Workflow Studio with submission review controls.';
+    return 'Go to Workflows → Membership Program. Configure pricing, qualifications, application/approval rules, renewal planning window, and the CE credits/category required for renewal. Save it as a draft or mark it active. ACTIVE workflows get a public ICA application page and appear in Workflow Studio with submission review controls.';
   }
 
   if (q.includes('course') || q.includes('lesson') || q.includes('training') || q.includes('video') || q.includes('quiz')) {
@@ -68,7 +68,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('domain') || q.includes('dns')) {
-    return 'Go to Integrations → Custom Domain. Save the hostname, add the TXT verification record ICA gives you, then press Verify DNS Ownership. Final custom-host routing is activated later when Cloudflare account credentials are connected.';
+    return 'Go to Integrations → Custom Domain. Save the hostname, add the TXT verification record ICA gives you, then press Verify DNS Ownership. Final custom-host routing is activated when that verified hostname is routed to the ICA Unified Worker in Cloudflare.';
   }
 
   if (q.includes('email')) {
@@ -80,7 +80,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('backup') || q.includes('export')) {
-    return 'Go to Integrations → Export + Backup. Owners/admins can download a clean member CSV or a full organization JSON backup. Password hashes are not included.';
+    return 'Go to Integrations → Export + Backup. Owners/admins can download a clean member CSV or an organization JSON backup. Password hashes are not included.';
   }
 
   if (q.includes('invoice')) {
