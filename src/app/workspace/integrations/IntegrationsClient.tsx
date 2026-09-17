@@ -91,7 +91,9 @@ export default function IntegrationsClient({
   }
 
   async function revokeKey(id: string) {
-    await fetch(`/api/integrations/keys?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const response = await fetch(`/api/integrations/keys?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return setMessage(data.error || 'Unable to revoke this API key.');
     setMessage('API key revoked.');
     await refresh();
   }
@@ -114,7 +116,9 @@ export default function IntegrationsClient({
   }
 
   async function deleteWebhook(id: string) {
-    await fetch(`/api/integrations/webhooks?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const response = await fetch(`/api/integrations/webhooks?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return setMessage(data.error || 'Unable to remove this webhook.');
     setMessage('Webhook removed.');
     await refresh();
   }
@@ -125,7 +129,8 @@ export default function IntegrationsClient({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'TEST' }),
     });
-    setMessage(response.ok ? 'Webhook test sent. Refreshing delivery status.' : 'Webhook test could not be sent.');
+    const data = await response.json().catch(() => ({}));
+    setMessage(response.ok ? 'Webhook test sent. Delivery status has been refreshed.' : (data.error || 'Webhook test could not be sent.'));
     await refresh();
   }
 
@@ -150,7 +155,7 @@ export default function IntegrationsClient({
       body: JSON.stringify({ action: 'VERIFY' }),
     });
     const data = await response.json();
-    setMessage(data.verified ? 'Domain ownership verified.' : (data.error || 'DNS record is not visible yet.'));
+    setMessage(data.verified ? 'Domain ownership verified. Route the verified hostname to the ICA Unified Worker to activate the branded portal.' : (data.error || 'DNS record is not visible yet.'));
     await refresh();
   }
 
@@ -164,11 +169,12 @@ export default function IntegrationsClient({
     });
     const data = await response.json();
     if (!response.ok) return setMessage(data.error || 'Unable to queue the email.');
-    setMessage('Test email queued. It will be ready for delivery when the email provider is connected.');
+    setMessage(data.status === 'DELIVERY_ATTEMPTED'
+      ? 'Test email delivery attempted through the connected provider. Check the outbox counters for the result.'
+      : 'Test email queued. Connect the managed email provider, then use Retry Queued / Failed Email to deliver it.');
     event.currentTarget.reset();
     await refresh();
   }
-
 
   async function retryQueuedEmail() {
     const response = await fetch('/api/integrations/email', {
@@ -196,8 +202,8 @@ export default function IntegrationsClient({
         </div>
         <div className={styles.state}>
           <small>FOUNDATION STATUS</small>
-          <strong>READY FOR CREDENTIALS</strong>
-          <span>API, webhooks, domain verification, email queue, and data export are built.</span>
+          <strong>CORE INTEGRATIONS BUILT</strong>
+          <span>API keys, signed webhooks, DNS verification, email outbox, and exports are built. External delivery and routing still require the applicable provider/DNS configuration.</span>
         </div>
       </header>
 
@@ -296,10 +302,10 @@ export default function IntegrationsClient({
         <article id="export-backup" className={styles.wide}>
           <div className={styles.cardHead}><span>05</span><b>EXPORT + BACKUP</b></div>
           <h2>The customer’s data stays portable.</h2>
-          <p>Download a clean member CSV for handoff or a full organization JSON backup containing member data, learning, credentials, documents, workflows, CE records, and activity history. Password hashes are never exported.</p>
+          <p>Download a clean member CSV for handoff or an organization JSON backup containing member data, learning, credentials, documents, workflows, CE records, and activity history. Password hashes and private credentials/secrets are not exported.</p>
           <div className={styles.downloads}>
             <a href="/api/export/organization?format=members-csv">DOWNLOAD MEMBER CSV</a>
-            <a href="/api/export/organization?format=json">DOWNLOAD FULL ICA BACKUP</a>
+            <a href="/api/export/organization?format=json">DOWNLOAD ICA BACKUP</a>
           </div>
         </article>
       </section>
