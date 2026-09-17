@@ -48,7 +48,7 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
       <section className={styles.identity}>
         <Link href="/" className={styles.back}>← BACK TO ICA UNIFIED</Link>
         <p>I COMPUTER ANYTHING / BUSINESS SYSTEMS</p>
-        <h1>ICA<br />UNIFIED</h1>
+        <h1><span className={styles.icaMark}><span className={styles.icaI}>I</span><span className={styles.icaC}>C</span><span className={styles.icaA}>A</span></span><br />UNIFIED</h1>
         <div className={styles.line} />
         <h2>One entrance.<br />Every business layer.</h2>
         <p className={styles.copy}>Learning, workforce administration, credentials, documents, approvals, and operations without bouncing between disconnected systems.</p>
