@@ -1,10 +1,13 @@
+import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
+import { sessionIsValid } from './security';
 
 const COOKIE_NAME = 'ica_unified_platform_session';
 const PLATFORM_ROLES = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT'] as const;
+const PLATFORM_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
 
@@ -23,21 +26,31 @@ function isPlatformRole(value: unknown): value is PlatformRole {
 export type PlatformSession = {
   platformAdminId: string;
   role: PlatformRole;
+  sessionId: string;
+  issuedAtMs: number;
+  expiresAtSeconds: number;
 };
 
-type PlatformSessionInput = Omit<PlatformSession, 'role'> & { role: string };
+type PlatformSessionInput = Pick<PlatformSession, 'platformAdminId'> & { role: string };
 
 export async function createPlatformSession(payload: PlatformSessionInput) {
   if (!isPlatformRole(payload.role)) {
     throw new Error('Invalid platform role for session.');
   }
 
-  const safePayload: PlatformSession = { ...payload, role: payload.role };
+  const sessionId = randomUUID();
+  const issuedAtMs = Date.now();
 
-  return new SignJWT(safePayload)
+  return new SignJWT({
+    platformAdminId: payload.platformAdminId,
+    role: payload.role,
+    sessionId,
+    issuedAtMs,
+  })
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(sessionId)
     .setIssuedAt()
-    .setExpirationTime('30d')
+    .setExpirationTime('8h')
     .sign(getSecret());
 }
 
@@ -47,11 +60,41 @@ export async function readPlatformSession(): Promise<PlatformSession | null> {
 
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    if (typeof payload.platformAdminId !== 'string' || !isPlatformRole(payload.role)) {
+    if (
+      typeof payload.platformAdminId !== 'string' ||
+      !isPlatformRole(payload.role) ||
+      typeof payload.jti !== 'string' ||
+      typeof payload.issuedAtMs !== 'number' ||
+      typeof payload.exp !== 'number'
+    ) {
       return null;
     }
 
-    return { platformAdminId: payload.platformAdminId, role: payload.role };
+    const valid = await sessionIsValid({
+      sessionId: payload.jti,
+      scope: 'platform',
+      principalId: payload.platformAdminId,
+      issuedAtMs: payload.issuedAtMs,
+    });
+    if (!valid) return null;
+
+    const admin = await prisma.platformAdmin.findFirst({
+      where: {
+        id: payload.platformAdminId,
+        role: payload.role,
+        active: true,
+      },
+      select: { id: true },
+    });
+    if (!admin) return null;
+
+    return {
+      platformAdminId: payload.platformAdminId,
+      role: payload.role,
+      sessionId: payload.jti,
+      issuedAtMs: payload.issuedAtMs,
+      expiresAtSeconds: payload.exp,
+    };
   } catch {
     return null;
   }
@@ -75,6 +118,6 @@ export const platformSessionCookie = {
     sameSite: 'lax' as const,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: PLATFORM_SESSION_MAX_AGE_SECONDS,
   },
 };
