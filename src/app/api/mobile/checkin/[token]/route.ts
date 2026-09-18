@@ -40,7 +40,7 @@ export async function POST(
   }
 
   const checkinMode = String(event.config.checkinMode || 'SELF_SCAN');
-  if (checkinMode === 'STAFF_SCAN') {
+  if (!['SELF_SCAN', 'BOTH'].includes(checkinMode)) {
     return NextResponse.json({ error: 'This event uses staff-scanned member check-in.' }, { status: 403 });
   }
 
