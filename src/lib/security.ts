@@ -19,10 +19,6 @@ function db() {
 let securityTablesReady: Promise<void> | null = null;
 
 async function ensureSecurityTables() {
-  // Production security tables are created by D1 migrations during deploy.
-  // Avoid request-time schema DDL in production; keep this bootstrap for local development.
-  if (process.env.NODE_ENV === 'production') return;
-
   if (!securityTablesReady) {
     securityTablesReady = (async () => {
       const database = db();
