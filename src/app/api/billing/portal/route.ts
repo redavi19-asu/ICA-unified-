@@ -53,7 +53,7 @@ async function ensurePortalConfiguration(secret: string) {
 }
 
 export async function POST(request: Request) {
-  const { membership } = await requireSession();
+  const { membership } = await requireSession({ allowUnentitled: true });
   if (!['OWNER', 'ADMIN'].includes(membership.role)) {
     return NextResponse.json({ error: 'Only an owner or admin can manage billing.' }, { status: 403 });
   }
