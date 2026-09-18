@@ -9,6 +9,7 @@ export default function BillingSetupClient({
   companyId,
   monthlyPrice,
   stripeReady,
+  manageExistingSubscription,
   cancelled,
   confirmationFailed,
   trialExpired,
@@ -17,6 +18,7 @@ export default function BillingSetupClient({
   companyId: string;
   monthlyPrice: number;
   stripeReady: boolean;
+  manageExistingSubscription: boolean;
   cancelled: boolean;
   confirmationFailed: boolean;
   trialExpired: boolean;
@@ -93,9 +95,17 @@ export default function BillingSetupClient({
           {confirmationFailed && <p className={styles.error}>Stripe returned to ICA, but the subscription could not be confirmed. Please try again.</p>}
           {error && <p className={styles.error}>{error}</p>}
 
-          <button onClick={openCheckout} disabled={working || !stripeReady} className={styles.checkoutButton}>
-            {working ? 'OPENING STRIPE…' : stripeReady ? 'CONTINUE TO STRIPE →' : 'STRIPE ACTIVATION PENDING'}
-          </button>
+          {manageExistingSubscription ? (
+            <form action="/api/billing/portal" method="post">
+              <button type="submit" className={styles.checkoutButton}>
+                MANAGE OR RESTORE BILLING →
+              </button>
+            </form>
+          ) : (
+            <button onClick={openCheckout} disabled={working || !stripeReady} className={styles.checkoutButton}>
+              {working ? 'OPENING STRIPE…' : stripeReady ? 'CONTINUE TO STRIPE →' : 'STRIPE ACTIVATION PENDING'}
+            </button>
+          )}
 
           {!stripeReady && (
             <div className={styles.pending}>
