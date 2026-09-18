@@ -19,13 +19,13 @@ jobs:
       PLATFORM_AUTH_SECRET: ci-only-platform-secret-for-build-validation
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm install --loglevel=error
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Validate Prisma schema
@@ -37,7 +37,7 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --omit=optional --audit-level=high
       - name: Install mobile dependencies
-        run: npm --prefix mobile install
+        run: npm --prefix mobile install --loglevel=error
       - name: Typecheck ICA Mobile
         run: npm --prefix mobile run typecheck
       - name: Validate desktop wrapper metadata
@@ -57,26 +57,22 @@ jobs:
             echo "Cloudflare deploy skipped: repository secrets are not configured yet."
             exit 0
           fi
-          echo "Attempting ICA Unified D1 migrations..."
-          if ! npx wrangler d1 migrations apply ica-unified --remote; then
-            echo "::warning::Cloudflare token cannot query/apply D1 migrations. Continuing with Worker deployment because D1 authorization is separate from Worker deployment."
-          fi
-
-          echo "Attempting ICA Unified application D1 integrity check..."
-          if ! npx wrangler d1 execute ica-unified --remote --command "PRAGMA integrity_check;"; then
-            echo "::warning::Application D1 integrity check skipped because this token is not authorized for D1 queries."
-          fi
-
-          echo "Attempting ICA central D1 integrity check..."
-          if ! npx wrangler d1 execute ica-saas-db --remote --command "PRAGMA integrity_check;"; then
-            echo "::warning::Central D1 integrity check skipped because this token is not authorized for D1 queries."
-          fi
-
           echo "Building and deploying ICA Unified..."
           npx opennextjs-cloudflare build
           npx wrangler deploy
 
-          echo "Verifying deployed Unified health endpoint..."
-          if ! curl --fail --show-error --silent https://unified.icomputeranything.com/api/health; then
-            echo "::warning::Unified deployed, but the public health endpoint did not return healthy yet. Review the live D1 bindings/permissions separately."
+          echo "Verifying deployed Unified runtime + D1 health..."
+          healthy=0
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            if curl --fail --show-error --silent --max-time 10 https://unified.icomputeranything.com/api/health; then
+              healthy=1
+              break
+            fi
+            echo "Health check attempt $attempt/12 not ready yet; retrying in 5 seconds..."
+            sleep 5
+          done
+
+          if [ "$healthy" -ne 1 ]; then
+            echo "Unified runtime health check failed after deployment."
+            exit 1
           fi
