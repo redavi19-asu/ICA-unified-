@@ -3,11 +3,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import {
-  authenticateApiKey,
   emitOrganizationEvent,
   queueEmail,
   renderInvitationEmail,
 } from '../../../../lib/organization-ops';
+import { authenticateApiRequest, ApiKeyAuthResult } from '../../../../lib/api-keys';
 
 const createSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -17,8 +17,8 @@ const createSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const auth = await apiOrganization(request);
-  if (!auth) return unauthorized();
+  const auth = await authenticateApiRequest(request, 'members:read');
+  if (!auth.ok) return apiAuthFailure(auth);
 
   const memberships = await prisma.membership.findMany({
     where: { organizationId: auth.organizationId },
@@ -41,8 +41,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await apiOrganization(request);
-  if (!auth) return unauthorized();
+  const auth = await authenticateApiRequest(request, 'members:write');
+  if (!auth.ok) return apiAuthFailure(auth);
 
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {
@@ -119,14 +119,17 @@ export async function POST(request: Request) {
   }, { status: 201 });
 }
 
-async function apiOrganization(request: Request) {
-  const authorization = request.headers.get('authorization') || '';
-  if (!authorization.startsWith('Bearer ')) return null;
-  const rawKey = authorization.slice('Bearer '.length).trim();
-  if (!rawKey) return null;
-  return authenticateApiKey(rawKey);
-}
+function apiAuthFailure(auth: ApiKeyAuthResult) {
+  if (auth.ok) {
+    return NextResponse.json({ error: 'Unexpected API authentication state.' }, { status: 500 });
+  }
 
-function unauthorized() {
-  return NextResponse.json({ error: 'A valid ICA API bearer key is required.' }, { status: 401 });
+  const headers = auth.retryAfterSeconds
+    ? { 'Retry-After': String(auth.retryAfterSeconds) }
+    : undefined;
+
+  return NextResponse.json(
+    { error: auth.error },
+    { status: auth.status, headers },
+  );
 }
