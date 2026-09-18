@@ -55,6 +55,18 @@ jobs:
           fi
           echo "Applying required ICA Unified D1 migrations..."
           npx wrangler d1 migrations apply ica-unified --remote
-          echo "D1 migrations complete. Building Cloudflare package..."
+
+          echo "Checking ICA Unified application D1 integrity..."
+          npx wrangler d1 execute ica-unified --remote --command "PRAGMA integrity_check;"
+          npx wrangler d1 execute ica-unified --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('Organization','User','Membership','Course') ORDER BY name;"
+
+          echo "Checking ICA central D1 integrity..."
+          npx wrangler d1 execute ica-saas-db --remote --command "PRAGMA integrity_check;"
+          npx wrangler d1 execute ica-saas-db --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name='users';"
+
+          echo "D1 migrations and integrity checks complete. Building Cloudflare package..."
           npx opennextjs-cloudflare build
           npx wrangler deploy
+
+          echo "Verifying deployed Unified health endpoint..."
+          curl --fail --show-error --silent https://unified.icomputeranything.com/api/health
