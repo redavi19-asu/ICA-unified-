@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm ci --loglevel=error
+        run: npm install --loglevel=error
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Validate Prisma schema
