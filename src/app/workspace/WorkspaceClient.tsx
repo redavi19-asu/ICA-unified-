@@ -49,8 +49,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
         const connected =
           response.ok &&
           data?.ok === true &&
-          data?.databaseReady === true &&
-          data?.centralDatabaseReady === true;
+          data?.serviceReady === true &&
+          data?.databaseReady === true;
         if (mounted) setSystemHealth(connected ? 'connected' : 'issue');
       } catch {
         if (mounted) setSystemHealth('issue');
