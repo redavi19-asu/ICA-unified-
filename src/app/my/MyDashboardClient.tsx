@@ -65,9 +65,22 @@ export default function MyDashboardClient({ user, organizationName, enrollments,
   }
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to sign out.');
+      }
+
+      window.location.replace('/login?loggedOut=1');
+    } catch {
+      window.location.assign('/login?logoutError=1');
+    }
   }
 
   return (
