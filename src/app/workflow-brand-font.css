@@ -1,18 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
 
-/* Match the I Computer Anything hero typeface on the four Unified workflow labels only. */
-[class*="workflowGrid"] h3 {
-  font-family: "DM Serif Display", serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-}
-
-
-
-
-/* Match the main ICA "I Computer Anything" hero typeface on Unified's primary promise. */
+/* Match the I Computer Anything hero typeface across Unified's primary display headings. */
+[class*="workflowGrid"] h3,
+[class*="sectionHead"] h2,
+[class*="integration"] h2,
+[class*="mobileIntro"] h2,
 .ica-hero-brand-font {
   font-family: "DM Serif Display", serif !important;
-  font-weight: 400 !important;
+  font-weight: 600 !important;
   letter-spacing: -0.02em !important;
+  font-synthesis: weight;
 }
