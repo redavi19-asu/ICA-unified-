@@ -3,7 +3,7 @@ import { requireSession } from '../../../../lib/auth';
 import { createProfessionalCheckout, isStripeCheckoutConfigured } from '../../../../lib/stripe-billing';
 
 export async function POST(request: Request) {
-  const { membership } = await requireSession();
+  const { membership } = await requireSession({ allowUnentitled: true });
 
   if (!['OWNER', 'ADMIN'].includes(membership.role)) {
     return NextResponse.json({ error: 'Only an organization owner or admin can start billing.' }, { status: 403 });
