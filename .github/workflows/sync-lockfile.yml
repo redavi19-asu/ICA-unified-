@@ -1,0 +1,36 @@
+name: Sync package lock
+
+on:
+  push:
+    branches:
+      - qc-lockfile-sync-20260918
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: qc-lockfile-sync-20260918
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Regenerate root lockfile
+        run: npm install --package-lock-only --ignore-scripts --loglevel=error
+      - name: Remove temporary workflow and commit lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/sync-lockfile.yml
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "No lockfile changes required."
+            exit 0
+          fi
+          git commit -m "Synchronize package lockfile"
+          git push
