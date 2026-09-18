@@ -7,7 +7,7 @@ export default async function SetupCompletePage({
 }: {
   searchParams: Promise<{ session_id?: string }>;
 }) {
-  const { membership } = await requireSession();
+  const { membership } = await requireSession({ allowUnentitled: true });
   const { session_id } = await searchParams;
   if (!session_id) redirect('/setup/billing');
 
