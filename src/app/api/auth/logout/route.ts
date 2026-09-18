@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { sessionCookie } from '../../../../lib/auth';
+import { readSession, sessionCookie } from '../../../../lib/auth';
+import { revokeSession } from '../../../../lib/security';
 
 function clearSessionCookie(response: NextResponse) {
   response.cookies.set(sessionCookie.name, '', {
@@ -11,6 +12,16 @@ function clearSessionCookie(response: NextResponse) {
 }
 
 export async function POST() {
+  const session = await readSession();
+  if (session) {
+    await revokeSession({
+      sessionId: session.sessionId,
+      scope: 'user',
+      principalId: session.userId,
+      expiresAtSeconds: session.expiresAtSeconds,
+    });
+  }
+
   return clearSessionCookie(
     NextResponse.json(
       { ok: true },
