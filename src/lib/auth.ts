@@ -89,8 +89,8 @@ export async function organizationHasUnifiedAccess(organization: {
   plan: string;
   trialEndsAt: Date | null;
 }) {
-  if (organization.plan === 'internal' || organization.slug === 'ica-master') return true;
   if (organization.status === 'SUSPENDED' || organization.status === 'CANCELLED') return false;
+  if (organization.plan === 'internal' || organization.slug === 'ica-master') return true;
 
   if (isStripeCheckoutConfigured()) {
     const billing = await getBillingProfile(organization.id);
