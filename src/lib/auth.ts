@@ -1,12 +1,18 @@
+import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
-import { emailVerificationIsEnforced, isUserEmailVerified } from './security';
+import {
+  emailVerificationIsEnforced,
+  isUserEmailVerified,
+  sessionIsValid,
+} from './security';
 
 const COOKIE_NAME = 'ica_unified_session';
 const devSecret = 'ica-unified-development-only-secret-change-me';
 const APP_ROLES = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'] as const;
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24;
 
 export type AppRole = (typeof APP_ROLES)[number];
 
@@ -27,21 +33,33 @@ export type SessionPayload = {
   organizationId: string;
   organizationSlug: string;
   role: AppRole;
+  sessionId: string;
+  issuedAtMs: number;
+  expiresAtSeconds: number;
 };
 
-type SessionInput = Omit<SessionPayload, 'role'> & { role: string };
+type SessionInput = Pick<SessionPayload, 'userId' | 'organizationId' | 'organizationSlug'> & { role: string };
 
 export async function createSession(payload: SessionInput) {
   if (!isAppRole(payload.role)) {
     throw new Error('Invalid organization role for session.');
   }
 
-  const safePayload: SessionPayload = { ...payload, role: payload.role };
+  const sessionId = randomUUID();
+  const issuedAtMs = Date.now();
 
-  return new SignJWT(safePayload)
+  return new SignJWT({
+    userId: payload.userId,
+    organizationId: payload.organizationId,
+    organizationSlug: payload.organizationSlug,
+    role: payload.role,
+    sessionId,
+    issuedAtMs,
+  })
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(sessionId)
     .setIssuedAt()
-    .setExpirationTime('30d')
+    .setExpirationTime('24h')
     .sign(getSecret());
 }
 
@@ -54,16 +72,30 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       typeof payload.userId !== 'string' ||
       typeof payload.organizationId !== 'string' ||
       typeof payload.organizationSlug !== 'string' ||
-      !isAppRole(payload.role)
+      !isAppRole(payload.role) ||
+      typeof payload.jti !== 'string' ||
+      typeof payload.issuedAtMs !== 'number' ||
+      typeof payload.exp !== 'number'
     ) {
       return null;
     }
+
+    const valid = await sessionIsValid({
+      sessionId: payload.jti,
+      scope: 'user',
+      principalId: payload.userId,
+      issuedAtMs: payload.issuedAtMs,
+    });
+    if (!valid) return null;
 
     return {
       userId: payload.userId,
       organizationId: payload.organizationId,
       organizationSlug: payload.organizationSlug,
       role: payload.role,
+      sessionId: payload.jti,
+      issuedAtMs: payload.issuedAtMs,
+      expiresAtSeconds: payload.exp,
     };
   } catch {
     return null;
@@ -113,6 +145,6 @@ export const sessionCookie = {
     sameSite: 'lax' as const,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_MAX_AGE_SECONDS,
   },
 };

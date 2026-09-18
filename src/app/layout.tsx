@@ -8,6 +8,11 @@ import UnifiedIntroLoader from './UnifiedIntroLoader';
 export const metadata: Metadata = {
   title: 'ICA Unified | AMS + LMS Business Platform',
   description: 'One company, one database, one login, one member record. ICA Unified combines AMS, LMS, credentials, documents, compliance, reporting, and website integrations in one cloud platform by I Computer Anything.',
+  icons: {
+    icon: '/images/ica-unified-icon.png',
+    shortcut: '/images/ica-unified-icon.png',
+    apple: '/images/ica-unified-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

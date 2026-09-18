@@ -2,7 +2,11 @@ import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
-import { consumeRateLimit, consumeSecurityToken } from '../../../../lib/security';
+import {
+  consumeRateLimit,
+  consumeSecurityToken,
+  invalidatePrincipalSessions,
+} from '../../../../lib/security';
 
 const schema = z.object({
   token: z.string().min(20),
@@ -34,5 +38,6 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  await invalidatePrincipalSessions('user', userId);
   return NextResponse.json({ ok: true });
 }

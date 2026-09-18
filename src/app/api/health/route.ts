@@ -43,37 +43,27 @@ export async function GET() {
     // independently so a central admin issue does not falsely mark Unified offline.
     const serviceReady = applicationDatabase.ready;
 
-    return NextResponse.json(
-      {
-        ok: serviceReady,
-        serviceReady,
-        service: 'ICA Unified',
-        databaseBound: applicationDatabase.bound,
-        databaseReady: applicationDatabase.ready,
-        databaseMissingTables: applicationDatabase.missing,
-        centralDatabaseBound: centralDatabase.bound,
+    if (!serviceReady || !centralDatabase.ready) {
+      console.error('ICA_UNIFIED_HEALTH_DEGRADED', {
+        applicationDatabaseReady: applicationDatabase.ready,
+        applicationDatabaseMissingCount: applicationDatabase.missing.length,
         centralDatabaseReady: centralDatabase.ready,
-        centralDatabaseMissingTables: centralDatabase.missing,
-        centralDatabaseRequiredForPublicService: false,
+        centralDatabaseMissingCount: centralDatabase.missing.length,
+      });
+    }
+
+    return NextResponse.json(
+      { ok: serviceReady, service: 'ICA Unified' },
+      {
+        status: serviceReady ? 200 : 503,
+        headers: { 'Cache-Control': 'no-store' },
       },
-      { status: serviceReady ? 200 : 503 },
     );
   } catch (error) {
     console.error('ICA_UNIFIED_HEALTH_ERROR', error);
     return NextResponse.json(
-      {
-        ok: false,
-        serviceReady: false,
-        service: 'ICA Unified',
-        databaseBound: false,
-        databaseReady: false,
-        databaseMissingTables: [],
-        centralDatabaseBound: false,
-        centralDatabaseReady: false,
-        centralDatabaseMissingTables: [],
-        centralDatabaseRequiredForPublicService: false,
-      },
-      { status: 503 },
+      { ok: false, service: 'ICA Unified' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
     );
   }
 }
