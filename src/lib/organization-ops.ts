@@ -5,16 +5,13 @@ import { emailDeliveryConfigured, sendTransactionalEmail } from './email-deliver
 export const PROFESSIONAL_PRICE_CENTS = 29900;
 export const PROFESSIONAL_PLAN = 'professional';
 
-let developmentOperationsTablesReady: Promise<void> | null = null;
+let operationsTablesReady: Promise<void> | null = null;
 
 export async function ensureOperationsTables() {
-  // Production schema is applied by Cloudflare D1 migrations during deploy.
-  // Keep the legacy bootstrap only for local development so normal production
-  // page/API requests never execute schema DDL.
-  if (process.env.NODE_ENV === 'production') return;
-
-  if (!developmentOperationsTablesReady) {
-    developmentOperationsTablesReady = (async () => {
+  // Cache fallback schema creation per runtime isolate. Normal read paths query
+  // existing tables directly and only invoke this if the schema is missing.
+  if (!operationsTablesReady) {
+    operationsTablesReady = (async () => {
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS OrganizationBillingProfile (
           organizationId TEXT PRIMARY KEY NOT NULL,
@@ -103,12 +100,12 @@ export async function ensureOperationsTables() {
         )
       `);
     })().catch((error) => {
-      developmentOperationsTablesReady = null;
+      operationsTablesReady = null;
       throw error;
     });
   }
 
-  return developmentOperationsTablesReady;
+  return operationsTablesReady;
 }
 
 export type BillingProfile = {
@@ -123,13 +120,21 @@ export type BillingProfile = {
   updatedAt: string;
 };
 
-export async function getBillingProfile(organizationId: string) {
-  await ensureOperationsTables();
+async function readBillingProfile(organizationId: string) {
   const rows = await prisma.$queryRawUnsafe<BillingProfile[]>(
     `SELECT * FROM OrganizationBillingProfile WHERE organizationId = ? LIMIT 1`,
     organizationId,
   );
   return rows[0];
+}
+
+export async function getBillingProfile(organizationId: string) {
+  try {
+    return await readBillingProfile(organizationId);
+  } catch {
+    await ensureOperationsTables();
+    return readBillingProfile(organizationId);
+  }
 }
 
 export async function ensureBillingProfile(organizationId: string) {
@@ -573,11 +578,10 @@ export async function verifyCustomDomain(organizationId: string) {
 }
 
 export async function resolveVerifiedCustomDomain(hostname: string) {
-  await ensureOperationsTables();
   const normalized = hostname.trim().toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '');
   if (!normalized) return null;
 
-  const rows = await prisma.$queryRawUnsafe<Array<{
+  const readDomain = () => prisma.$queryRawUnsafe<Array<{
     organizationId: string;
     hostname: string;
   }>>(
@@ -587,6 +591,15 @@ export async function resolveVerifiedCustomDomain(hostname: string) {
      LIMIT 1`,
     normalized,
   );
+
+  let rows: Array<{ organizationId: string; hostname: string }>;
+  try {
+    rows = await readDomain();
+  } catch {
+    await ensureOperationsTables();
+    rows = await readDomain();
+  }
+
   const match = rows[0];
   if (!match) return null;
 
