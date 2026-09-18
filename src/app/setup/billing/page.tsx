@@ -20,12 +20,20 @@ export default async function BillingSetupPage({
   const billing = await ensureBillingProfile(membership.organizationId);
   if (isStripeEntitledStatus(billing?.subscriptionStatus || '')) redirect('/downloads');
 
+  const subscriptionStatus = String(billing?.subscriptionStatus || '').toLowerCase();
+  const manageExistingSubscription = Boolean(
+    billing?.providerCustomerId &&
+    billing?.providerSubscriptionId &&
+    !['', 'not_connected', 'canceled', 'incomplete_expired'].includes(subscriptionStatus)
+  );
+
   return (
     <BillingSetupClient
       organizationName={membership.organization.name}
       companyId={membership.organization.slug.toUpperCase()}
       monthlyPrice={PROFESSIONAL_PRICE_CENTS / 100}
       stripeReady={isStripeCheckoutConfigured()}
+      manageExistingSubscription={manageExistingSubscription}
       cancelled={params.cancelled === '1'}
       confirmationFailed={params.confirm === 'failed'}
       trialExpired={params.trial === 'expired'}
