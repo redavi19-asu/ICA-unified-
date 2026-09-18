@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install --loglevel=error
+        run: npm ci --loglevel=error
       - name: Generate Prisma client
         run: npx prisma generate
       - name: Validate Prisma schema
@@ -36,14 +36,26 @@ jobs:
         run: npm test
       - name: Audit production dependencies
         run: npm audit --omit=dev --omit=optional --audit-level=high
+      - name: Audit complete dependency tree for critical vulnerabilities
+        run: npm audit --omit=optional --audit-level=critical
+      - name: Validate security migrations
+        run: |
+          sqlite3 /tmp/ica-unified-migrations.db < migrations/0001_production_hardening.sql
+          sqlite3 /tmp/ica-unified-migrations.db < migrations/0002_security_hardening.sql
       - name: Install mobile dependencies
         run: npm --prefix mobile install --loglevel=error
+      - name: Audit ICA Mobile production dependencies
+        run: npm --prefix mobile audit --omit=dev --audit-level=high
       - name: Typecheck ICA Mobile
         run: npm --prefix mobile run typecheck
+      - name: Bundle-check ICA Mobile
+        run: npx --prefix mobile expo export --platform all --output-dir /tmp/ica-unified-mobile-dist
       - name: Validate desktop wrapper metadata
         run: |
           node -e "JSON.parse(require('fs').readFileSync('desktop/package.json','utf8')); JSON.parse(require('fs').readFileSync('desktop/src-tauri/tauri.conf.json','utf8'));"
           cargo metadata --manifest-path desktop/src-tauri/Cargo.toml --format-version 1 --no-deps > /dev/null
+      - name: Compile-check ICA Desktop
+        run: cargo check --manifest-path desktop/src-tauri/Cargo.toml
       - name: Build Next.js app
         run: npm run build
 
