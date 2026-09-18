@@ -49,7 +49,7 @@ jobs:
       - name: Typecheck ICA Mobile
         run: npm --prefix mobile run typecheck
       - name: Bundle-check ICA Mobile
-        run: cd mobile && npx expo export --platform all --output-dir /tmp/ica-unified-mobile-dist
+        run: cd mobile && npx expo export --platform ios --output-dir /tmp/ica-unified-mobile-ios && npx expo export --platform android --output-dir /tmp/ica-unified-mobile-android
       - name: Validate desktop wrapper metadata
         run: |
           node -e "JSON.parse(require('fs').readFileSync('desktop/package.json','utf8')); JSON.parse(require('fs').readFileSync('desktop/src-tauri/tauri.conf.json','utf8'));"
