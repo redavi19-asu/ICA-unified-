@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
-import { readPlatformSession } from '../../../../lib/platform-auth';
+import { platformSessionCookie, readPlatformSession } from '../../../../lib/platform-auth';
+import { invalidatePrincipalSessions } from '../../../../lib/security';
 
 const schema = z.object({
   currentPassword: z.string().min(8),
@@ -40,8 +41,18 @@ export async function POST(request: Request) {
       where: { id: admin.id },
       data: { passwordHash },
     });
+    await invalidatePrincipalSessions('platform', admin.id);
 
-    return NextResponse.redirect(new URL('/platform?passwordChanged=1', request.url), { status: 303 });
+    const response = NextResponse.redirect(
+      new URL('/platform/login?passwordChanged=1', request.url),
+      { status: 303 },
+    );
+    response.cookies.set(platformSessionCookie.name, '', {
+      ...platformSessionCookie.options,
+      maxAge: 0,
+      expires: new Date(0),
+    });
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'New password must be at least 12 characters.' }, { status: 400 });
