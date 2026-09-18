@@ -37,6 +37,11 @@ export async function POST(
     return NextResponse.json({ error }, { status: 403 });
   }
 
+  const checkinMode = String(event.config.checkinMode || 'SELF_SCAN');
+  if (!['SELF_SCAN', 'BOTH'].includes(checkinMode)) {
+    return NextResponse.json({ error: 'This event requires staff-scanned member check-in.' }, { status: 403 });
+  }
+
   const credits = Number(event.config.ceuCredits || 0);
   const category = String(event.config.creditCategory || 'GENERAL');
   const checkedInAt = await recordEventAttendance({

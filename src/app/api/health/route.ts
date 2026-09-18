@@ -1,9 +1,25 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
+const REQUIRED_APPLICATION_TABLES = [
+  'Organization',
+  'User',
+  'Membership',
+  'Course',
+  'Enrollment',
+  'Credential',
+  'Document',
+  'WorkflowDefinition',
+  'OrganizationBillingProfile',
+  'EmailOutbox',
+  'CustomDomain',
+  'UserSecurityState',
+  'RateLimitBucket',
+];
+
 async function checkRequiredTables(db: any, expected: string[]) {
   if (!db) {
-    return { bound: false, ready: false, present: [] as string[], missing: expected };
+    return { bound: false, ready: false, missing: expected };
   }
 
   try {
@@ -19,12 +35,11 @@ async function checkRequiredTables(db: any, expected: string[]) {
     return {
       bound: true,
       ready: missing.length === 0,
-      present,
       missing,
     };
   } catch (error) {
     console.error('ICA_UNIFIED_D1_SCHEMA_ERROR', error);
-    return { bound: true, ready: false, present: [] as string[], missing: expected };
+    return { bound: true, ready: false, missing: expected };
   }
 }
 
@@ -32,29 +47,24 @@ export async function GET() {
   try {
     const { env } = getCloudflareContext();
     const bindings = env as any;
-
-    const [applicationDatabase, centralDatabase] = await Promise.all([
-      checkRequiredTables(bindings.DB, ['Organization', 'User', 'Membership']),
-      checkRequiredTables(bindings.ICA_DB, ['users']),
-    ]);
-
-    // Unified's public/customer service depends on its own application D1.
-    // ICA_DB is the separate ICA master/control-plane database and is reported
-    // independently so a central admin issue does not falsely mark Unified offline.
+    const applicationDatabase = await checkRequiredTables(bindings.DB, REQUIRED_APPLICATION_TABLES);
     const serviceReady = applicationDatabase.ready;
 
+    if (!serviceReady) {
+      console.error('ICA_UNIFIED_HEALTH_NOT_READY', {
+        databaseBound: applicationDatabase.bound,
+        missing: applicationDatabase.missing,
+      });
+    }
+
+    // Keep the public response intentionally minimal. Detailed schema/binding
+    // diagnostics stay in server logs instead of being exposed to visitors.
     return NextResponse.json(
       {
         ok: serviceReady,
         serviceReady,
         service: 'ICA Unified',
-        databaseBound: applicationDatabase.bound,
         databaseReady: applicationDatabase.ready,
-        databaseMissingTables: applicationDatabase.missing,
-        centralDatabaseBound: centralDatabase.bound,
-        centralDatabaseReady: centralDatabase.ready,
-        centralDatabaseMissingTables: centralDatabase.missing,
-        centralDatabaseRequiredForPublicService: false,
       },
       { status: serviceReady ? 200 : 503 },
     );
@@ -65,13 +75,7 @@ export async function GET() {
         ok: false,
         serviceReady: false,
         service: 'ICA Unified',
-        databaseBound: false,
         databaseReady: false,
-        databaseMissingTables: [],
-        centralDatabaseBound: false,
-        centralDatabaseReady: false,
-        centralDatabaseMissingTables: [],
-        centralDatabaseRequiredForPublicService: false,
       },
       { status: 503 },
     );

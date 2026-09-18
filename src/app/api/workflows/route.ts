@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { readSession } from '../../../lib/auth';
+import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 
 const workflowSchema = z.object({
@@ -11,18 +11,8 @@ const workflowSchema = z.object({
 });
 
 async function actor() {
-  const session = await readSession();
-  if (!session) return null;
-
-  const membership = await prisma.membership.findFirst({
-    where: {
-      userId: session.userId,
-      organizationId: session.organizationId,
-      role: session.role,
-    },
-  });
-
-  if (!membership || !['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) return null;
+  const { session, membership } = await requireSession();
+  if (!['OWNER', 'ADMIN', 'MANAGER'].includes(membership.role)) return null;
   return { session, membership };
 }
 

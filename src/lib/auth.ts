@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { emailVerificationIsEnforced, isUserEmailVerified } from './security';
+import { getBillingProfile } from './organization-ops';
+import { isStripeCheckoutConfigured, isStripeEntitledStatus } from './stripe-billing';
 
 const COOKIE_NAME = 'ica_unified_session';
 const devSecret = 'ica-unified-development-only-secret-change-me';
@@ -76,7 +78,33 @@ export async function readSession(): Promise<SessionPayload | null> {
   return verifySessionToken(token);
 }
 
-export async function requireSession() {
+type RequireSessionOptions = {
+  allowUnentitled?: boolean;
+};
+
+export async function organizationHasUnifiedAccess(organization: {
+  id: string;
+  slug: string;
+  status: string;
+  plan: string;
+  trialEndsAt: Date | null;
+}) {
+  if (organization.status === 'SUSPENDED' || organization.status === 'CANCELLED') return false;
+  if (organization.plan === 'internal' || organization.slug === 'ica-master') return true;
+
+  if (isStripeCheckoutConfigured()) {
+    const billing = await getBillingProfile(organization.id);
+    return isStripeEntitledStatus(billing?.subscriptionStatus || '');
+  }
+
+  const localTrialExpired =
+    organization.status === 'TRIAL' &&
+    Boolean(organization.trialEndsAt && organization.trialEndsAt.getTime() <= Date.now());
+
+  return !localTrialExpired;
+}
+
+export async function requireSession(options: RequireSessionOptions = {}) {
   const session = await readSession();
   if (!session) redirect('/login');
 
@@ -91,16 +119,31 @@ export async function requireSession() {
 
   if (!membership) redirect('/login');
 
+  if (membership.status === 'SUSPENDED') {
+    redirect('/login?unavailable=1');
+  }
+
   if (
-    membership.status === 'SUSPENDED' ||
-    membership.organization.status === 'SUSPENDED' ||
-    membership.organization.status === 'CANCELLED'
+    !options.allowUnentitled &&
+    (membership.organization.status === 'SUSPENDED' || membership.organization.status === 'CANCELLED')
   ) {
     redirect('/login?unavailable=1');
   }
 
   if (emailVerificationIsEnforced() && !(await isUserEmailVerified(membership.userId))) {
     redirect('/verify-email/pending');
+  }
+
+  if (!options.allowUnentitled && !(await organizationHasUnifiedAccess(membership.organization))) {
+    const localTrialExpired =
+      !isStripeCheckoutConfigured() &&
+      membership.organization.status === 'TRIAL' &&
+      Boolean(
+        membership.organization.trialEndsAt &&
+        membership.organization.trialEndsAt.getTime() <= Date.now()
+      );
+
+    redirect(localTrialExpired ? '/setup/billing?trial=expired' : '/setup/billing');
   }
 
   return { session, membership };
