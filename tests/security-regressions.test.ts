@@ -66,3 +66,11 @@ test('content security policy does not allow unpkg or generic HTTPS connections'
   assert.doesNotMatch(config, /connect-src 'self' https: wss:/);
   assert.match(config, /script-src-attr 'none'/);
 });
+
+test('mobile sign-out revokes the bearer token at the server', () => {
+  const route = source('src/app/api/mobile/auth/logout/route.ts');
+  const app = source('mobile/App.tsx');
+  assert.match(route, /revokeSession/);
+  assert.match(app, /await logout\(token\)/);
+  assert.match(app, /deleteItemAsync\(TOKEN_KEY\)/);
+});
