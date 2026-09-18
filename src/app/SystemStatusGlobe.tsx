@@ -326,8 +326,8 @@ export default function SystemStatusGlobe() {
         const connected =
           response.ok &&
           data?.ok === true &&
-          data?.databaseReady === true &&
-          data?.centralDatabaseReady === true;
+          data?.serviceReady === true &&
+          data?.databaseReady === true;
 
         if (mounted) setStatus(connected ? 'connected' : 'issue');
       } catch {
