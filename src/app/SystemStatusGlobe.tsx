@@ -48,6 +48,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const healthRef = useRef<HealthState>(health);
   const rotationRef = useRef(-20);
+  const visibleRef = useRef(true);
+  const pageVisibleRef = useRef(true);
+  const reducedMotionRef = useRef(false);
 
   useEffect(() => {
     healthRef.current = health;
@@ -69,6 +72,28 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
     canvas.width = size;
     canvas.height = size;
+
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    reducedMotionRef.current = motionPreference.matches;
+    const onMotionPreferenceChange = (event: MediaQueryListEvent) => {
+      reducedMotionRef.current = event.matches;
+    };
+    motionPreference.addEventListener('change', onMotionPreferenceChange);
+
+    const onVisibilityChange = () => {
+      pageVisibleRef.current = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    onVisibilityChange();
+
+    let observer: IntersectionObserver | null = null;
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver((entries) => {
+        visibleRef.current = entries[0]?.isIntersecting ?? true;
+        if (visibleRef.current) render();
+      }, { threshold: 0.01 });
+      observer.observe(canvas);
+    }
 
     const contextResult = canvas.getContext('2d', { alpha: true });
     if (!contextResult) return;
@@ -246,11 +271,19 @@ function RealMapGlobe({ health }: { health: HealthState }) {
       const delta = Math.min(50, now - lastTime);
       lastTime = now;
 
-      if (healthRef.current !== 'issue' && !dragging && now >= resumeAt) {
+      const active = visibleRef.current && pageVisibleRef.current;
+
+      if (
+        active &&
+        !reducedMotionRef.current &&
+        healthRef.current !== 'issue' &&
+        !dragging &&
+        now >= resumeAt
+      ) {
         rotationRef.current = (rotationRef.current - delta * 0.0065) % 360;
       }
 
-      if (now - lastPaint >= 33) {
+      if (active && !reducedMotionRef.current && now - lastPaint >= 40) {
         render();
         lastPaint = now;
       }
@@ -288,6 +321,9 @@ function RealMapGlobe({ health }: { health: HealthState }) {
 
     return () => {
       cancelAnimationFrame(animationFrame);
+      observer?.disconnect();
+      motionPreference.removeEventListener('change', onMotionPreferenceChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       canvas.removeEventListener('pointerdown', pointerDown);
       canvas.removeEventListener('pointermove', pointerMove);
       canvas.removeEventListener('pointerup', pointerUp);
