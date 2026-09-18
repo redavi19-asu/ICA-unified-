@@ -1,7 +1,8 @@
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { queueEmail, renderInvitationEmail } from './organization-ops';
-import { deriveWorkflowSubmissionStatus, localTrialExpired } from './workflow-policy';
+import { deriveWorkflowSubmissionStatus } from './workflow-policy';
+import { organizationHasUnifiedAccess } from './auth';
 
 export type PublicWorkflow = {
   id: string;
@@ -92,14 +93,9 @@ export async function getPublicWorkflow(workflowId: string): Promise<PublicWorkf
 
   const organization = await prisma.organization.findUnique({
     where: { id: row.organizationId },
-    select: { name: true, status: true, plan: true, trialEndsAt: true },
+    select: { id: true, name: true, slug: true, status: true, plan: true, trialEndsAt: true },
   });
-  if (!organization || ['SUSPENDED', 'CANCELLED'].includes(organization.status)) return null;
-  if (localTrialExpired({
-    plan: organization.plan,
-    status: organization.status,
-    trialEndsAt: organization.trialEndsAt,
-  })) return null;
+  if (!organization || !(await organizationHasUnifiedAccess(organization))) return null;
 
   let config: Record<string, unknown> = {};
   try { config = JSON.parse(row.configJson || '{}'); } catch {}
