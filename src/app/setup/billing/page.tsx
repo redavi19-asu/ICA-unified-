@@ -9,7 +9,7 @@ export default async function BillingSetupPage({
 }: {
   searchParams: Promise<{ cancelled?: string; confirm?: string; trial?: string }>;
 }) {
-  const { membership } = await requireSession();
+  const { membership } = await requireSession({ allowUnentitled: true });
   const params = await searchParams;
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
