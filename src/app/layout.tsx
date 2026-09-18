@@ -3,6 +3,7 @@ import './globals.css';
 import './workflow-brand-font.css';
 import CookieNotice from './CookieNotice';
 import LegalFooter from './LegalFooter';
+import UnifiedIntroLoader from './UnifiedIntroLoader';
 
 export const metadata: Metadata = {
   title: 'ICA Unified | AMS + LMS Business Platform',
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}<LegalFooter /><CookieNotice /></body>
+      <body><UnifiedIntroLoader />{children}<LegalFooter /><CookieNotice /></body>
     </html>
   );
 }
