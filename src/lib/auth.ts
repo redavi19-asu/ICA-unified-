@@ -82,6 +82,28 @@ type RequireSessionOptions = {
   allowUnentitled?: boolean;
 };
 
+export async function organizationHasUnifiedAccess(organization: {
+  id: string;
+  slug: string;
+  status: string;
+  plan: string;
+  trialEndsAt: Date | null;
+}) {
+  if (organization.plan === 'internal' || organization.slug === 'ica-master') return true;
+  if (organization.status === 'SUSPENDED' || organization.status === 'CANCELLED') return false;
+
+  if (isStripeCheckoutConfigured()) {
+    const billing = await getBillingProfile(organization.id);
+    return isStripeEntitledStatus(billing?.subscriptionStatus || '');
+  }
+
+  const localTrialExpired =
+    organization.status === 'TRIAL' &&
+    Boolean(organization.trialEndsAt && organization.trialEndsAt.getTime() <= Date.now());
+
+  return !localTrialExpired;
+}
+
 export async function requireSession(options: RequireSessionOptions = {}) {
   const session = await readSession();
   if (!session) redirect('/login');
@@ -112,26 +134,16 @@ export async function requireSession(options: RequireSessionOptions = {}) {
     redirect('/verify-email/pending');
   }
 
-  if (
-    !options.allowUnentitled &&
-    membership.organization.plan !== 'internal' &&
-    membership.organization.slug !== 'ica-master'
-  ) {
+  if (!options.allowUnentitled && !(await organizationHasUnifiedAccess(membership.organization))) {
     const localTrialExpired =
+      !isStripeCheckoutConfigured() &&
       membership.organization.status === 'TRIAL' &&
       Boolean(
         membership.organization.trialEndsAt &&
         membership.organization.trialEndsAt.getTime() <= Date.now()
       );
 
-    if (isStripeCheckoutConfigured()) {
-      const billing = await getBillingProfile(membership.organizationId);
-      if (!isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
-        redirect('/setup/billing');
-      }
-    } else if (localTrialExpired) {
-      redirect('/setup/billing?trial=expired');
-    }
+    redirect(localTrialExpired ? '/setup/billing?trial=expired' : '/setup/billing');
   }
 
   return { session, membership };
