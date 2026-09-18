@@ -5,94 +5,131 @@ import { emailDeliveryConfigured, sendTransactionalEmail } from './email-deliver
 export const PROFESSIONAL_PRICE_CENTS = 29900;
 export const PROFESSIONAL_PLAN = 'professional';
 
+let developmentOperationsTablesReady: Promise<void> | null = null;
+
 export async function ensureOperationsTables() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS OrganizationBillingProfile (
-      organizationId TEXT PRIMARY KEY NOT NULL,
-      plan TEXT NOT NULL DEFAULT 'professional',
-      priceCents INTEGER NOT NULL DEFAULT 29900,
-      currency TEXT NOT NULL DEFAULT 'usd',
-      subscriptionStatus TEXT NOT NULL DEFAULT 'NOT_CONNECTED',
-      provider TEXT NOT NULL DEFAULT 'STRIPE',
-      providerCustomerId TEXT,
-      providerSubscriptionId TEXT,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  // Production schema is applied by Cloudflare D1 migrations during deploy.
+  // Keep the legacy bootstrap only for local development so normal production
+  // page/API requests never execute schema DDL.
+  if (process.env.NODE_ENV === 'production') return;
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS EmailOutbox (
-      id TEXT PRIMARY KEY NOT NULL,
-      organizationId TEXT NOT NULL,
-      recipient TEXT NOT NULL,
-      subject TEXT NOT NULL,
-      templateKey TEXT NOT NULL,
-      bodyText TEXT NOT NULL,
-      payloadJson TEXT NOT NULL DEFAULT '{}',
-      status TEXT NOT NULL DEFAULT 'QUEUED',
-      providerMessageId TEXT,
-      lastError TEXT,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      sentAt TEXT
-    )
-  `);
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS EmailOutbox_org_status ON EmailOutbox (organizationId, status, createdAt)`);
+  if (!developmentOperationsTablesReady) {
+    developmentOperationsTablesReady = (async () => {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS OrganizationBillingProfile (
+          organizationId TEXT PRIMARY KEY NOT NULL,
+          plan TEXT NOT NULL DEFAULT 'professional',
+          priceCents INTEGER NOT NULL DEFAULT 29900,
+          currency TEXT NOT NULL DEFAULT 'usd',
+          subscriptionStatus TEXT NOT NULL DEFAULT 'NOT_CONNECTED',
+          provider TEXT NOT NULL DEFAULT 'STRIPE',
+          providerCustomerId TEXT,
+          providerSubscriptionId TEXT,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS ApiCredential (
-      id TEXT PRIMARY KEY NOT NULL,
-      organizationId TEXT NOT NULL,
-      name TEXT NOT NULL,
-      keyPrefix TEXT NOT NULL,
-      keyHash TEXT NOT NULL UNIQUE,
-      active INTEGER NOT NULL DEFAULT 1,
-      createdById TEXT,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      lastUsedAt TEXT
-    )
-  `);
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS ApiCredential_org_active ON ApiCredential (organizationId, active)`);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS EmailOutbox (
+          id TEXT PRIMARY KEY NOT NULL,
+          organizationId TEXT NOT NULL,
+          recipient TEXT NOT NULL,
+          subject TEXT NOT NULL,
+          templateKey TEXT NOT NULL,
+          bodyText TEXT NOT NULL,
+          payloadJson TEXT NOT NULL DEFAULT '{}',
+          status TEXT NOT NULL DEFAULT 'QUEUED',
+          providerMessageId TEXT,
+          lastError TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          sentAt TEXT
+        )
+      `);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS EmailOutbox_org_status ON EmailOutbox (organizationId, status, createdAt)`);
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS WebhookEndpoint (
-      id TEXT PRIMARY KEY NOT NULL,
-      organizationId TEXT NOT NULL,
-      url TEXT NOT NULL,
-      secret TEXT NOT NULL,
-      eventTypesJson TEXT NOT NULL DEFAULT '["*"]',
-      active INTEGER NOT NULL DEFAULT 1,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      lastDeliveryAt TEXT,
-      lastStatus INTEGER,
-      lastError TEXT
-    )
-  `);
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS WebhookEndpoint_org_active ON WebhookEndpoint (organizationId, active)`);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS ApiCredential (
+          id TEXT PRIMARY KEY NOT NULL,
+          organizationId TEXT NOT NULL,
+          name TEXT NOT NULL,
+          keyPrefix TEXT NOT NULL,
+          keyHash TEXT NOT NULL UNIQUE,
+          active INTEGER NOT NULL DEFAULT 1,
+          createdById TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          lastUsedAt TEXT
+        )
+      `);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS ApiCredential_org_active ON ApiCredential (organizationId, active)`);
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS WebhookDelivery (
-      id TEXT PRIMARY KEY NOT NULL,
-      organizationId TEXT NOT NULL,
-      endpointId TEXT NOT NULL,
-      eventType TEXT NOT NULL,
-      responseStatus INTEGER,
-      success INTEGER NOT NULL DEFAULT 0,
-      error TEXT,
-      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS WebhookDelivery_org_created ON WebhookDelivery (organizationId, createdAt)`);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS WebhookEndpoint (
+          id TEXT PRIMARY KEY NOT NULL,
+          organizationId TEXT NOT NULL,
+          url TEXT NOT NULL,
+          secret TEXT NOT NULL,
+          eventTypesJson TEXT NOT NULL DEFAULT '["*"]',
+          active INTEGER NOT NULL DEFAULT 1,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          lastDeliveryAt TEXT,
+          lastStatus INTEGER,
+          lastError TEXT
+        )
+      `);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS WebhookEndpoint_org_active ON WebhookEndpoint (organizationId, active)`);
 
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS CustomDomain (
-      organizationId TEXT PRIMARY KEY NOT NULL,
-      hostname TEXT NOT NULL UNIQUE,
-      verificationToken TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'PENDING',
-      verifiedAt TEXT,
-      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS WebhookDelivery (
+          id TEXT PRIMARY KEY NOT NULL,
+          organizationId TEXT NOT NULL,
+          endpointId TEXT NOT NULL,
+          eventType TEXT NOT NULL,
+          responseStatus INTEGER,
+          success INTEGER NOT NULL DEFAULT 0,
+          error TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS WebhookDelivery_org_created ON WebhookDelivery (organizationId, createdAt)`);
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS CustomDomain (
+          organizationId TEXT PRIMARY KEY NOT NULL,
+          hostname TEXT NOT NULL UNIQUE,
+          verificationToken TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'PENDING',
+          verifiedAt TEXT,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    })().catch((error) => {
+      developmentOperationsTablesReady = null;
+      throw error;
+    });
+  }
+
+  return developmentOperationsTablesReady;
+}
+
+export type BillingProfile = {
+  organizationId: string;
+  plan: string;
+  priceCents: number;
+  currency: string;
+  subscriptionStatus: string;
+  provider: string;
+  providerCustomerId: string | null;
+  providerSubscriptionId: string | null;
+  updatedAt: string;
+};
+
+export async function getBillingProfile(organizationId: string) {
+  await ensureOperationsTables();
+  const rows = await prisma.$queryRawUnsafe<BillingProfile[]>(
+    `SELECT * FROM OrganizationBillingProfile WHERE organizationId = ? LIMIT 1`,
+    organizationId,
+  );
+  return rows[0];
 }
 
 export async function ensureBillingProfile(organizationId: string) {
@@ -110,21 +147,7 @@ export async function ensureBillingProfile(organizationId: string) {
     PROFESSIONAL_PRICE_CENTS,
   );
 
-  const rows = await prisma.$queryRawUnsafe<Array<{
-    organizationId: string;
-    plan: string;
-    priceCents: number;
-    currency: string;
-    subscriptionStatus: string;
-    provider: string;
-    providerCustomerId: string | null;
-    providerSubscriptionId: string | null;
-    updatedAt: string;
-  }>>(
-    `SELECT * FROM OrganizationBillingProfile WHERE organizationId = ? LIMIT 1`,
-    organizationId,
-  );
-  return rows[0];
+  return getBillingProfile(organizationId);
 }
 
 export async function queueEmail(input: {
