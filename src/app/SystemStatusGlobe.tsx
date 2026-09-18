@@ -323,11 +323,7 @@ export default function SystemStatusGlobe() {
         });
 
         const data = await response.json().catch(() => null);
-        const connected =
-          response.ok &&
-          data?.ok === true &&
-          data?.serviceReady === true &&
-          data?.databaseReady === true;
+        const connected = response.ok && data?.ok === true;
 
         if (mounted) setStatus(connected ? 'connected' : 'issue');
       } catch {
