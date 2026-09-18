@@ -11,6 +11,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "icon": [
+      "icons/icon.png"
+    ],
     "category": "Business",
     "shortDescription": "ICA Unified organization operations workspace",
     "longDescription": "ICA Unified desktop client for association management, learning, compliance, workflows, documents, credentials, and event operations."
