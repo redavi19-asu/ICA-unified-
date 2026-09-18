@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
 import { emailVerificationIsEnforced, isUserEmailVerified } from './security';
+import { getBillingProfile } from './organization-ops';
+import { isStripeCheckoutConfigured, isStripeEntitledStatus } from './stripe-billing';
 
 const COOKIE_NAME = 'ica_unified_session';
 const devSecret = 'ica-unified-development-only-secret-change-me';
@@ -76,7 +78,11 @@ export async function readSession(): Promise<SessionPayload | null> {
   return verifySessionToken(token);
 }
 
-export async function requireSession() {
+type RequireSessionOptions = {
+  allowUnentitled?: boolean;
+};
+
+export async function requireSession(options: RequireSessionOptions = {}) {
   const session = await readSession();
   if (!session) redirect('/login');
 
@@ -91,16 +97,41 @@ export async function requireSession() {
 
   if (!membership) redirect('/login');
 
+  if (membership.status === 'SUSPENDED') {
+    redirect('/login?unavailable=1');
+  }
+
   if (
-    membership.status === 'SUSPENDED' ||
-    membership.organization.status === 'SUSPENDED' ||
-    membership.organization.status === 'CANCELLED'
+    !options.allowUnentitled &&
+    (membership.organization.status === 'SUSPENDED' || membership.organization.status === 'CANCELLED')
   ) {
     redirect('/login?unavailable=1');
   }
 
   if (emailVerificationIsEnforced() && !(await isUserEmailVerified(membership.userId))) {
     redirect('/verify-email/pending');
+  }
+
+  if (
+    !options.allowUnentitled &&
+    membership.organization.plan !== 'internal' &&
+    membership.organization.slug !== 'ica-master'
+  ) {
+    const localTrialExpired =
+      membership.organization.status === 'TRIAL' &&
+      Boolean(
+        membership.organization.trialEndsAt &&
+        membership.organization.trialEndsAt.getTime() <= Date.now()
+      );
+
+    if (isStripeCheckoutConfigured()) {
+      const billing = await getBillingProfile(membership.organizationId);
+      if (!isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
+        redirect('/setup/billing');
+      }
+    } else if (localTrialExpired) {
+      redirect('/setup/billing?trial=expired');
+    }
   }
 
   return { session, membership };
