@@ -1,13 +1,17 @@
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { emailDeliveryConfigured } from './email-delivery';
+import { sessionIssuedAfterInvalidation } from './security-policy';
 
 type RateLimitInput = {
   scope: string;
   identity?: string;
   limit: number;
   windowSeconds: number;
+  includeIp?: boolean;
 };
+
+type SessionScope = 'user' | 'platform';
 
 function db() {
   const { env } = getCloudflareContext();
@@ -53,6 +57,28 @@ async function ensureSecurityTables() {
           updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `).run();
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS PrincipalSessionState (
+          scope TEXT NOT NULL,
+          principalId TEXT NOT NULL,
+          invalidAfter INTEGER NOT NULL DEFAULT 0,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (scope, principalId)
+        )
+      `).run();
+      await database.prepare(`
+        CREATE TABLE IF NOT EXISTS RevokedSession (
+          sessionId TEXT PRIMARY KEY NOT NULL,
+          scope TEXT NOT NULL,
+          principalId TEXT NOT NULL,
+          expiresAt INTEGER NOT NULL,
+          revokedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `).run();
+      await database.prepare(`
+        CREATE INDEX IF NOT EXISTS RevokedSession_expiry
+        ON RevokedSession (expiresAt)
+      `).run();
     })().catch((error) => {
       securityTablesReady = null;
       throw error;
@@ -81,8 +107,9 @@ export async function consumeRateLimit(request: Request, input: RateLimitInput) 
   await ensureSecurityTables();
   const now = Date.now();
   const nextReset = now + input.windowSeconds * 1000;
+  const networkIdentity = input.includeIp === false ? 'global' : ipFor(request);
   const bucketKey = digest(
-    `${input.scope}|${ipFor(request)}|${String(input.identity || '').trim().toLowerCase()}`,
+    `${input.scope}|${networkIdentity}|${String(input.identity || '').trim().toLowerCase()}`,
   );
   const database = db();
 
@@ -106,6 +133,74 @@ export async function consumeRateLimit(request: Request, input: RateLimitInput) 
     remaining: Math.max(0, input.limit - count),
     retryAfterSeconds: Math.max(1, Math.ceil((resetAt - now) / 1000)),
   };
+}
+
+export async function revokeSession(input: {
+  sessionId: string;
+  scope: SessionScope;
+  principalId: string;
+  expiresAtSeconds: number;
+}) {
+  if (!input.sessionId || !input.principalId) return;
+  await ensureSecurityTables();
+  const database = db();
+  const expiresAt = Math.max(Date.now(), Number(input.expiresAtSeconds || 0) * 1000);
+
+  await database.prepare(
+    `INSERT INTO RevokedSession (sessionId, scope, principalId, expiresAt, revokedAt)
+     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(sessionId) DO UPDATE SET
+       scope = excluded.scope,
+       principalId = excluded.principalId,
+       expiresAt = excluded.expiresAt,
+       revokedAt = CURRENT_TIMESTAMP`,
+  ).bind(input.sessionId, input.scope, input.principalId, expiresAt).run();
+
+  await database.prepare(
+    'DELETE FROM RevokedSession WHERE expiresAt <= ?',
+  ).bind(Date.now()).run();
+}
+
+export async function invalidatePrincipalSessions(scope: SessionScope, principalId: string) {
+  if (!principalId) return;
+  await ensureSecurityTables();
+  const invalidAfter = Date.now();
+  await db().prepare(
+    `INSERT INTO PrincipalSessionState (scope, principalId, invalidAfter, updatedAt)
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(scope, principalId) DO UPDATE SET
+       invalidAfter = excluded.invalidAfter,
+       updatedAt = CURRENT_TIMESTAMP`,
+  ).bind(scope, principalId, invalidAfter).run();
+}
+
+export async function sessionIsValid(input: {
+  sessionId: string;
+  scope: SessionScope;
+  principalId: string;
+  issuedAtMs: number;
+}) {
+  await ensureSecurityTables();
+  const database = db();
+  const now = Date.now();
+
+  const revoked = await database.prepare(
+    `SELECT sessionId
+     FROM RevokedSession
+     WHERE sessionId = ? AND scope = ? AND principalId = ? AND expiresAt > ?
+     LIMIT 1`,
+  ).bind(input.sessionId, input.scope, input.principalId, now).first();
+
+  if (revoked) return false;
+
+  const state = await database.prepare(
+    `SELECT invalidAfter
+     FROM PrincipalSessionState
+     WHERE scope = ? AND principalId = ?
+     LIMIT 1`,
+  ).bind(input.scope, input.principalId).first() as { invalidAfter?: number | null } | null;
+
+  return sessionIssuedAfterInvalidation(input.issuedAtMs, Number(state?.invalidAfter || 0));
 }
 
 export async function ensureUserSecurityState(userId: string, verified = false) {

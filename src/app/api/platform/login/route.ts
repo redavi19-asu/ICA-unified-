@@ -5,6 +5,7 @@ import { prisma } from '../../../../lib/prisma';
 import { createPlatformSession, platformSessionCookie } from '../../../../lib/platform-auth';
 import { authenticateIcaMasterOwner } from '../../../../lib/ica-master-auth';
 import { verifyTurnstile } from '../../../../lib/turnstile';
+import { consumeRateLimit } from '../../../../lib/security';
 
 const schema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
@@ -15,6 +16,19 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
+
+    const limit = await consumeRateLimit(request, {
+      scope: 'platform-login',
+      identity: body.email,
+      limit: 5,
+      windowSeconds: 15 * 60,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many platform sign-in attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+      );
+    }
 
     const challenge = await verifyTurnstile(body.turnstileToken, request);
     if (!challenge.success) {
