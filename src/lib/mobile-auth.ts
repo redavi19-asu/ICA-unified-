@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { prisma } from './prisma';
-import { verifySessionToken } from './auth';
+import { organizationHasUnifiedAccess, verifySessionToken } from './auth';
 
 const qrDevSecret = 'ica-unified-development-only-secret-change-me';
 
@@ -70,11 +70,7 @@ export async function readMobileSession(request: Request) {
     membership.organization.status === 'CANCELLED'
   ) return null;
 
-  const localTrialExpired =
-    membership.organization.plan !== 'internal' &&
-    membership.organization.status === 'TRIAL' &&
-    Boolean(membership.organization.trialEndsAt && membership.organization.trialEndsAt.getTime() <= Date.now());
-  if (localTrialExpired) return null;
+  if (!(await organizationHasUnifiedAccess(membership.organization))) return null;
 
   return { session, membership };
 }
