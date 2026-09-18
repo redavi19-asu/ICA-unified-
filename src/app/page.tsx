@@ -292,8 +292,8 @@ export default async function Home() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={`${styles.eyebrow} ica-brand-signature`}>I Computer Anything <span>/ Business Systems</span></p>
-          <h1>One company.<br />One database.<br />One login.<br />One member record.</h1>
+          <p className={styles.eyebrow}>I COMPUTER ANYTHING / BUSINESS SYSTEMS</p>
+          <h1 className="ica-hero-brand-font">One company.<br />One database.<br />One login.<br />One member record.</h1>
           <p className={styles.lede}>
             ICA Unified brings association management, learning management, credentials,
             documents, compliance, reporting, and website integrations into the same cloud platform.
