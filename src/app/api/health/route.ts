@@ -1,32 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-async function checkIntegrity(db: any) {
-  if (!db) return { bound: false, ready: false, integrity: 'unbound', tables: [] as string[] };
-
-  try {
-    const integrityRow = await db.prepare('PRAGMA integrity_check').first();
-    const integrityValue = String(
-      integrityRow?.integrity_check ??
-      integrityRow?.['PRAGMA integrity_check'] ??
-      Object.values(integrityRow || {})[0] ??
-      '',
-    ).toLowerCase();
-
-    return {
-      bound: true,
-      ready: integrityValue === 'ok',
-      integrity: integrityValue || 'unknown',
-      tables: [] as string[],
-    };
-  } catch (error) {
-    console.error('ICA_UNIFIED_D1_INTEGRITY_ERROR', error);
-    return { bound: true, ready: false, integrity: 'error', tables: [] as string[] };
+async function checkRequiredTables(db: any, expected: string[]) {
+  if (!db) {
+    return { bound: false, ready: false, present: [] as string[], missing: expected };
   }
-}
-
-async function checkTables(db: any, expected: string[]) {
-  if (!db) return { present: [] as string[], missing: expected };
 
   try {
     const placeholders = expected.map(() => '?').join(',');
@@ -36,13 +14,17 @@ async function checkTables(db: any, expected: string[]) {
       .all();
 
     const present = (result?.results || []).map((row: any) => String(row.name));
+    const missing = expected.filter((name) => !present.includes(name));
+
     return {
+      bound: true,
+      ready: missing.length === 0,
       present,
-      missing: expected.filter((name) => !present.includes(name)),
+      missing,
     };
   } catch (error) {
     console.error('ICA_UNIFIED_D1_SCHEMA_ERROR', error);
-    return { present: [] as string[], missing: expected };
+    return { bound: true, ready: false, present: [] as string[], missing: expected };
   }
 }
 
@@ -51,57 +33,45 @@ export async function GET() {
     const { env } = getCloudflareContext();
     const bindings = env as any;
 
-    const appExpectedTables = ['Organization', 'User', 'Membership', 'Course'];
-    const centralExpectedTables = ['users'];
-
-    const [appIntegrity, centralIntegrity, appSchema, centralSchema] = await Promise.all([
-      checkIntegrity(bindings.DB),
-      checkIntegrity(bindings.ICA_DB),
-      checkTables(bindings.DB, appExpectedTables),
-      checkTables(bindings.ICA_DB, centralExpectedTables),
+    const [applicationDatabase, centralDatabase] = await Promise.all([
+      checkRequiredTables(bindings.DB, ['Organization', 'User', 'Membership']),
+      checkRequiredTables(bindings.ICA_DB, ['users']),
     ]);
 
-    const applicationDatabaseReady =
-      appIntegrity.bound &&
-      appIntegrity.ready &&
-      appSchema.missing.length === 0;
-
-    const centralDatabaseReady =
-      centralIntegrity.bound &&
-      centralIntegrity.ready &&
-      centralSchema.missing.length === 0;
-
-    const healthy = applicationDatabaseReady && centralDatabaseReady;
+    // Unified's public/customer service depends on its own application D1.
+    // ICA_DB is the separate ICA master/control-plane database and is reported
+    // independently so a central admin issue does not falsely mark Unified offline.
+    const serviceReady = applicationDatabase.ready;
 
     return NextResponse.json(
       {
-        ok: healthy,
+        ok: serviceReady,
+        serviceReady,
         service: 'ICA Unified',
-        databaseBound: appIntegrity.bound,
-        databaseReady: applicationDatabaseReady,
-        databaseIntegrity: appIntegrity.integrity,
-        databaseMissingTables: appSchema.missing,
-        centralDatabaseBound: centralIntegrity.bound,
-        centralDatabaseReady,
-        centralDatabaseIntegrity: centralIntegrity.integrity,
-        centralDatabaseMissingTables: centralSchema.missing,
+        databaseBound: applicationDatabase.bound,
+        databaseReady: applicationDatabase.ready,
+        databaseMissingTables: applicationDatabase.missing,
+        centralDatabaseBound: centralDatabase.bound,
+        centralDatabaseReady: centralDatabase.ready,
+        centralDatabaseMissingTables: centralDatabase.missing,
+        centralDatabaseRequiredForPublicService: false,
       },
-      { status: healthy ? 200 : 503 },
+      { status: serviceReady ? 200 : 503 },
     );
   } catch (error) {
     console.error('ICA_UNIFIED_HEALTH_ERROR', error);
     return NextResponse.json(
       {
         ok: false,
+        serviceReady: false,
         service: 'ICA Unified',
         databaseBound: false,
         databaseReady: false,
-        databaseIntegrity: 'error',
         databaseMissingTables: [],
         centralDatabaseBound: false,
         centralDatabaseReady: false,
-        centralDatabaseIntegrity: 'error',
         centralDatabaseMissingTables: [],
+        centralDatabaseRequiredForPublicService: false,
       },
       { status: 503 },
     );
