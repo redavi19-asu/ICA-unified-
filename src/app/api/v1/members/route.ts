@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
+import { organizationHasUnifiedAccess } from '../../../../lib/auth';
 import {
   authenticateApiKey,
   emitOrganizationEvent,
@@ -19,6 +20,7 @@ const createSchema = z.object({
 export async function GET(request: Request) {
   const auth = await apiOrganization(request);
   if (!auth) return unauthorized();
+  if (!auth.entitled) return subscriptionRequired();
 
   const memberships = await prisma.membership.findMany({
     where: { organizationId: auth.organizationId },
@@ -43,14 +45,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await apiOrganization(request);
   if (!auth) return unauthorized();
+  if (!auth.entitled) return subscriptionRequired();
 
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'Check name, email, job title, and role.' }, { status: 400 });
   }
 
-  const organization = await prisma.organization.findUnique({ where: { id: auth.organizationId } });
-  if (!organization) return NextResponse.json({ error: 'Organization not found.' }, { status: 404 });
+  const organization = auth.organization;
 
   const existingUser = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (existingUser) {
@@ -124,9 +126,37 @@ async function apiOrganization(request: Request) {
   if (!authorization.startsWith('Bearer ')) return null;
   const rawKey = authorization.slice('Bearer '.length).trim();
   if (!rawKey) return null;
-  return authenticateApiKey(rawKey);
+
+  const apiKey = await authenticateApiKey(rawKey);
+  if (!apiKey) return null;
+
+  const organization = await prisma.organization.findUnique({
+    where: { id: apiKey.organizationId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      plan: true,
+      trialEndsAt: true,
+    },
+  });
+  if (!organization) return null;
+
+  return {
+    ...apiKey,
+    organization,
+    entitled: await organizationHasUnifiedAccess(organization),
+  };
 }
 
 function unauthorized() {
   return NextResponse.json({ error: 'A valid ICA API bearer key is required.' }, { status: 401 });
+}
+
+function subscriptionRequired() {
+  return NextResponse.json(
+    { error: 'This organization does not currently have active ICA Unified access.', code: 'SUBSCRIPTION_REQUIRED' },
+    { status: 402 },
+  );
 }
