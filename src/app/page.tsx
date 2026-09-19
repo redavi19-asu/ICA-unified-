@@ -285,7 +285,7 @@ export default async function Home() {
           <a href="#mobile">Mobile</a>
           <a href="#plans">Plans</a>
           <a href="/downloads">Apps</a>
-          <a href="/login">Customer Login</a>
+          <a href="/register?mode=login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>
       </header>
@@ -300,7 +300,7 @@ export default async function Home() {
           </p>
           <div className={styles.actions}>
             <a className={styles.primary} href="/register">START 14-DAY TRIAL →</a>
-            <a className={styles.secondary} href="/login">CUSTOMER LOGIN</a>
+            <a className={styles.secondary} href="/register?mode=login">CUSTOMER LOGIN</a>
           </div>
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
