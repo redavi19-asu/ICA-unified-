@@ -32,3 +32,10 @@ radial-gradient(circle at 92% 18%,rgba(20,184,166,.08),transparent 24%),
   .formPanel{padding:32px 22px}
 }
 @media(prefers-reduced-motion:reduce){.orbit{animation:none}}
+
+.authTabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 28px;padding:5px;border:1px solid #d7e4ec;background:#f3f8fb;border-radius:12px}
+.authTabs button{margin:0;background:transparent;color:#667d8f;box-shadow:none;border:0;padding:12px 14px;border-radius:8px;font-size:11px;letter-spacing:.1em;font-weight:900}
+.authTabs button:hover{background:#eaf3f8;color:#173247}
+.authTabs .activeTab{background:#147fd1;color:#fff;box-shadow:0 8px 22px rgba(20,127,209,.18)}
+.forgot{display:inline-block;margin-top:2px;color:#147fd1;text-decoration:none;font-size:11px;font-weight:800;letter-spacing:.04em}
+.forgot:hover{text-decoration:underline}
