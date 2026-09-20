@@ -220,6 +220,10 @@ const professionalServices = [
   ['Training + live consulting', 'Custom quote', 'Dedicated staff training, live implementation sessions, after-hours help, or on-site work.'],
 ];
 
+function BrandICA() {
+  return <span className={styles.inlineIca} aria-label="ICA"><em>I</em><em>C</em><em>A</em></span>;
+}
+
 function MiniIcon({ type }: { type: string }) {
   const common = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   if (type === 'people') return <svg {...common}><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.8-3.1 2.6-4.7 5.5-4.7s4.7 1.6 5.5 4.7"/><circle cx="17" cy="9" r="2.3"/><path d="M15.5 14.7c2.8-.3 4.6 1.1 5.2 4.3"/></svg>;
@@ -343,7 +347,7 @@ export default async function Home() {
       <section id="capabilities" className={styles.capabilitySection}>
         <div className={styles.sectionHead}>
           <p className={styles.eyebrow}>COMPLETE CAPABILITY MAP</p>
-          <h2>What ICA Unified actually does.</h2>
+          <h2>What <BrandICA /> Unified actually does.</h2>
           <p>
             This is the customer-facing feature map of the platform today. Each area below is tied to
             the same organization and member record, so operations do not break apart as the organization grows.
@@ -387,12 +391,12 @@ export default async function Home() {
       <section id="integrations" className={styles.integration}>
         <div>
           <p className={styles.eyebrow}>TWO WAYS TO RUN IT</p>
-          <h2>Use ICA Unified as the portal — or connect the website you already have.</h2>
+          <h2>Use <BrandICA /> Unified as the portal — or connect the website you already have.</h2>
         </div>
         <div className={styles.integrationChoices}>
           <article>
             <small>OPTION A</small>
-            <h3>ICA Unified Portal</h3>
+            <h3><BrandICA /> Unified Portal</h3>
             <p>
               Use ICA Unified as the member-facing workspace for sign-in, learning, credentials,
               documents, administration, and organization operations.
@@ -401,7 +405,7 @@ export default async function Home() {
           </article>
           <article>
             <small>OPTION B</small>
-            <h3>Existing Website + ICA Unified</h3>
+            <h3>Existing Website + <BrandICA /> Unified</h3>
             <p>
               Keep the website your organization already uses. The current ICA API connects member registration
               and member data, while signed webhooks push ICA member events outward. Learning, workflow, CRM,
@@ -415,7 +419,7 @@ export default async function Home() {
       <section id="mobile" className={styles.mobileSection}>
         <div className={styles.mobileIntro}>
           <div>
-            <p className={styles.eyebrow}>ICA UNIFIED MOBILE</p>
+            <p className={`${styles.eyebrow} ${styles.brandEyebrow}`}><BrandICA /> UNIFIED MOBILE</p>
             <h2>Built for the people standing at the event.</h2>
             <p>
               The desktop workspace runs the organization. ICA Unified Mobile is built as a native Expo app for the staff member
@@ -552,7 +556,7 @@ export default async function Home() {
       </section>
 
       <section className={styles.finalCta}>
-        <p className={styles.eyebrow}>ICA UNIFIED</p>
+        <p className={`${styles.eyebrow} ${styles.brandEyebrow}`}><BrandICA /> UNIFIED</p>
         <h2>Your organization should not need five disconnected systems to know one member.</h2>
         <p>Create the company workspace, bring the team in, and keep the business and learning layers connected from day one.</p>
         <div className={styles.actions}>
