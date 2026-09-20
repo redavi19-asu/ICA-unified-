@@ -266,3 +266,10 @@
 .capabilityCard:nth-child(4n+4) .capabilityTop>i{background:#fff8e8;color:#f59e0b}
 @media(max-width:900px){.capabilityGrid{grid-template-columns:1fr}.capabilitySection{padding-left:30px!important;padding-right:30px!important;box-sizing:border-box;overflow:hidden}.capabilitySection .sectionHead{padding-left:0!important;padding-right:0!important;box-sizing:border-box}.capabilityGrid{width:100%;box-sizing:border-box}}
 @media(max-width:650px){.capabilitySection{padding-left:28px!important;padding-right:28px!important}.capabilityCard{padding:20px}.capabilityTop h3{font-size:20px}.capabilityCard li{font-size:12px}}
+
+
+/* ICA brand + editorial display system */
+.inlineIca{display:inline-flex;align-items:baseline;white-space:nowrap;font-family:inherit;font-weight:inherit;letter-spacing:inherit}
+.inlineIca em{font-style:normal}.inlineIca em:nth-child(1){color:#d9433f}.inlineIca em:nth-child(2){color:#ef7a2d}.inlineIca em:nth-child(3){color:#7b8792}
+.brandEyebrow{display:flex;align-items:center;justify-content:inherit;gap:.28em}.brandEyebrow .inlineIca{font-family:var(--font-ica-display),Georgia,'Times New Roman',serif;font-size:1.45em;font-weight:400;letter-spacing:-.035em}
+.sectionHead h2,.integration h2,.finalCta h2,.mobileIntro h2,.supportCard h3,.boundaryCard h3,.servicesHead h3,.capabilityTop h3,.integrationChoices h3,.workflowGrid h3,.moduleCard>span,.includedGrid h3,.mobileFeatureGrid h3,.planCard h3,.planFeatured h3{font-family:var(--font-ica-display),Georgia,'Times New Roman',serif;font-weight:400}
