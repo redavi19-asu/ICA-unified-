@@ -32,6 +32,7 @@ export default async function DownloadsPage({
 
   const windowsUrl = (process.env.ICA_WINDOWS_DOWNLOAD_URL || '').trim();
   const macUrl = (process.env.ICA_MAC_DOWNLOAD_URL || '').trim();
+  const macIntelUrl = (process.env.ICA_MAC_INTEL_DOWNLOAD_URL || '').trim();
   const subscriptionLabel = String(billing?.subscriptionStatus || membership.organization.status).toUpperCase();
 
   return (
@@ -58,7 +59,8 @@ export default async function DownloadsPage({
       <section className={styles.grid}>
         <AppCard platform="WEB" title="ICA Unified Web" copy="The complete organization workspace. Nothing to install—open it from any supported modern browser." href="/workspace" action="OPEN WEB APP" state="READY" />
         <AppCard platform="WINDOWS" title="ICA Unified for Windows" copy="The Tauri desktop wrapper is built in the ICA codebase and connects to the same organization data. Public download activates after Windows signing and installer verification." href={windowsUrl} action="DOWNLOAD WINDOWS" state={windowsUrl ? 'READY' : 'SIGNING / RELEASE'} />
-        <AppCard platform="macOS" title="ICA Unified for Mac" copy="The Tauri desktop wrapper is built in the ICA codebase. Public download activates after Apple signing, notarization, and package verification." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'SIGNING / RELEASE'} />
+        <AppCard platform="macOS · APPLE SILICON" title="ICA Unified for Mac" copy="Signed and notarized production build for Apple Silicon Macs including M1, M2, M3, M4 and newer." href={macUrl} action="DOWNLOAD MAC" state={macUrl ? 'READY' : 'SIGNING / RELEASE'} />
+        <AppCard platform="macOS · INTEL" title="ICA Unified for Intel Mac" copy="Signed and notarized production build for Intel Core i3, i5, i7 and i9 Macs." href={macIntelUrl} action="DOWNLOAD INTEL MAC" state={macIntelUrl ? 'READY' : 'SIGNING / RELEASE'} />
         <AppCard platform="IPHONE + IPAD" title="ICA Unified Mobile" copy="Native Expo app code and production build profiles are ready for QR check-in, member lookup, attendance, CE, credentials, and notifications. App Store signing/submission remains." href="" action="APP STORE" state="STORE RELEASE PENDING" />
       </section>
 

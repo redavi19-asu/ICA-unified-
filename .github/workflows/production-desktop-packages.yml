@@ -1,0 +1,156 @@
+name: ICA Unified Production Desktop Packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ica-unified-production-desktop
+  cancel-in-progress: false
+
+jobs:
+  signing-preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      windows_ready: ${{ steps.check.outputs.windows_ready }}
+      apple_ready: ${{ steps.check.outputs.apple_ready }}
+    steps:
+      - id: check
+        shell: bash
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$WINDOWS_CERTIFICATE" ] && [ -n "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
+            echo "windows_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "windows_ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Windows signing credentials are not configured yet."
+          fi
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_CERTIFICATE_PASSWORD" ] && [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            echo "apple_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "apple_ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Apple Developer ID signing/notarization credentials are not configured yet."
+          fi
+
+  windows:
+    needs: signing-preflight
+    if: needs.signing-preflight.outputs.windows_ready == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+      - name: Import Windows signing certificate
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\ica-signing" | Out-Null
+          Set-Content -Path "$env:RUNNER_TEMP\ica-signing\certificate.txt" -Value $env:WINDOWS_CERTIFICATE -NoNewline
+          certutil -decode "$env:RUNNER_TEMP\ica-signing\certificate.txt" "$env:RUNNER_TEMP\ica-signing\certificate.pfx" | Out-Null
+          $securePassword = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          $cert = Import-PfxCertificate -FilePath "$env:RUNNER_TEMP\ica-signing\certificate.pfx" -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
+          if (-not $cert) { throw "Windows signing certificate import failed." }
+          $config = @{ bundle = @{ windows = @{ certificateThumbprint = $cert.Thumbprint; digestAlgorithm = "sha256"; timestampUrl = "http://timestamp.digicert.com"; tsp = $false } } } | ConvertTo-Json -Depth 6
+          Set-Content -Path "desktop\src-tauri\tauri.windows.conf.json" -Value $config
+      - name: Build signed Windows installer
+        working-directory: desktop
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Verify and publish Windows installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installer = Get-ChildItem "desktop\src-tauri\target\release\bundle" -Recurse -File -Filter "*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "No Windows EXE installer was produced." }
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          if ($signature.Status -ne "Valid") { throw "Windows signature is not valid: $($signature.Status)" }
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item $installer.FullName "release\ICA-Unified-Windows-x64.exe"
+          gh release view unified-desktop-production --repo "$env:GITHUB_REPOSITORY" *> $null
+          if ($LASTEXITCODE -ne 0) { gh release create unified-desktop-production --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "ICA Unified Production Desktop Apps" --notes "Verified signed production installers." }
+          gh release upload unified-desktop-production "release\ICA-Unified-Windows-x64.exe" --repo "$env:GITHUB_REPOSITORY" --clobber
+
+  macos:
+    needs: signing-preflight
+    if: needs.signing-preflight.outputs.apple_ready == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            asset: ICA-Unified-macOS-Apple-Silicon.dmg
+          - target: x86_64-apple-darwin
+            asset: ICA-Unified-macOS-Intel.dmg
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build signed and notarized Mac package
+        working-directory: desktop
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          npm install --no-audit --no-fund
+          npm run build -- --target ${{ matrix.target }} --bundles dmg
+      - name: Verify and publish Mac package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ matrix.target }}
+          ASSET: ${{ matrix.asset }}
+        run: |
+          set -euo pipefail
+          APP="$(find "desktop/src-tauri/target/$TARGET/release/bundle" -type d -name '*.app' -print -quit)"
+          DMG="$(find "desktop/src-tauri/target/$TARGET/release/bundle" -type f -name '*.dmg' -print -quit)"
+          test -n "$APP" && test -n "$DMG"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          xcrun stapler validate "$DMG"
+          mkdir -p release
+          cp "$DMG" "release/$ASSET"
+          gh release view unified-desktop-production --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create unified-desktop-production --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ICA Unified Production Desktop Apps" --notes "Verified signed production installers."
+          gh release upload unified-desktop-production "release/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
+
+  publish-download-urls:
+    needs: [signing-preflight, windows, macos]
+    if: always() && (needs.windows.result == 'success' || needs.macos.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Activate verified download URLs in ICA Unified
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/unified-desktop-production"
+          if [ "${{ needs.windows.result }}" = "success" ]; then
+            printf '%s' "$BASE/ICA-Unified-Windows-x64.exe" | npx --yes wrangler@latest secret put ICA_WINDOWS_DOWNLOAD_URL --name ica-unified
+          fi
+          if [ "${{ needs.macos.result }}" = "success" ]; then
+            printf '%s' "$BASE/ICA-Unified-macOS-Apple-Silicon.dmg" | npx --yes wrangler@latest secret put ICA_MAC_DOWNLOAD_URL --name ica-unified
+            printf '%s' "$BASE/ICA-Unified-macOS-Intel.dmg" | npx --yes wrangler@latest secret put ICA_MAC_INTEL_DOWNLOAD_URL --name ica-unified
+          fi
