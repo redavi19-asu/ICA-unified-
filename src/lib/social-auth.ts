@@ -189,7 +189,9 @@ async function verifyIdToken(idToken: string, provider: SocialProvider, nonce: s
 
   const response = await fetch(config.jwks, { headers: { accept: 'application/json' } });
   if (!response.ok) throw new Error('Identity provider signing keys are unavailable.');
-  const keyPayload = await response.json() as { keys?: Array<Record<string, unknown> & { kid?: string }> };
+  const keyPayload = await response.json() as {
+    keys?: Array<Record<string, unknown> & { kid?: string; kty: string }>;
+  };
   const jwk = keyPayload.keys?.find((key) => key.kid === header.kid);
   if (!jwk) throw new Error('Identity provider signing key was not found.');
 
