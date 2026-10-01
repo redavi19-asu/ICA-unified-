@@ -329,9 +329,12 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
     if (linked?.userId) user = await prisma.user.findUnique({ where: { id: linked.userId } });
   }
 
-  if (!user) throw new Error('No ICA Unified account is connected to this identity yet. Create your organization first.');
+  if (!user) {
+    const ticket = await issueRegistrationTicket(provider, subject, email, displayName);
+    return { kind: 'register' as const, ticket };
+  }
   const membership = await findMembership(user.id, String(row.organizationSlug || ''));
-  if (!membership) throw new Error('No active ICA Unified workspace was found for this account.');
+  if (!membership) throw new Error('No active ICA Unified workspace was found for this account. Start or restore your organization access first.');
 
   await markUserEmailVerified(user.id);
   await linkIdentity(provider, subject, user.id, email);
