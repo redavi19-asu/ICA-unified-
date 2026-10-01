@@ -165,3 +165,26 @@
   --ws-line:#1d3042;--ws-blue:#5eb8ff;--ws-teal:#35d4c0;--ws-purple:#a47aff;--ws-amber:#ffc14d;--ws-green:#35e982;
   background:#07101a;color:#edf6ff
 }
+
+
+/* ICA Unified account & privacy */
+.account-privacy-shell{min-height:100vh;padding:clamp(24px,5vw,64px);background:radial-gradient(circle at 75% 8%,rgba(28,157,255,.09),transparent 25%),#07101a;color:#edf6ff}
+.account-privacy-card{width:min(900px,100%);margin:0 auto;border:1px solid #1f3a50;border-radius:16px;background:linear-gradient(155deg,#0b1b29,#07121c);padding:clamp(24px,5vw,48px);box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.account-privacy-back{display:inline-block;margin-bottom:28px;color:#5eb8ff;text-decoration:none;font-size:9px;font-weight:900;letter-spacing:.14em}
+.account-privacy-card>small{color:#5eb8ff;font-size:8px;font-weight:900;letter-spacing:.16em}
+.account-privacy-card h1{margin:9px 0 10px;font-size:clamp(42px,7vw,72px);line-height:.95;letter-spacing:-.055em}
+.account-privacy-card>p{color:#8fa4b4;line-height:1.7;max-width:720px}
+.account-policy-links{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:28px 0}
+.account-policy-links a{border:1px solid #244760;border-radius:9px;background:#0b1c2a;color:#cfeeff;text-decoration:none;padding:14px;font-size:9px;font-weight:900;letter-spacing:.08em}
+.account-delete-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+.account-delete-panel{border:1px solid #293e50;border-radius:12px;padding:20px;background:#091722}
+.account-delete-panel.danger{border-color:#6d3437;background:linear-gradient(155deg,#201013,#100d12)}
+.account-delete-panel h2{margin:0 0 8px;font-size:20px}
+.account-delete-panel p{margin:0;color:#8fa1af;font-size:11px;line-height:1.65}
+.account-delete-panel input{width:100%;margin:16px 0 10px;border:1px solid #334a5c;background:#06101a;color:#fff;border-radius:8px;padding:12px}
+.account-delete-panel button{width:100%;border:1px solid #3a6380;background:#0e3550;color:#eaf7ff;border-radius:8px;padding:12px;font-size:9px;font-weight:900;letter-spacing:.08em;cursor:pointer}
+.account-delete-panel.danger button{border-color:#91474c;background:#5c252a}
+.account-delete-panel button:disabled{opacity:.45;cursor:not-allowed}
+.account-delete-status{margin-top:18px;border:1px solid #28506c;border-radius:9px;padding:12px 14px;color:#a7d8f8;background:#0a2030;font-size:11px}
+@media(max-width:760px){.account-policy-links{grid-template-columns:1fr 1fr}.account-delete-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.account-policy-links{grid-template-columns:1fr}}
