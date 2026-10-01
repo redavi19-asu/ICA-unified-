@@ -36,8 +36,18 @@ const PROVIDERS = {
   },
 } as const;
 
+type D1StatementLike = {
+  bind: (...values: unknown[]) => D1StatementLike;
+  run: () => Promise<{ success?: boolean }>;
+  first: <T = Record<string, unknown>>() => Promise<T | null>;
+};
+
+type D1DatabaseLike = {
+  prepare: (sql: string) => D1StatementLike;
+};
+
 type UnifiedBindings = {
-  DB?: D1Database;
+  DB?: D1DatabaseLike;
   [key: string]: unknown;
 };
 
