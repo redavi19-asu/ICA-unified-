@@ -36,16 +36,23 @@ const PROVIDERS = {
   },
 } as const;
 
+type UnifiedBindings = {
+  DB?: D1Database;
+  [key: string]: unknown;
+};
+
+function bindings(): UnifiedBindings {
+  return getCloudflareContext().env as unknown as UnifiedBindings;
+}
+
 function db() {
-  const { env } = getCloudflareContext();
-  const database = (env as any).DB;
+  const database = bindings().DB;
   if (!database) throw new Error('ICA Unified application database is unavailable.');
   return database;
 }
 
 function envValue(name: string) {
-  const { env } = getCloudflareContext();
-  return String((env as any)[name] || '').trim();
+  return String(bindings()[name] || '').trim();
 }
 
 function providerConfig(provider: SocialProvider) {
