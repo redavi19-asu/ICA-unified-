@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 export default function LegalPage({
   eyebrow,
   title,
-  updated = 'September 17, 2026',
+  updated = 'October 1, 2026',
   children,
 }: {
   eyebrow: string;
@@ -23,6 +23,8 @@ export default function LegalPage({
         <div style={{marginTop:46,paddingTop:22,borderTop:'1px solid #dce7ee',display:'flex',gap:18,flexWrap:'wrap',fontSize:12}}>
           <Link href="/privacy" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Privacy</Link>
           <Link href="/terms" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Terms</Link>
+          <Link href="/acceptable-use" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Acceptable Use</Link>
+          <Link href="/account-deletion" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Account & Data Deletion</Link>
           <Link href="/cancellation" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Cancellation & Billing</Link>
           <a href="https://icomputeranything.com/#contact" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Contact ICA</a>
         </div>

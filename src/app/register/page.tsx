@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [turnstileReset, setTurnstileReset] = useState(0);
   const [socialTicket, setSocialTicket] = useState('');
   const [socialProfile, setSocialProfile] = useState<{ provider: string; email: string; displayName: string } | null>(null);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -44,6 +45,11 @@ export default function RegisterPage() {
     const form = new FormData(event.currentTarget);
 
     const isLogin = mode === 'login';
+    if (!isLogin && !legalAccepted) {
+      setError('Agree to the ICA Unified Terms, Privacy Policy, and Acceptable Use Policy before creating an organization.');
+      setLoading(false);
+      return;
+    }
     if (!isLogin && socialTicket) {
       const response = await fetch('/api/auth/social/register', {
         method: 'POST',
@@ -51,6 +57,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           ticket: socialTicket,
           organizationName: form.get('organizationName'),
+          termsAccepted: legalAccepted,
         }),
       });
       const data = await response.json();
@@ -73,6 +80,7 @@ export default function RegisterPage() {
               organizationSlug: form.get('organizationSlug'),
               email: form.get('email'),
               password: form.get('password'),
+              termsAccepted: legalAccepted,
               turnstileToken,
             }
           : {
@@ -121,7 +129,16 @@ export default function RegisterPage() {
         </div>
         <p className={styles.kicker}>{mode === 'login' ? 'CUSTOMER LOGIN' : 'CREATE ORGANIZATION'}</p>
         <h2>{mode === 'login' ? 'Enter your ICA Unified workspace.' : 'Your company becomes its own tenant.'}</h2>
-        {mode === 'register' && !socialProfile && <SocialAuthButtons purpose="register" />}
+        {mode === 'register' && (
+          <label style={{display:'flex',alignItems:'flex-start',gap:10,margin:'14px 0 18px',fontSize:12,lineHeight:1.55}}>
+            <input type="checkbox" checked={legalAccepted} onChange={(event) => setLegalAccepted(event.target.checked)} style={{marginTop:3}} />
+            <span>
+              I agree to the <Link href="/terms">Terms of Service</Link>, acknowledge the <Link href="/privacy">Privacy Policy</Link>, agree to the <Link href="/acceptable-use">Acceptable Use Policy</Link>, and confirm I have authority to create this organization workspace.
+            </span>
+          </label>
+        )}
+        {mode === 'register' && !socialProfile && legalAccepted && <SocialAuthButtons purpose="register" />}
+        {mode === 'register' && !socialProfile && !legalAccepted && <p className={styles.note}>Accept the policies above to enable Google, Apple, or Microsoft organization setup.</p>}
         {mode === 'login' && <SocialAuthButtons purpose="login" />}
         {socialProfile && (
           <div style={{margin:'0 0 16px',padding:'12px 14px',border:'1px solid rgba(38,138,86,.24)',borderRadius:10,background:'rgba(38,138,86,.08)',fontSize:12}}>

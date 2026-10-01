@@ -5,6 +5,10 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
 
   try {
+    if (body?.termsAccepted !== true) {
+      return NextResponse.json({ error: 'Agree to the ICA Unified Terms, Privacy Policy, and Acceptable Use Policy before creating an organization.' }, { status: 400 });
+    }
+
     const result = await completeSocialRegistration(
       String(body?.ticket || ''),
       String(body?.organizationName || ''),
