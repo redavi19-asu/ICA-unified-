@@ -188,3 +188,14 @@
 .account-delete-status{margin-top:18px;border:1px solid #28506c;border-radius:9px;padding:12px 14px;color:#a7d8f8;background:#0a2030;font-size:11px}
 @media(max-width:760px){.account-policy-links{grid-template-columns:1fr 1fr}.account-delete-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.account-policy-links{grid-template-columns:1fr}}
+
+
+/* Urban Director Studio social-auth treatment — ICA source of truth */
+.director-social-auth{display:grid;gap:9px;margin:18px 0 12px;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.025)}
+.director-social-auth>span{font-size:10px;letter-spacing:.14em;color:#92998f;font-weight:800}
+.director-social-auth>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.director-social-auth button{min-height:42px;border:1px solid #454b43;border-radius:10px;background:#171a17;color:#f2f3ef;font-weight:800;cursor:pointer}
+.director-social-auth button:hover{border-color:#8b9686;background:#232823}
+.director-social-auth small{color:#858c82;line-height:1.45}
+.director-social-auth button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:560px){.director-social-auth>div{grid-template-columns:1fr}}
