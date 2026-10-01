@@ -4,7 +4,7 @@ export default function AccountDeletionPage() {
   return (
     <LegalPage eyebrow="ICA UNIFIED / CUSTOMER POLICY" title="Account & Data Deletion">
       <LegalSection title="Individual accounts">
-        <p>People whose ICA Unified access is controlled by an organization should first ask that organization's Owner or Administrator to remove their membership. A user may also contact I Computer Anything for a privacy or deletion review when appropriate.</p>
+        <p>People whose ICA Unified access is controlled by an organization should first ask that organization&apos;s Owner or Administrator to remove their membership. A user may also contact I Computer Anything for a privacy or deletion review when appropriate.</p>
       </LegalSection>
       <LegalSection title="Organization workspaces">
         <p>An Organization Owner may request closure and deletion of the organization workspace through I Computer Anything support. ICA may require identity, ownership, and billing verification before deleting a tenant because deletion can affect other members, training records, credentials, documents, workflows, and organization history.</p>
