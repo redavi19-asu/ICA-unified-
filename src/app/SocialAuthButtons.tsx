@@ -37,7 +37,7 @@ export default function SocialAuthButtons({
         {purpose === 'register' ? 'VERIFY WITH' : 'CONTINUE WITH'}
       </span>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
-        {providers.google && <button type="button" onClick={() => start('google')}><span aria-hidden="true" style={{fontWeight:900,marginRight:7,color:"#4285F4"}}>G</span>Google</button>}
+        {providers.google && <button type="button" onClick={() => start('google')}><span aria-hidden="true" style={{fontWeight:900,marginRight:7,color:"#fff"}}>G</span>Google</button>}
         {providers.apple && <button type="button" onClick={() => start('apple')}>Apple</button>}
         {providers.microsoft && <button type="button" onClick={() => start('microsoft')}>Microsoft</button>}
       </div>
