@@ -7,9 +7,9 @@ import styles from './login.module.css';
 import TurnstileWidget from '../TurnstileWidget';
 import SocialAuthButtons from '../SocialAuthButtons';
 
-export default function LoginClient({ defaultOrganizationSlug = '', portalOrganizationName = null }: { defaultOrganizationSlug?: string; portalOrganizationName?: string | null }) {
+export default function LoginClient({ defaultOrganizationSlug = '', portalOrganizationName = null, initialError = '' }: { defaultOrganizationSlug?: string; portalOrganizationName?: string | null; initialError?: string }) {
   const router = useRouter();
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileReset, setTurnstileReset] = useState(0);
