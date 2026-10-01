@@ -5,6 +5,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
 import TurnstileWidget from '../TurnstileWidget';
+import SocialAuthButtons from '../SocialAuthButtons';
 
 export default function LoginClient({ defaultOrganizationSlug = '', portalOrganizationName = null }: { defaultOrganizationSlug?: string; portalOrganizationName?: string | null }) {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileReset, setTurnstileReset] = useState(0);
+  const [organizationSlug, setOrganizationSlug] = useState(defaultOrganizationSlug);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,8 +60,9 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
         <div className={styles.signal}><span /><span /><span /><span /></div>
         <p className={styles.kicker}>SECURE ORGANIZATION ACCESS</p>
         <h2>{portalOrganizationName ? `Enter ${portalOrganizationName}.` : 'Enter your workspace.'}</h2>
+        <SocialAuthButtons purpose="login" organizationSlug={organizationSlug} />
         <form onSubmit={submit}>
-          <label>ICA Company ID <span style={{opacity:.55}}>{portalOrganizationName ? '(verified by portal domain)' : '(issued by ICA)'}</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" defaultValue={defaultOrganizationSlug} readOnly={Boolean(portalOrganizationName)} /></label>
+          <label>ICA Company ID <span style={{opacity:.55}}>{portalOrganizationName ? '(verified by portal domain)' : '(issued by ICA)'}</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" value={organizationSlug} onChange={(event) => setOrganizationSlug(event.target.value)} readOnly={Boolean(portalOrganizationName)} /></label>
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
