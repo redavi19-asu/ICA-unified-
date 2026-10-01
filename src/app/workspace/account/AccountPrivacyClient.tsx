@@ -77,7 +77,7 @@ export default function AccountPrivacyClient({
         <div className="account-delete-grid">
           <article className="account-delete-panel danger">
             <h2>Request account deletion</h2>
-            <p>Requests removal of your ICA Unified account and memberships after identity, billing, security, and retention checks. This does not silently delete other people's organization records.</p>
+            <p>Requests removal of your ICA Unified account and memberships after identity, billing, security, and retention checks. This does not silently delete other people&apos;s organization records.</p>
             <input value={confirmation} onChange={(event) => setConfirmation(event.target.value.toUpperCase())} placeholder="Type DELETE to confirm" />
             <button disabled={working !== '' || confirmation !== 'DELETE' || accountPending} onClick={() => requestDeletion('ACCOUNT')}>
               {accountPending ? 'ACCOUNT DELETION REQUEST PENDING' : working === 'ACCOUNT' ? 'SUBMITTING…' : 'REQUEST ACCOUNT DELETION'}
