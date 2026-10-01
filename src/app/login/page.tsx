@@ -7,7 +7,7 @@ import LoginClient from './LoginClient';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ company?: string; portal?: string }>;
+  searchParams: Promise<{ company?: string; portal?: string; social_error?: string }>;
 }) {
   const session = await readSession();
   if (session) redirect('/workspace');
@@ -21,6 +21,7 @@ export default async function LoginPage({
     <LoginClient
       defaultOrganizationSlug={defaultOrganizationSlug}
       portalOrganizationName={customOrganization?.name || null}
+      initialError={String(params.social_error || '')}
     />
   );
 }
