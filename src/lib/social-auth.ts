@@ -1,3 +1,4 @@
+import { appleSigningConfigured, appleClientSecret } from './apple-client-secret';
 import { createHash, randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { importJWK, jwtVerify } from 'jose';
@@ -69,7 +70,7 @@ function providerConfig(provider: SocialProvider) {
   const upper = provider.toUpperCase();
   const clientId = envValue('SOCIAL_' + upper + '_CLIENT_ID');
   const clientSecret = envValue('SOCIAL_' + upper + '_CLIENT_SECRET');
-  return { ...PROVIDERS[provider], provider, clientId, clientSecret, ready: Boolean(clientId && clientSecret) };
+  return { ...PROVIDERS[provider], provider, clientId, clientSecret, ready: Boolean(clientId && (clientSecret || (provider === 'apple' && appleSigningConfigured(bindings())))) };
 }
 
 export function socialProviderStatus() {
@@ -218,7 +219,7 @@ async function exchangeCode(request: Request, provider: SocialProvider, code: st
     grant_type: 'authorization_code',
     code,
     client_id: config.clientId,
-    client_secret: config.clientSecret,
+    client_secret: config.provider === 'apple' && appleSigningConfigured(bindings()) ? await appleClientSecret(bindings(), config.clientId) : config.clientSecret,
     redirect_uri: callbackOrigin(request) + '/api/auth/social/' + provider + '/callback',
     code_verifier: verifier,
   });
