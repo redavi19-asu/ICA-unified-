@@ -24,6 +24,7 @@ import {
   getStaffEvents,
   getWallet,
   login,
+  logout,
   searchMembers,
   staffCheckIn,
 } from './src/api';
@@ -76,6 +77,13 @@ export default function App() {
   }
 
   async function signOut() {
+    if (token) {
+      try {
+        await logout(token);
+      } catch {
+        // Local sign-out still completes if the network is unavailable.
+      }
+    }
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     setToken(null);
     setMe(null);
