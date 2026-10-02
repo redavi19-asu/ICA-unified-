@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { organizationHasUnifiedAccess } from '../../../../lib/auth';
 import {
-  authenticateApiKey,
   emitOrganizationEvent,
   queueEmail,
   renderInvitationEmail,
 } from '../../../../lib/organization-ops';
+import { authenticateApiRequest, ApiKeyAuthResult } from '../../../../lib/api-keys';
 
 const createSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -18,8 +18,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const auth = await apiOrganization(request);
-  if (!auth) return unauthorized();
+  const authResult = await apiOrganization(request, 'members:read');
+  if (!authResult.ok) return apiAuthFailure(authResult);
+  const auth = authResult;
   if (!auth.entitled) return subscriptionRequired();
 
   const memberships = await prisma.membership.findMany({
@@ -43,8 +44,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await apiOrganization(request);
-  if (!auth) return unauthorized();
+  const authResult = await apiOrganization(request, 'members:write');
+  if (!authResult.ok) return apiAuthFailure(authResult);
+  const auth = authResult;
   if (!auth.entitled) return subscriptionRequired();
 
   const parsed = createSchema.safeParse(await request.json());
@@ -121,17 +123,12 @@ export async function POST(request: Request) {
   }, { status: 201 });
 }
 
-async function apiOrganization(request: Request) {
-  const authorization = request.headers.get('authorization') || '';
-  if (!authorization.startsWith('Bearer ')) return null;
-  const rawKey = authorization.slice('Bearer '.length).trim();
-  if (!rawKey) return null;
-
-  const apiKey = await authenticateApiKey(rawKey);
-  if (!apiKey) return null;
+async function apiOrganization(request: Request, requiredScope: 'members:read' | 'members:write') {
+  const keyAuth = await authenticateApiRequest(request, requiredScope);
+  if (!keyAuth.ok) return keyAuth;
 
   const organization = await prisma.organization.findUnique({
-    where: { id: apiKey.organizationId },
+    where: { id: keyAuth.organizationId },
     select: {
       id: true,
       name: true,
@@ -141,17 +138,28 @@ async function apiOrganization(request: Request) {
       trialEndsAt: true,
     },
   });
-  if (!organization) return null;
+
+  if (!organization) {
+    return { ok: false as const, status: 401 as const, error: 'This ICA API key is invalid.' };
+  }
 
   return {
-    ...apiKey,
+    ...keyAuth,
     organization,
     entitled: await organizationHasUnifiedAccess(organization),
   };
 }
 
-function unauthorized() {
-  return NextResponse.json({ error: 'A valid ICA API bearer key is required.' }, { status: 401 });
+function apiAuthFailure(auth: ApiKeyAuthResult | { ok: false; status: 401; error: string }) {
+  if (auth.ok) {
+    return NextResponse.json({ error: 'Unexpected API authentication state.' }, { status: 500 });
+  }
+
+  const headers = 'retryAfterSeconds' in auth && auth.retryAfterSeconds
+    ? { 'Retry-After': String(auth.retryAfterSeconds) }
+    : undefined;
+
+  return NextResponse.json({ error: auth.error }, { status: auth.status, headers });
 }
 
 function subscriptionRequired() {
