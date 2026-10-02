@@ -60,24 +60,14 @@ export async function GET() {
     // Keep the public response intentionally minimal. Detailed schema/binding
     // diagnostics stay in server logs instead of being exposed to visitors.
     return NextResponse.json(
-      {
-        ok: serviceReady,
-        serviceReady,
-        service: 'ICA Unified',
-        databaseReady: applicationDatabase.ready,
-      },
-      { status: serviceReady ? 200 : 503 },
+      { ok: serviceReady, service: 'ICA Unified' },
+      { status: serviceReady ? 200 : 503, headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
     console.error('ICA_UNIFIED_HEALTH_ERROR', error);
     return NextResponse.json(
-      {
-        ok: false,
-        serviceReady: false,
-        service: 'ICA Unified',
-        databaseReady: false,
-      },
-      { status: 503 },
+      { ok: false, service: 'ICA Unified' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
     );
   }
 }

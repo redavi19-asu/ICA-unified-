@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../../../../../lib/prisma';
 import { readPlatformSession } from '../../../../../../../../lib/platform-auth';
+import { invalidatePrincipalSessions } from '../../../../../../../../lib/security';
 
 const schema = z.object({
   newPassword: z.string().min(12),
@@ -45,6 +46,7 @@ export async function POST(
       where: { id: userId },
       data: { passwordHash },
     });
+    await invalidatePrincipalSessions('user', userId);
 
     await prisma.activity.create({
       data: {

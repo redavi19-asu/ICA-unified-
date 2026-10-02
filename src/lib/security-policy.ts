@@ -15,3 +15,18 @@ export function checkoutBlocked(subscriptionId: string | null | undefined, statu
   const terminal = new Set(['', 'not_connected', 'canceled', 'incomplete_expired']);
   return Boolean(subscriptionId && !terminal.has(value)) || ['trialing', 'active'].includes(value);
 }
+
+export function sessionIssuedAfterInvalidation(issuedAtMs: number, invalidAfterMs: number | null | undefined) {
+  if (!Number.isFinite(issuedAtMs) || issuedAtMs <= 0) return false;
+  const cutoff = Number(invalidAfterMs || 0);
+  return cutoff <= 0 || issuedAtMs >= cutoff;
+}
+
+export function apiScopeAllowed(scopes: string[], requiredScope: string) {
+  return scopes.includes('*') || scopes.includes(requiredScope);
+}
+
+export function apiKeyExpired(expiresAtMs: number | null | undefined, nowMs = Date.now()) {
+  const expiresAt = Number(expiresAtMs || 0);
+  return expiresAt > 0 && expiresAt <= nowMs;
+}
