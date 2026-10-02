@@ -13,6 +13,13 @@
     "targets": "all",
     "category": "Business",
     "shortDescription": "ICA Unified organization operations workspace",
-    "longDescription": "ICA Unified desktop client for association management, learning, compliance, workflows, documents, credentials, and event operations."
+    "longDescription": "ICA Unified desktop client for association management, learning, compliance, workflows, documents, credentials, and event operations.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }

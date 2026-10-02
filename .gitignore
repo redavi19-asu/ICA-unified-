@@ -29,3 +29,7 @@ tmp/
 
 .open-next/
 .wrangler/
+
+# Generated desktop build artifacts
+desktop/src-tauri/target/
+desktop/src-tauri/icons/

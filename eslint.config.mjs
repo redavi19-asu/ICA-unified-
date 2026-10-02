@@ -18,6 +18,10 @@ const eslintConfig = [
     ],
   },
   {
+    files: ['mobile/scripts/*.cjs', 'mobile/tests/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: [
       'src/lib/prisma.ts',
       'src/lib/ica-master-auth.ts',

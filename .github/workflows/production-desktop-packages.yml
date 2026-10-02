@@ -27,6 +27,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
         run: |
           if [ -n "$WINDOWS_CERTIFICATE" ] && [ -n "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
             echo "windows_ready=true" >> "$GITHUB_OUTPUT"
@@ -34,7 +37,13 @@ jobs:
             echo "windows_ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Windows signing credentials are not configured yet."
           fi
-          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_CERTIFICATE_PASSWORD" ] && [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+          apple_notary_ready=false
+          if [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ] && [ -n "$APPLE_API_KEY_P8_BASE64" ]; then
+            apple_notary_ready=true
+          elif [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            apple_notary_ready=true
+          fi
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_CERTIFICATE_PASSWORD" ] && [ "$apple_notary_ready" = true ]; then
             echo "apple_ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "apple_ready=false" >> "$GITHUB_OUTPUT"
@@ -68,7 +77,7 @@ jobs:
       - name: Build signed Windows installer
         working-directory: desktop
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run build
       - name: Verify and publish Windows installer
         shell: pwsh
@@ -105,6 +114,26 @@ jobs:
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           targets: ${{ matrix.target }}
+      - name: Prepare and validate Apple notarization credentials
+        shell: bash
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ] && [ -n "$APPLE_API_KEY_P8_BASE64" ]; then
+            key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+            umask 077
+            printf '%s' "$APPLE_API_KEY_P8_BASE64" | base64 --decode > "$key_path"
+            echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+            xcrun notarytool history --key "$key_path" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER" >/dev/null
+          else
+            xcrun notarytool history --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" >/dev/null
+          fi
       - name: Build signed and notarized Mac package
         working-directory: desktop
         env:
@@ -113,26 +142,59 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
-          npm install --no-audit --no-fund
-          npm run build -- --target ${{ matrix.target }} --bundles dmg
+          set -euo pipefail
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then
+            unset APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+          fi
+          npm ci --no-audit --no-fund
+          # Tauri removes the app after dmg-only builds; retain it for verification.
+          npm run build -- --target ${{ matrix.target }} --bundles app,dmg
       - name: Verify and publish Mac package
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET: ${{ matrix.target }}
           ASSET: ${{ matrix.asset }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           APP="$(find "desktop/src-tauri/target/$TARGET/release/bundle" -type d -name '*.app' -print -quit)"
           DMG="$(find "desktop/src-tauri/target/$TARGET/release/bundle" -type f -name '*.dmg' -print -quit)"
-          test -n "$APP" && test -n "$DMG"
+          test -n "$APP" || { echo "::error::App bundle missing; use --bundles app,dmg."; exit 1; }
+          test -n "$DMG" || { echo "::error::DMG missing."; exit 1; }
           codesign --verify --deep --strict --verbose=2 "$APP"
+          xcrun stapler validate "$APP"
+          spctl --assess --type execute --verbose=2 "$APP"
+          codesign --verify --strict --verbose=2 "$DMG"
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then
+            notary_auth=(--key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER")
+          else
+            notary_auth=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")
+          fi
+          xcrun notarytool submit "$DMG" "${notary_auth[@]}" --wait
+          xcrun stapler staple "$DMG"
           xcrun stapler validate "$DMG"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
           mkdir -p release
           cp "$DMG" "release/$ASSET"
-          gh release view unified-desktop-production --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create unified-desktop-production --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ICA Unified Production Desktop Apps" --notes "Verified signed production installers."
+          gh release view unified-desktop-production --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || {
+            gh release create unified-desktop-production --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "ICA Unified Production Desktop Apps" --notes "Verified signed production installers." ||
+              gh release view unified-desktop-production --repo "$GITHUB_REPOSITORY" >/dev/null
+          }
           gh release upload unified-desktop-production "release/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
+
+      - name: Remove temporary Apple API key
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then rm -f "$APPLE_API_KEY_PATH"; fi
 
   publish-download-urls:
     needs: [signing-preflight, windows, macos]
@@ -148,9 +210,9 @@ jobs:
           set -euo pipefail
           BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/unified-desktop-production"
           if [ "${{ needs.windows.result }}" = "success" ]; then
-            printf '%s' "$BASE/ICA-Unified-Windows-x64.exe" | npx --yes wrangler@latest secret put ICA_WINDOWS_DOWNLOAD_URL --name ica-unified
+            printf '%s' "$BASE/ICA-Unified-Windows-x64.exe" | npx --yes wrangler@4.147.0 secret put ICA_WINDOWS_DOWNLOAD_URL --name ica-unified
           fi
           if [ "${{ needs.macos.result }}" = "success" ]; then
-            printf '%s' "$BASE/ICA-Unified-macOS-Apple-Silicon.dmg" | npx --yes wrangler@latest secret put ICA_MAC_DOWNLOAD_URL --name ica-unified
-            printf '%s' "$BASE/ICA-Unified-macOS-Intel.dmg" | npx --yes wrangler@latest secret put ICA_MAC_INTEL_DOWNLOAD_URL --name ica-unified
+            printf '%s' "$BASE/ICA-Unified-macOS-Apple-Silicon.dmg" | npx --yes wrangler@4.147.0 secret put ICA_MAC_DOWNLOAD_URL --name ica-unified
+            printf '%s' "$BASE/ICA-Unified-macOS-Intel.dmg" | npx --yes wrangler@4.147.0 secret put ICA_MAC_INTEL_DOWNLOAD_URL --name ica-unified
           fi

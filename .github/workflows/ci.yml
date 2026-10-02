@@ -19,9 +19,9 @@ jobs:
       PLATFORM_AUTH_SECRET: ci-only-platform-secret-for-build-validation
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
       - name: Install dependencies
@@ -34,10 +34,12 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --omit=optional --audit-level=high
+      - name: Audit all dependencies including optional packages
+        run: npm audit --audit-level=high
       - name: Install mobile dependencies
-        run: npm --prefix mobile install --loglevel=error
+        run: npm --prefix mobile ci --loglevel=error
+      - name: Audit mobile dependencies and verify security mitigation
+        run: npm --prefix mobile run audit:security
       - name: Typecheck ICA Mobile
         run: npm --prefix mobile run typecheck
       - name: Validate desktop wrapper metadata

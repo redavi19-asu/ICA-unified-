@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "prebuild": "tauri icon app-icon.svg"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.8.5"

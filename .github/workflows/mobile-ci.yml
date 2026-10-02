@@ -1,11 +1,7 @@
 name: ICA Unified Mobile Check
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'mobile/**'
-      - '.github/workflows/mobile-ci.yml'
+  # Pushes and pull requests already run mobile checks in ci.yml.
   workflow_dispatch:
 
 jobs:
@@ -24,7 +20,10 @@ jobs:
           node-version: '22.13'
 
       - name: Install mobile dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Audit mobile dependencies and verify security mitigation
+        run: npm run audit:security
 
       - name: Type-check mobile app
         run: npm run typecheck
