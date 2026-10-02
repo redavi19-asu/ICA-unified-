@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
-import { createApiKey, listApiKeys, revokeApiKey } from '../../../../lib/organization-ops';
+import { createApiKey, listApiKeys, revokeApiKey } from '../../../../lib/api-keys';
 
 const createSchema = z.object({
   name: z.string().trim().min(2).max(80),
+  scopes: z.array(z.enum(['members:read', 'members:write'])).min(1).max(2).default(['members:read', 'members:write']),
+  expiresInDays: z.number().int().min(1).max(365).default(90),
+  requestsPerMinute: z.number().int().min(10).max(1000).default(120),
 });
 
 export async function GET() {
@@ -19,6 +22,7 @@ export async function GET() {
       ...key,
       active: Boolean(key.active),
       displayKey: `${key.keyPrefix}••••••••••••••••`,
+      expiresAt: new Date(key.expiresAt).toISOString(),
     })),
   });
 }
@@ -34,13 +38,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Give this API key a name.' }, { status: 400 });
   }
 
-  const key = await createApiKey(membership.organizationId, membership.userId, parsed.data.name);
+  const key = await createApiKey({
+    organizationId: membership.organizationId,
+    createdById: membership.userId,
+    name: parsed.data.name,
+    scopes: parsed.data.scopes,
+    expiresInDays: parsed.data.expiresInDays,
+    requestsPerMinute: parsed.data.requestsPerMinute,
+  });
   return NextResponse.json({
     key: {
       id: key.id,
       name: key.name,
       value: key.raw,
       keyPrefix: key.keyPrefix,
+      scopes: key.scopes,
+      expiresAt: new Date(key.expiresAt).toISOString(),
+      requestsPerMinute: key.requestsPerMinute,
     },
     warning: 'Copy this key now. ICA stores only its hash and cannot show the full key again.',
   }, { status: 201 });
