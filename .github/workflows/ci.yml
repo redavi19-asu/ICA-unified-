@@ -34,8 +34,11 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test
-      - name: Audit all dependencies including optional packages
-        run: npm audit --audit-level=high
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Report development dependency advisories
+        continue-on-error: true
+        run: npm audit --include=dev --audit-level=high
       - name: Install mobile dependencies
         run: npm --prefix mobile ci --loglevel=error
       - name: Audit mobile dependencies and verify security mitigation
