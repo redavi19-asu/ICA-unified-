@@ -46,11 +46,7 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
       try {
         const response = await fetch('/api/health', { cache: 'no-store' });
         const data = await response.json().catch(() => null);
-        const connected =
-          response.ok &&
-          data?.ok === true &&
-          data?.serviceReady === true &&
-          data?.databaseReady === true;
+        const connected = response.ok && data?.ok === true;
         if (mounted) setSystemHealth(connected ? 'connected' : 'issue');
       } catch {
         if (mounted) setSystemHealth('issue');
