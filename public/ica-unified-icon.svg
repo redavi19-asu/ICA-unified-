@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">ICA Unified</title>
+<desc id="desc">Two people working across connected desks inside a red and orange orbit on a white background.</desc>
+<defs>
+  <linearGradient id="orbit" x1="72" y1="90" x2="444" y2="424" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#ff1f2e"/><stop offset=".46" stop-color="#d80018"/><stop offset=".72" stop-color="#ff5b12"/><stop offset="1" stop-color="#ffb313"/>
+  </linearGradient>
+  <linearGradient id="orbit2" x1="100" y1="52" x2="418" y2="180" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#c90016"/><stop offset=".5" stop-color="#ff3131"/><stop offset="1" stop-color="#ffb721"/>
+  </linearGradient>
+  <linearGradient id="orb" x1="222" y1="132" x2="292" y2="198" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#fff2c9"/><stop offset=".22" stop-color="#ff9a24"/><stop offset=".62" stop-color="#ff2b16"/><stop offset="1" stop-color="#bd0015"/>
+  </linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4b535d"/><stop offset="1" stop-color="#14191f"/></linearGradient>
+  <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8fafc"/><stop offset="1" stop-color="#c9ced4"/></linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#111827" flood-opacity=".18"/></filter>
+  <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="512" height="512" fill="#fff"/>
+<g filter="url(#shadow)">
+  <path d="M78 206C121 92 238 40 357 72c50 14 92 43 119 83-62-35-124-52-187-49-79 4-146 35-211 100Z" fill="url(#orbit2)"/>
+  <path d="M61 185C127 119 211 93 300 101c76 7 137 38 181 92" fill="none" stroke="url(#orbit)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M56 200C18 277 42 374 114 424c73 51 183 55 282 14 55-23 93-58 116-101-50 44-111 72-181 82-102 15-203-7-275-70-41-36-58-93-45-149Z" fill="url(#orbit)" opacity=".98"/>
+  <path d="M83 382c78 62 199 74 300 35 50-19 94-49 129-90" fill="none" stroke="#ff7310" stroke-width="10" stroke-linecap="round" opacity=".72"/>
+</g>
+<path d="M132 198C181 151 224 146 256 159c31-13 75-8 124 39" fill="none" stroke="url(#orbit)" stroke-width="16" stroke-linecap="round"/>
+<g filter="url(#glow)">
+  <circle cx="256" cy="159" r="37" fill="url(#orb)" stroke="#fff" stroke-width="4"/>
+  <circle cx="244" cy="145" r="9" fill="#fff" opacity=".45"/>
+</g>
+
+<!-- left person -->
+<g>
+  <circle cx="137" cy="215" r="31" fill="url(#body)" stroke="#0f1419" stroke-width="2"/>
+  <path d="M119 250c18-15 43-14 57 4l31 41-19 15-28-31v58h-63v-50c0-17 7-28 22-37Z" fill="url(#body)"/>
+  <path d="M154 270c19 16 32 30 43 45" fill="none" stroke="#626b75" stroke-width="14" stroke-linecap="round"/>
+  <path d="M92 249c-12 18-17 41-15 69l6 69h30l-1-104c0-17-6-29-20-34Z" fill="#ef151f"/>
+  <path d="M91 390h32" stroke="#1f252b" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="90" cy="402" r="9" fill="#252b31"/><circle cx="120" cy="402" r="9" fill="#252b31"/>
+</g>
+
+<!-- right person -->
+<g>
+  <circle cx="375" cy="215" r="31" fill="url(#body)" stroke="#0f1419" stroke-width="2"/>
+  <path d="M393 250c-18-15-43-14-57 4l-31 41 19 15 28-31v58h63v-50c0-17-7-28-22-37Z" fill="url(#body)"/>
+  <path d="M358 270c-19 16-32 30-43 45" fill="none" stroke="#626b75" stroke-width="14" stroke-linecap="round"/>
+  <path d="M420 249c12 18 17 41 15 69l-6 69h-30l1-104c0-17 6-29 20-34Z" fill="#ff7b12"/>
+  <path d="M389 390h32" stroke="#1f252b" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="392" cy="402" r="9" fill="#252b31"/><circle cx="422" cy="402" r="9" fill="#252b31"/>
+</g>
+
+<!-- desks -->
+<g filter="url(#shadow)">
+  <rect x="105" y="307" width="129" height="20" rx="7" fill="url(#desk)" stroke="#aeb5bd"/>
+  <rect x="129" y="327" width="91" height="79" rx="4" fill="#343b44"/>
+  <rect x="278" y="307" width="129" height="20" rx="7" fill="url(#desk)" stroke="#aeb5bd"/>
+  <rect x="292" y="327" width="91" height="79" rx="4" fill="#343b44"/>
+</g>
+
+<!-- laptops -->
+<g>
+  <path d="M179 252h39l-19 58h-43z" fill="#20262d" stroke="#7e8791" stroke-width="2"/>
+  <rect x="151" y="306" width="70" height="8" rx="4" fill="#1a1f24"/>
+  <path d="M294 252h39l23 58h-43z" fill="#20262d" stroke="#7e8791" stroke-width="2"/>
+  <rect x="291" y="306" width="70" height="8" rx="4" fill="#1a1f24"/>
+</g>
+</svg>
