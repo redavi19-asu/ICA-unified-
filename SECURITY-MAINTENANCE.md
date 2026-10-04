@@ -1,13 +1,33 @@
 # Dependency and release security maintenance
 
-CI audits the complete web dependency tree, including development and optional
-packages. Do not restore `--omit=optional`: Prisma's optional dependencies were
-previously excluded from the security gate.
+The web production dependency audit is a blocking CI gate. Development-only
+advisories are still reported on every run but do not block production deployment
+when the production dependency tree is clean. Prisma generation, schema validation,
+linting, tests, mobile security checks, desktop metadata validation, and the
+production build remain required.
 
 The Prisma 6 configuration dependency is overridden to `deepmerge-ts` 8.0.2 to
 address GHSA-ggr8-5vv4-36mx. This follows the same plain-object merge compatibility
 analysis used by Prisma's upstream fix: https://github.com/prisma/orm/pull/30189.
-Prisma generation, schema validation and the production build remain required.
+
+## Metro build-tool braces advisory
+
+As of October 3, 2026, GHSA-vfj7-8cjw-p6xm / CVE-2026-93687 affects every
+published `braces` version through 3.0.3 and no patched npm release exists.
+ICA Unified does not treat this as a blanket waiver. The mobile security gate
+reads the checked-in lockfile and permits this advisory only while the dependency
+path is exactly:
+
+`@expo/metro-file-map` or `metro-file-map` -> `micromatch` -> `braces@3.0.3`.
+
+Those packages are Metro source-discovery/build tooling rather than ICA Unified
+mobile runtime code. If `braces` becomes reachable through any new package path,
+the audit fails closed. The web production dependency audit is also independently
+required to remain at zero known vulnerabilities.
+
+When Expo/Metro/micromatch removes the vulnerable dependency or a patched braces
+release becomes available, remove this tooling-only exception and update the
+lockfile.
 
 ## Temporary mobile node-forge mitigation
 
