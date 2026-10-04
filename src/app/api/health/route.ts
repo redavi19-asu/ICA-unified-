@@ -1,25 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import {
+  ensureUnifiedRuntimeSchema,
+  REQUIRED_APPLICATION_TABLES,
+} from '../../../lib/runtime-schema';
 
-const REQUIRED_APPLICATION_TABLES = [
-  'Organization',
-  'User',
-  'Membership',
-  'Course',
-  'Enrollment',
-  'Credential',
-  'Document',
-  'WorkflowDefinition',
-  'OrganizationBillingProfile',
-  'EmailOutbox',
-  'CustomDomain',
-  'UserSecurityState',
-  'RateLimitBucket',
-];
-
-async function checkRequiredTables(db: any, expected: string[]) {
+async function checkRequiredTables(db: any, expected: readonly string[]) {
   if (!db) {
-    return { bound: false, ready: false, missing: expected };
+    return { bound: false, ready: false, missing: [...expected] };
   }
 
   try {
@@ -39,7 +27,7 @@ async function checkRequiredTables(db: any, expected: string[]) {
     };
   } catch (error) {
     console.error('ICA_UNIFIED_D1_SCHEMA_ERROR', error);
-    return { bound: true, ready: false, missing: expected };
+    return { bound: true, ready: false, missing: [...expected] };
   }
 }
 
@@ -47,7 +35,28 @@ export async function GET() {
   try {
     const { env } = getCloudflareContext();
     const bindings = env as any;
-    const applicationDatabase = await checkRequiredTables(bindings.DB, REQUIRED_APPLICATION_TABLES);
+
+    let applicationDatabase = await checkRequiredTables(
+      bindings.DB,
+      REQUIRED_APPLICATION_TABLES,
+    );
+
+    // A healthy Worker binding is authoritative for ICA Unified runtime schema.
+    // If an auxiliary table is missing, create the idempotent runtime schema
+    // through that binding, then verify the full required table set again.
+    if (applicationDatabase.bound && !applicationDatabase.ready) {
+      try {
+        await ensureUnifiedRuntimeSchema();
+      } catch (error) {
+        console.error('ICA_UNIFIED_RUNTIME_SCHEMA_BOOTSTRAP_ERROR', error);
+      }
+
+      applicationDatabase = await checkRequiredTables(
+        bindings.DB,
+        REQUIRED_APPLICATION_TABLES,
+      );
+    }
+
     const serviceReady = applicationDatabase.ready;
 
     if (!serviceReady) {
