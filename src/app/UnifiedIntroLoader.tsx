@@ -25,10 +25,13 @@ export default function UnifiedIntroLoader() {
       <main className={styles.center}>
         <div className={styles.eyebrow}>I Computer Anything</div>
 
-        <div className={styles.brand} aria-label="ICA Unified">
-          <span className={styles.red}>I</span>
-          <span className={styles.orange}>C</span>
-          <span className={styles.gray}>A</span>
+        <div aria-label="ICA Unified" style={{display:'flex',justifyContent:'center'}}>
+          <img
+            src="/ica-unified-icon.svg"
+            alt=""
+            aria-hidden="true"
+            style={{width:'clamp(100px,18vw,150px)',height:'clamp(100px,18vw,150px)',display:'block',objectFit:'contain',borderRadius:30,background:'#fff',padding:6,boxShadow:'0 18px 55px rgba(28,58,78,.14)'}}
+          />
         </div>
 
         <div className={styles.unified}>UNIFIED</div>
