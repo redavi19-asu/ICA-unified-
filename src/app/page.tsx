@@ -325,7 +325,7 @@ export default async function Home() {
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
             <span><i><PlatformIcon type="web" /></i><b>WEB</b><small>LIVE</small></span>
             <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>SIGNING PENDING</small></span>
-            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>NOTARIZATION PENDING</small></span>
+            <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>SIGNED + RELEASED</small></span>
             <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>STORE RELEASE PENDING</small></span>
           </div>
           <div className={styles.heroTrinkets} aria-hidden="true">
