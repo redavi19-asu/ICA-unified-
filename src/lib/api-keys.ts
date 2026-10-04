@@ -9,7 +9,7 @@ const DEFAULT_REQUESTS_PER_MINUTE = 120;
 
 let apiTablesReady: Promise<void> | null = null;
 
-async function ensureApiKeyTables() {
+export async function ensureApiKeyTables() {
   if (!apiTablesReady) {
     apiTablesReady = (async () => {
       await prisma.$executeRawUnsafe(`
