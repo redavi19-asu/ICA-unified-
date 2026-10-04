@@ -22,7 +22,7 @@ function db() {
 
 let securityTablesReady: Promise<void> | null = null;
 
-async function ensureSecurityTables() {
+export async function ensureSecurityTables() {
   if (!securityTablesReady) {
     securityTablesReady = (async () => {
       const database = db();
