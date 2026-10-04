@@ -2,6 +2,11 @@ name: ICA Unified Production Desktop Packages
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "desktop/app-icon.svg"
+      - ".github/workflows/production-desktop-packages.yml"
 
 permissions:
   contents: write
