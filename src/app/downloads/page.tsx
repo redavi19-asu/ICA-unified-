@@ -38,7 +38,7 @@ export default async function DownloadsPage({
   return (
     <main className={styles.shell}>
       <header className={styles.nav}>
-        <Link href="/" className={styles.brand}>ICA <span>UNIFIED</span></Link>
+        <Link href="/" className={styles.brand}><img src="/ica-unified-icon.svg" alt="" aria-hidden="true" style={{width:38,height:38,borderRadius:10,background:'#fff',padding:2,objectFit:'contain',verticalAlign:'middle',marginRight:9}} />ICA <span>UNIFIED</span></Link>
         <div>
           <a href="/workspace">Workspace</a>
           {['OWNER', 'ADMIN'].includes(membership.role) && <a href="/workspace/billing">Billing</a>}
@@ -82,7 +82,7 @@ function AppCard({platform,title,copy,href,action,state}:{platform:string;title:
   return (
     <article className={ready ? styles.cardReady : styles.card}>
       <div className={styles.cardTop}><span>{platform}</span><b>{state}</b></div>
-      <div className={styles.deviceMark}>{platform === 'WEB' ? '◫' : platform === 'WINDOWS' ? '⊞' : platform === 'macOS' ? '◉' : '▯'}</div>
+      <div className={styles.deviceMark}>{platform === 'WEB' ? '◫' : platform === 'WINDOWS' ? '⊞' : platform.startsWith('macOS') ? '◉' : '▯'}</div>
       <h2>{title}</h2>
       <p>{copy}</p>
       {ready ? <a href={href}>{action} →</a> : <span className={styles.disabled}>{state}</span>}
