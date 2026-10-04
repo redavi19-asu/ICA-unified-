@@ -52,7 +52,7 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Build, migrate, and deploy ICA Unified to Cloudflare
+      - name: Build and deploy ICA Unified to Cloudflare
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -66,24 +66,21 @@ jobs:
           echo "Building ICA Unified for Cloudflare..."
           npx opennextjs-cloudflare build
 
-          echo "Applying pending ICA Unified D1 migrations..."
-          npx wrangler d1 migrations apply ica-unified --remote
-
           echo "Deploying ICA Unified..."
           npx wrangler deploy
 
-          echo "Verifying deployed Unified runtime + D1 health..."
+          echo "Verifying Worker-bound D1 schema and Unified health..."
           healthy=0
           for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
             if curl --fail --show-error --silent --max-time 10 https://unified.icomputeranything.com/api/health; then
               healthy=1
               break
             fi
-            echo "Health check attempt $attempt/12 not ready yet; retrying in 5 seconds..."
+            echo "Health/schema verification attempt $attempt/12 not ready yet; retrying in 5 seconds..."
             sleep 5
           done
 
           if [ "$healthy" -ne 1 ]; then
-            echo "Unified runtime health check failed after deployment."
+            echo "Unified runtime schema/health verification failed after deployment."
             exit 1
           fi
