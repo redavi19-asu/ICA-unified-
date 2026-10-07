@@ -5,6 +5,8 @@ import { importJWK, jwtVerify } from 'jose';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { prisma } from './prisma';
 import { createSession, sessionCookie } from './auth';
+import { createPlatformSession } from './platform-auth';
+import { findIcaMasterOwnerByEmail } from './ica-master-auth';
 import { markUserEmailVerified } from './security';
 
 export type SocialProvider = 'google' | 'apple' | 'microsoft';
@@ -313,8 +315,35 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
   if (!subject || !/^\S+@\S+\.\S+$/.test(email)) {
     throw new Error('Identity provider did not return a usable email address.');
   }
-  if (provider === 'google' && claims.email_verified === false) {
+  if (provider === 'google' && claims.email_verified !== true) {
     throw new Error('Google did not verify this email address.');
+  }
+
+  const masterOwner = await findIcaMasterOwnerByEmail(email);
+  if (masterOwner) {
+    const localOnlyHash = await bcrypt.hash(randomToken(48), 12);
+    const admin = await prisma.platformAdmin.upsert({
+      where: { email: masterOwner.email },
+      update: {
+        name: masterOwner.displayName,
+        role: 'MASTER',
+        active: true,
+      },
+      create: {
+        email: masterOwner.email,
+        name: masterOwner.displayName,
+        passwordHash: localOnlyHash,
+        role: 'MASTER',
+        active: true,
+      },
+    });
+
+    await linkIdentity(provider, subject, admin.id, email);
+    const token = await createPlatformSession({
+      platformAdminId: admin.id,
+      role: 'MASTER',
+    });
+    return { kind: 'platform' as const, token };
   }
 
   if (row.purpose === 'register') {
