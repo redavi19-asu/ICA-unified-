@@ -10,7 +10,7 @@ const bodySchema = z.object({
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await readPlatformSession();
-  if (!session || !['SUPER_ADMIN', 'PLATFORM_ADMIN'].includes(session.role)) {
+  if (!session || !['MASTER', 'PLATFORM_ADMIN'].includes(session.role)) {
     return NextResponse.json({ error: 'Platform administrator access required.' }, { status: 403 });
   }
 
