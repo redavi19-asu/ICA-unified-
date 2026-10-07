@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!false && emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
+    if (emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
       return NextResponse.json(
         { error: 'Verify your email before signing in.', code: 'EMAIL_VERIFICATION_REQUIRED' },
         { status: 403 },
@@ -139,12 +139,9 @@ export async function POST(request: Request) {
     }
 
     if (
-      !false &&
-      (
-        membership.status === 'SUSPENDED' ||
+      membership.status === 'SUSPENDED' ||
         membership.organization.status === 'SUSPENDED' ||
         membership.organization.status === 'CANCELLED'
-      )
     ) {
       return NextResponse.json(
         { error: 'This workspace or account is currently unavailable.' },
