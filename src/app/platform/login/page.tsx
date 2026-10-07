@@ -44,8 +44,8 @@ export default function PlatformLoginPage() {
   return (
     <main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:24,background:'#08090b',color:'#f4f0e8'}}>
       <section style={{width:'min(520px,100%)',border:'1px solid #30333a',padding:'clamp(28px,6vw,58px)',clipPath:'polygon(0 0,94% 0,100% 8%,100% 100%,6% 100%,0 92%)'}}>
-        <p style={{letterSpacing:'.2em',fontSize:10,color:'#858a90'}}>ICA UNIFIED / PLATFORM CONTROL</p>
-        <h1 style={{fontSize:'clamp(48px,9vw,86px)',lineHeight:.82,letterSpacing:'-.07em',margin:'18px 0 36px'}}>SUPER<br/>ADMIN</h1>
+        <p style={{letterSpacing:'.2em',fontSize:10,color:'#858a90'}}>ICA UNIFIED / MASTER ACCESS</p>
+        <h1 style={{fontSize:'clamp(48px,9vw,86px)',lineHeight:.82,letterSpacing:'-.07em',margin:'18px 0 36px'}}>ICA<br/>MASTER</h1>
 
         <form onSubmit={submit} style={{display:'grid',gap:18}}>
           <label style={{display:'grid',gap:8,fontSize:11,color:'#90959a'}}>
@@ -78,12 +78,12 @@ export default function PlatformLoginPage() {
         </form>
 
         {error && <p style={{color:'#e58f8f'}}>{error}</p>}
-        <p style={{fontSize:12,color:'#73787d',marginTop:24}}>This entrance is separate from every customer organization workspace.</p>
+        <p style={{fontSize:12,color:'#73787d',marginTop:24}}>Use the ICA Master owner account here. Delegated platform administrators can still use their assigned platform credentials.</p>
         <a
           href="https://icomputeranything.com/master"
           style={{display:'inline-block',marginTop:14,color:'#b9d7ff',fontSize:12,textDecoration:'none'}}
         >
-          ICA Master Owner → Open Super Platform
+          ICA Master Owner → Open Master
         </a>
       </section>
     </main>
