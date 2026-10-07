@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const challenge = await verifyTurnstile(body.turnstileToken, request);
+    const challenge = await verifyTurnstile(body.turnstileToken, request, 'unified_platform_login');
     if (!challenge.success) {
       return NextResponse.json(
         { error: 'Security verification failed. Please try again.' },
