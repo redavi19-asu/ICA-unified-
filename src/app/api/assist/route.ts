@@ -29,7 +29,7 @@ Current navigation and behavior:
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
 - Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
 - Billing: Owner/Admin subscription flow for ICA Unified Professional at $299/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
-- Platform/Super Admin: platform-level company health, diagnostics, analytics and support controls.
+- ICA Master / Platform Control: Master-owner and delegated platform-admin controls for company health, diagnostics, analytics and support.
 
 Help style:
 1. Give the shortest useful answer first.
