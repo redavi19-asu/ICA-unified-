@@ -161,7 +161,7 @@ export default function RegisterPage() {
             <>
               <label>Work email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
               <label>Password<input name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'login' ? 8 : 12} required />{mode === 'register' && <small>Use at least 12 characters.</small>}</label>
-              <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
+              <TurnstileWidget action={mode === 'login' ? 'unified_login' : 'unified_register'} onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
             </>
           )}
           <button disabled={loading || (!socialProfile && Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? (mode === 'login' ? 'VERIFYING…' : 'BUILDING WORKSPACE…') : (mode === 'login' ? 'ENTER UNIFIED →' : 'CREATE ICA UNIFIED →')}</button>
