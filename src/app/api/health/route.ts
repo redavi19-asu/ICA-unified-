@@ -35,6 +35,14 @@ async function reconcileMasterCustomerResidue() {
   ));
 
   for (const membership of accidentalTrials) {
+    try {
+      await prisma.$executeRawUnsafe(
+        'DELETE FROM OrganizationBillingProfile WHERE organizationId = ?',
+        membership.organizationId,
+      );
+    } catch {
+      // Billing profiles are auxiliary; a missing table should not block cleanup.
+    }
     await prisma.organization.delete({
       where: { id: membership.organizationId },
     });
@@ -45,6 +53,14 @@ async function reconcileMasterCustomerResidue() {
   });
 
   if (remainingMemberships === 0) {
+    try {
+      await prisma.$executeRawUnsafe(
+        'DELETE FROM SocialIdentity WHERE userId = ?',
+        localUser.id,
+      );
+    } catch {
+      // Social identity storage is auxiliary and may not exist before first use.
+    }
     await prisma.user.delete({ where: { id: localUser.id } });
   }
 }
