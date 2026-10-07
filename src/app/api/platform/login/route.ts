@@ -74,11 +74,6 @@ export async function POST(request: Request) {
           active: true,
         },
       });
-    } else if (admin?.role === 'SUPER_ADMIN' && localPasswordValid) {
-      admin = await prisma.platformAdmin.update({
-        where: { id: admin.id },
-        data: { role: 'MASTER' },
-      });
     } else if (!localPasswordValid) {
       return NextResponse.json(
         { error: 'Invalid ICA Master or platform administrator credentials.' },
