@@ -108,7 +108,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push(isLogin ? '/workspace' : '/setup/billing');
+    router.push(isLogin && data.platform ? '/platform' : (isLogin ? '/workspace' : '/setup/billing'));
     router.refresh();
   }
 
