@@ -338,7 +338,6 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
       },
     });
 
-    await linkIdentity(provider, subject, admin.id, email);
     const token = await createPlatformSession({
       platformAdminId: admin.id,
       role: 'MASTER',
