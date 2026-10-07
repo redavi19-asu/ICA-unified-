@@ -85,7 +85,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
         ];
     if (platformRole) {
       steps.push({
-        title: platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control',
+        title: platformRole === 'MASTER' ? 'ICA Master' : 'Platform Control',
         body: 'Your platform controls are separate from company operations and are used for diagnostics, support, health, and platform administration.',
       });
     }
@@ -142,7 +142,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
           })}
           {platformRole && (
             <button className="platform" onClick={() => router.push('/platform')}>
-              {platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform'}
+              {platformRole === 'MASTER' ? 'ICA Master' : 'Platform'}
             </button>
           )}
         </nav>
