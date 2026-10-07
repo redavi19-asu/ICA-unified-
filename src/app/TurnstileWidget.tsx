@@ -8,6 +8,7 @@ declare global {
     turnstile?: {
       render: (element: HTMLElement, options: {
         sitekey: string;
+        action?: string;
         callback: (token: string) => void;
         'expired-callback'?: () => void;
         'timeout-callback'?: () => void;
@@ -30,11 +31,12 @@ type Props = {
   onToken: (token: string) => void;
   resetKey?: number;
   theme?: 'light' | 'dark' | 'auto';
+  action?: string;
 };
 
 const SITE_KEY = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAAAEpl_r2LJcL18Dn5').trim();
 
-export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' }: Props) {
+export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark', action = 'unified_auth' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const responseTimerRef = useRef<number | null>(null);
@@ -99,6 +101,7 @@ export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' 
     try {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: SITE_KEY,
+        action,
         callback: (token) => {
           setStatus('verified');
           publishToken(token);
@@ -134,7 +137,7 @@ export default function TurnstileWidget({ onToken, resetKey = 0, theme = 'dark' 
       publishToken('');
       setStatus('error');
     }
-  }, [publishToken, recoverSolvedToken, stopResponsePolling, theme]);
+  }, [action, publishToken, recoverSolvedToken, stopResponsePolling, theme]);
 
   useEffect(() => {
     if (window.turnstile) renderWidget();
