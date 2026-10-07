@@ -41,7 +41,7 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
       return;
     }
 
-    router.push('/workspace');
+    router.push(data.platform ? '/platform' : '/workspace');
     router.refresh();
   }
 
