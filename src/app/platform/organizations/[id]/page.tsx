@@ -136,7 +136,7 @@ export default async function OrganizationDiagnosticsPage(props:{params:Promise<
             </article>
           ))}
         </div>
-        <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:12}}>Passwords are never displayed. Super Admin can only replace a password with a new temporary one.</p>
+        <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:12}}>Passwords are never displayed. ICA Master can replace a password with a new temporary one.</p>
       </section>
 
       <section style={{marginTop:40,display:'grid',gridTemplateColumns:'minmax(0,1.25fr) minmax(280px,.75fr)',gap:28}}>
