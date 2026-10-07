@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = (process.env.PLATFORM_ADMIN_EMAIL || process.env.SUPERADMIN_EMAIL)?.trim().toLowerCase();
-  const password = process.env.PLATFORM_ADMIN_PASSWORD || process.env.SUPERADMIN_PASSWORD;
-  const name = process.env.PLATFORM_ADMIN_NAME?.trim() || process.env.SUPERADMIN_NAME?.trim() || 'ICA Unified Platform Administrator';
+  const email = process.env.PLATFORM_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.PLATFORM_ADMIN_PASSWORD;
+  const name = process.env.PLATFORM_ADMIN_NAME?.trim() || 'ICA Unified Platform Administrator';
 
   if (!email || !password || password.length < 12) {
     throw new Error('Set PLATFORM_ADMIN_EMAIL and a PLATFORM_ADMIN_PASSWORD of at least 12 characters.');
