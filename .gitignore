@@ -33,3 +33,8 @@ tmp/
 # Generated desktop build artifacts
 desktop/src-tauri/target/
 desktop/src-tauri/icons/
+
+# Expo-generated native projects (recreated from mobile/app.json)
+mobile/ios/
+mobile/android/
+mobile/.expo/

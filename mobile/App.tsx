@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Linking,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -55,25 +56,31 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const saved = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (saved) {
-        try {
-          const profile = await getMe(saved);
-          setToken(saved);
-          setMe(profile);
-        } catch {
-          await SecureStore.deleteItemAsync(TOKEN_KEY);
+      try {
+        const saved = await SecureStore.getItemAsync(TOKEN_KEY);
+        if (saved) {
+          try {
+            const profile = await getMe(saved);
+            setToken(saved);
+            setMe(profile);
+          } catch {
+            await SecureStore.deleteItemAsync(TOKEN_KEY);
+          }
         }
+      } catch {
+        // An unavailable keychain must still allow the user to reach sign-in.
+      } finally {
+        setBooting(false);
       }
-      setBooting(false);
     })();
   }, []);
 
   async function onLogin(email: string, password: string, slug: string) {
     const data = await login(email, password, slug);
+    const profile = await getMe(data.token);
     await SecureStore.setItemAsync(TOKEN_KEY, data.token);
     setToken(data.token);
-    setMe(await getMe(data.token));
+    setMe(profile);
   }
 
   async function signOut() {
@@ -151,10 +158,11 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string, s
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.loginPage}>
+      <ScrollView contentContainerStyle={styles.loginPage} keyboardShouldPersistTaps="handled">
         <Text style={styles.kicker}>I COMPUTER ANYTHING</Text>
         <Text style={styles.loginTitle}>ICA{"\n"}UNIFIED</Text>
         <Text style={styles.sub}>Mobile event operations</Text>
+        <Text style={styles.body}>Sign in with your existing organization account. Company ID is optional unless you belong to multiple workspaces.</Text>
         <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="Email" placeholderTextColor="#7890a1" value={email} onChangeText={setEmail} />
         <TextInput style={styles.input} secureTextEntry placeholder="Password" placeholderTextColor="#7890a1" value={password} onChangeText={setPassword} />
         <TextInput style={styles.input} autoCapitalize="none" placeholder="Company ID / slug" placeholderTextColor="#7890a1" value={slug} onChangeText={setSlug} />
@@ -162,7 +170,10 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string, s
         <Pressable style={styles.primaryButton} onPress={submit} disabled={working}>
           {working ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>SIGN IN →</Text>}
         </Pressable>
-      </View>
+        <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/forgot-password')}><Text style={styles.link}>FORGOT PASSWORD</Text></Pressable>
+        <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/privacy')}><Text style={styles.link}>PRIVACY POLICY</Text></Pressable>
+        <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/terms')}><Text style={styles.link}>TERMS OF USE</Text></Pressable>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -357,7 +368,7 @@ function Metric({label,value}:{label:string;value:string}) {
 function Loading() { return <SafeAreaView style={styles.safe}><View style={styles.loading}><ActivityIndicator size="large" color="#5eb8ff" /><Text style={styles.muted}>ICA UNIFIED</Text></View></SafeAreaView>; }
 
 const styles=StyleSheet.create({
-  safe:{flex:1,backgroundColor:'#f8fbfd'},page:{padding:22,paddingBottom:50},loginPage:{flex:1,padding:28,justifyContent:'center',backgroundColor:'#f8fbfd'},shell:{flex:1,padding:22,backgroundColor:'#f8fbfd'},loading:{flex:1,alignItems:'center',justifyContent:'center',gap:16},
+  safe:{flex:1,backgroundColor:'#f8fbfd'},page:{padding:22,paddingBottom:50},loginPage:{flexGrow:1,padding:28,justifyContent:'center',backgroundColor:'#f8fbfd'},shell:{flex:1,padding:22,backgroundColor:'#f8fbfd'},loading:{flex:1,alignItems:'center',justifyContent:'center',gap:16},
   kicker:{color:'#147fd1',fontSize:10,fontWeight:'800',letterSpacing:2},hero:{color:'#10202f',fontSize:58,fontWeight:'900',letterSpacing:-4,marginTop:8},loginTitle:{color:'#10202f',fontSize:72,fontWeight:'900',lineHeight:64,letterSpacing:-5,marginTop:12},sub:{color:'#6c8191',fontSize:16,marginTop:8,marginBottom:24},
   identity:{borderTopWidth:1,borderBottomWidth:1,borderColor:'#d9e5ed',paddingVertical:18,marginBottom:18,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},identityName:{color:'#10202f',fontSize:20,fontWeight:'800'},muted:{color:'#6c8191',fontSize:12,marginTop:5},link:{color:'#147fd1',fontSize:11,fontWeight:'800',letterSpacing:1},
   action:{minHeight:112,borderWidth:1,borderColor:'#d9e5ed',backgroundColor:'#ffffff',padding:19,marginBottom:10,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:18,borderRadius:14},actionPrimary:{borderColor:'#96c9eb',backgroundColor:'#eef8ff'},actionTitle:{color:'#10202f',fontSize:21,fontWeight:'900',marginBottom:7},body:{color:'#6c8191',fontSize:13,lineHeight:19},arrow:{color:'#147fd1',fontSize:28},

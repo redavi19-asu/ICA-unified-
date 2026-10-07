@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/harden-forge.cjs",
     "test:security": "node --test tests/forge-security.test.cjs",
-    "audit:security": "node scripts/audit.cjs"
+    "audit:security": "node scripts/audit.cjs",
+    "ios:prepare": "expo prebuild --platform ios",
+    "ios:export": "expo export --platform ios --output-dir dist"
   },
   "dependencies": {
     "expo": "~57.0.0",
