@@ -157,7 +157,7 @@ const capabilityGroups = [
     icon: 'support',
     summary: 'ICA can support the companies running on the platform.',
     items: [
-      'Platform/Super Admin controls for organization health, diagnostics, account state, analytics, and support actions.',
+      'ICA Master and delegated Platform Admin controls for organization health, diagnostics, account state, analytics, and support actions.',
       'Live Worker/database health signaling on the public ICA system-status globe.',
       'ICA Assist provides in-product guidance using the product’s current workflows, billing, compliance, and integration model.',
       'Owner/Admin access center separates organization operations, billing, integrations, tools, and released client access.',
