@@ -6,7 +6,7 @@ import { prisma } from './prisma';
 import { sessionIsValid } from './security';
 
 const COOKIE_NAME = 'ica_unified_platform_session';
-const PLATFORM_ROLES = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT'] as const;
+const PLATFORM_ROLES = ['MASTER', 'PLATFORM_ADMIN', 'SUPPORT'] as const;
 const PLATFORM_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
@@ -100,7 +100,7 @@ export async function readPlatformSession(): Promise<PlatformSession | null> {
   }
 }
 
-export async function requirePlatformAdmin(allowed: PlatformRole[] = ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'SUPPORT']) {
+export async function requirePlatformAdmin(allowed: PlatformRole[] = ['MASTER', 'PLATFORM_ADMIN', 'SUPPORT']) {
   const session = await readPlatformSession();
   if (!session || !allowed.includes(session.role)) redirect('/platform/login');
 
