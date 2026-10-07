@@ -113,11 +113,11 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
           {platformRole && (
             <>
               <p>PLATFORM</p>
-              <button className="super-admin-nav-button" onClick={() => router.push('/platform')}>
+              <button className="platform-control-nav-button" onClick={() => router.push('/platform')}>
                 ⚡
                 <span>
-                  <strong>{platformRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Platform Control'}</strong>
-                  <small>{platformRole === 'SUPER_ADMIN' ? 'FULL PLATFORM PRIVILEGES' : platformRole.replaceAll('_', ' ')}</small>
+                  <strong>{platformRole === 'MASTER' ? 'ICA Master' : 'Platform Control'}</strong>
+                  <small>{platformRole === 'MASTER' ? 'MASTER OWNER ACCESS' : platformRole.replaceAll('_', ' ')}</small>
                 </span>
               </button>
             </>
