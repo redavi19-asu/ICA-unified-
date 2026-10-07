@@ -47,6 +47,8 @@
     "postcss": "8.5.28",
     "@prisma/config": {
       "deepmerge-ts": "8.0.2"
-    }
+    },
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2"
   }
 }
