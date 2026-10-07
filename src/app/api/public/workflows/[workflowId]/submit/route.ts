@@ -48,7 +48,7 @@ export async function POST(
       );
     }
 
-    const challenge = await verifyTurnstile(parsed.data.turnstileToken, request);
+    const challenge = await verifyTurnstile(parsed.data.turnstileToken, request, 'unified_workflow_submit');
     if (!challenge.success) {
       return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
     }
