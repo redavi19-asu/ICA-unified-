@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const challenge = await verifyTurnstile(body.turnstileToken, request);
+    const challenge = await verifyTurnstile(body.turnstileToken, request, 'unified_register');
     if (!challenge.success) {
       return NextResponse.json(
         { error: challenge.configured ? 'Security verification failed. Please try again.' : 'Security verification is temporarily unavailable.' },
