@@ -8,6 +8,7 @@ export default function LegalFooter() {
         <Link href="/privacy" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Privacy</Link>
         <Link href="/terms" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Terms</Link>
         <Link href="/cancellation" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Cancellation & Billing</Link>
+        <a href="mailto:ryanedavis@gmail.com?subject=ICA%20Unified%20Support" style={{color:'#147fd1',textDecoration:'none',fontWeight:800}}>Support · ryanedavis@gmail.com</a>
       </nav>
     </footer>
   );
