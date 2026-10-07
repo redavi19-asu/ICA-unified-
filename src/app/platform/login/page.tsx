@@ -59,7 +59,7 @@ export default function PlatformLoginPage() {
           </label>
 
           <div style={{padding:'4px 0'}}>
-            <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="dark" />
+            <TurnstileWidget action="unified_platform_login" onToken={setTurnstileToken} resetKey={turnstileReset} theme="dark" />
           </div>
 
           <button
