@@ -50,16 +50,8 @@ export async function POST(request: Request) {
 
     let masterOwner = false;
 
-    if (!localPasswordValid) {
-      const master = await authenticateIcaMasterOwner(body.email, body.password);
-
-      if (!master) {
-        return NextResponse.json(
-          { error: 'Invalid platform administrator credentials.' },
-          { status: 401 }
-        );
-      }
-
+    const master = await authenticateIcaMasterOwner(body.email, body.password);
+    if (master) {
       masterOwner = true;
 
       const localOnlyHash = await bcrypt.hash(
@@ -71,17 +63,27 @@ export async function POST(request: Request) {
         where: { email: master.email },
         update: {
           name: master.displayName,
-          role: 'SUPER_ADMIN',
+          role: 'MASTER',
           active: true,
         },
         create: {
           email: master.email,
           name: master.displayName,
           passwordHash: localOnlyHash,
-          role: 'SUPER_ADMIN',
+          role: 'MASTER',
           active: true,
         },
       });
+    } else if (admin?.role === 'SUPER_ADMIN' && localPasswordValid) {
+      admin = await prisma.platformAdmin.update({
+        where: { id: admin.id },
+        data: { role: 'MASTER' },
+      });
+    } else if (!localPasswordValid) {
+      return NextResponse.json(
+        { error: 'Invalid ICA Master or platform administrator credentials.' },
+        { status: 401 }
+      );
     }
 
     if (!admin || !admin.active) {
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
 
     const token = await createPlatformSession({
       platformAdminId: admin.id,
-      role: masterOwner ? 'SUPER_ADMIN' : admin.role,
+      role: masterOwner ? 'MASTER' : admin.role,
     });
 
     const response = NextResponse.json({
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
       admin: {
         name: admin.name,
         email: admin.email,
-        role: masterOwner ? 'SUPER_ADMIN' : admin.role,
+        role: masterOwner ? 'MASTER' : admin.role,
       },
     });
 
