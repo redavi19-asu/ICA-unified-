@@ -65,7 +65,7 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
           <label>ICA Company ID <span style={{opacity:.55}}>{portalOrganizationName ? '(verified by portal domain)' : '(issued by ICA)'}</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" value={organizationSlug} onChange={(event) => setOrganizationSlug(event.target.value)} readOnly={Boolean(portalOrganizationName)} /></label>
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
-          <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
+          <TurnstileWidget action="unified_login" onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
           <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
           <a className={styles.forgot} href="/forgot-password">Forgot password?</a>
         </form>
