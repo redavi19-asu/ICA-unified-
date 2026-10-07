@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
+import { createPlatformSession, platformSessionCookie } from '../../../../lib/platform-auth';
 import { authenticateIcaMasterOwner } from '../../../../lib/ica-master-auth';
 import { verifyTurnstile } from '../../../../lib/turnstile';
 import { consumeRateLimit, emailVerificationIsEnforced, isUserEmailVerified } from '../../../../lib/security';
@@ -42,6 +43,51 @@ export async function POST(request: Request) {
       );
     }
 
+    const master = await authenticateIcaMasterOwner(body.email, body.password);
+    if (master) {
+      const localOnlyHash = await bcrypt.hash(
+        crypto.randomUUID() + crypto.randomUUID(),
+        12
+      );
+      const admin = await prisma.platformAdmin.upsert({
+        where: { email: master.email },
+        update: {
+          name: master.displayName,
+          role: 'MASTER',
+          active: true,
+        },
+        create: {
+          email: master.email,
+          name: master.displayName,
+          passwordHash: localOnlyHash,
+          role: 'MASTER',
+          active: true,
+        },
+      });
+
+      const token = await createPlatformSession({
+        platformAdminId: admin.id,
+        role: 'MASTER',
+      });
+      const response = NextResponse.json({
+        ok: true,
+        masterOwner: true,
+        platform: true,
+        admin: {
+          name: admin.name,
+          email: admin.email,
+          role: 'MASTER',
+        },
+      });
+      response.cookies.set(
+        platformSessionCookie.name,
+        token,
+        platformSessionCookie.options
+      );
+      response.cookies.delete(sessionCookie.name);
+      return response;
+    }
+
     let user = await prisma.user.findUnique({
       where: { email: body.email },
       include: {
@@ -71,82 +117,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let masterOwner = false;
-
     if (!localPasswordValid) {
-      const master = await authenticateIcaMasterOwner(body.email, body.password);
-
-      if (!master) {
-        return NextResponse.json(
-          { error: 'Invalid company, email, or password.' },
-          { status: 401 }
-        );
-      }
-
-      masterOwner = true;
-
-      let localUser = await prisma.user.findUnique({
-        where: { email: master.email },
-        include: { memberships: { include: { organization: true } } },
-      });
-
-      if (!localUser) {
-        const localOnlyHash = await bcrypt.hash(
-          crypto.randomUUID() + crypto.randomUUID(),
-          12
-        );
-
-        localUser = await prisma.user.create({
-          data: {
-            email: master.email,
-            name: master.displayName,
-            passwordHash: localOnlyHash,
-          },
-          include: { memberships: { include: { organization: true } } },
-        });
-      }
-
-      const organization = await prisma.organization.upsert({
-        where: { slug: 'ica-master' },
-        update: {
-          name: 'ICA Master Workspace',
-          status: 'ACTIVE',
-          plan: 'internal',
-        },
-        create: {
-          name: 'ICA Master Workspace',
-          slug: 'ica-master',
-          status: 'ACTIVE',
-          plan: 'internal',
-        },
-      });
-
-      membership = await prisma.membership.upsert({
-        where: {
-          userId_organizationId: {
-            userId: localUser.id,
-            organizationId: organization.id,
-          },
-        },
-        update: {
-          role: 'OWNER',
-          status: 'ACTIVE',
-          jobTitle: 'ICA Master Owner',
-        },
-        create: {
-          userId: localUser.id,
-          organizationId: organization.id,
-          role: 'OWNER',
-          status: 'ACTIVE',
-          jobTitle: 'ICA Master Owner',
-        },
-        include: { organization: true },
-      });
-
-      user = {
-        ...localUser,
-        memberships: [membership],
-      };
+      return NextResponse.json(
+        { error: 'Invalid company, email, or password.' },
+        { status: 401 }
+      );
     }
 
     if (!user || !membership) {
@@ -156,7 +131,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!masterOwner && emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
+    if (!false && emailVerificationIsEnforced() && !(await isUserEmailVerified(user.id))) {
       return NextResponse.json(
         { error: 'Verify your email before signing in.', code: 'EMAIL_VERIFICATION_REQUIRED' },
         { status: 403 },
@@ -164,7 +139,7 @@ export async function POST(request: Request) {
     }
 
     if (
-      !masterOwner &&
+      !false &&
       (
         membership.status === 'SUSPENDED' ||
         membership.organization.status === 'SUSPENDED' ||
@@ -181,16 +156,17 @@ export async function POST(request: Request) {
       userId: user.id,
       organizationId: membership.organizationId,
       organizationSlug: membership.organization.slug,
-      role: masterOwner ? 'OWNER' : membership.role,
+      role: membership.role,
     });
 
     const response = NextResponse.json({
       ok: true,
-      masterOwner,
+      masterOwner: false,
+      platform: false,
       user: {
         name: user.name,
         email: user.email,
-        role: masterOwner ? 'OWNER' : membership.role,
+        role: membership.role,
       },
       organization: {
         name: membership.organization.name,
