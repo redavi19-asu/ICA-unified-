@@ -583,6 +583,7 @@ export default async function Home() {
       <footer className={styles.footer}>
         <span>ICA Unified</span>
         <span>Built by I Computer Anything</span>
+        <a href="mailto:ryanedavis@gmail.com?subject=ICA%20Unified%20Support">Support · ryanedavis@gmail.com</a>
         <a href="https://icomputeranything.com/" target="_blank" rel="noreferrer">IComputerAnything.com ↗</a>
       </footer>
     </main>
