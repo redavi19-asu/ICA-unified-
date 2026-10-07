@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { finishSocialCallback, sessionCookie, type SocialProvider } from '../../../../../../lib/social-auth';
+import { platformSessionCookie } from '../../../../../../lib/platform-auth';
 
 function validProvider(value: string): value is SocialProvider {
   return value === 'google' || value === 'apple' || value === 'microsoft';
@@ -18,6 +19,13 @@ async function handle(request: Request, context: { params: Promise<{ provider: s
 
     if (result.kind === 'register') {
       return NextResponse.redirect(origin + '/register?social_ticket=' + encodeURIComponent(result.ticket));
+    }
+
+    if (result.kind === 'platform') {
+      const response = NextResponse.redirect(origin + '/platform');
+      response.cookies.set(platformSessionCookie.name, result.token, platformSessionCookie.options);
+      response.cookies.delete(sessionCookie.name);
+      return response;
     }
 
     const response = NextResponse.redirect(origin + '/workspace');
