@@ -16,7 +16,7 @@ export default async function PlatformPage() {
     prisma.organization.count({ where: { status: 'TRIAL' } }),
   ]);
 
-  const canControl = admin.role === 'SUPER_ADMIN' || admin.role === 'PLATFORM_ADMIN';
+  const canControl = admin.role === 'MASTER' || admin.role === 'PLATFORM_ADMIN';
 
   return (
     <main style={{minHeight:'100vh',background:'#090a0c',color:'#f2efe8',padding:'clamp(24px,5vw,70px)'}}>
@@ -27,7 +27,7 @@ export default async function PlatformPage() {
         </div>
         <div style={{display:'grid',gap:10,justifyItems:'end'}}>
           <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
-          <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role}</div>
+          <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role === 'MASTER' ? 'ICA MASTER' : admin.role.replaceAll('_', ' ')}</div>
         </div>
       </header>
 
@@ -62,18 +62,6 @@ export default async function PlatformPage() {
           ))}
         </div>
       </section>
-      {admin.role === 'SUPER_ADMIN' && (
-        <section style={{marginTop:42,borderTop:'1px solid #2d3035',paddingTop:28}}>
-          <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>SECURITY & ACCESS</p>
-          <h2 style={{fontSize:28,margin:'10px 0 18px'}}>Change Super Admin password</h2>
-          <form action="/api/platform/password" method="post" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr)) auto',gap:10,maxWidth:900}}>
-            <input name="currentPassword" type="password" minLength={8} required placeholder="Current password" autoComplete="current-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
-            <input name="newPassword" type="password" minLength={12} required placeholder="New password (12+ characters)" autoComplete="new-password" style={{background:'#0f1115',border:'1px solid #3a3f46',color:'#f2efe8',padding:'11px 12px'}}/>
-            <button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>CHANGE PASSWORD</button>
-          </form>
-          <p style={{fontSize:11,color:'#717980',lineHeight:1.6,marginTop:10}}>Your existing password is never displayed. Changing it requires the current password.</p>
-        </section>
-      )}
 
       <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:34}}>
         <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
