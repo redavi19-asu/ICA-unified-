@@ -16,16 +16,16 @@ export async function POST(
   const { id, userId } = await props.params;
   const session = await readPlatformSession();
 
-  if (!session || session.role !== 'SUPER_ADMIN') {
-    return NextResponse.json({ error: 'Super administrator access required.' }, { status: 403 });
+  if (!session || session.role !== 'MASTER') {
+    return NextResponse.json({ error: 'ICA Master access required.' }, { status: 403 });
   }
 
   const admin = await prisma.platformAdmin.findFirst({
-    where: { id: session.platformAdminId, active: true, role: 'SUPER_ADMIN' },
+    where: { id: session.platformAdminId, active: true, role: 'MASTER' },
   });
 
   if (!admin) {
-    return NextResponse.json({ error: 'Super administrator access required.' }, { status: 403 });
+    return NextResponse.json({ error: 'ICA Master access required.' }, { status: 403 });
   }
 
   const membership = await prisma.membership.findFirst({
@@ -52,7 +52,7 @@ export async function POST(
       data: {
         organizationId: id,
         type: 'PLATFORM_PASSWORD_RESET',
-        message: `Password reset by platform Super Admin for ${membership.user.email}`,
+        message: `Password reset by ICA Master for ${membership.user.email}`,
       },
     });
 
