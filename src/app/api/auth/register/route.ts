@@ -6,6 +6,7 @@ import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
 import { verifyTurnstile } from '../../../../lib/turnstile';
 import { queueEmail } from '../../../../lib/organization-ops';
+import { findIcaMasterOwnerByEmail } from '../../../../lib/ica-master-auth';
 import {
   consumeRateLimit,
   createSecurityToken,
@@ -53,6 +54,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: challenge.configured ? 'Security verification failed. Please try again.' : 'Security verification is temporarily unavailable.' },
         { status: 403 },
+      );
+    }
+
+    const masterOwner = await findIcaMasterOwnerByEmail(body.email);
+    if (masterOwner) {
+      return NextResponse.json(
+        { error: 'This email belongs to ICA Master. Use Sign in with Google or ICA Master / platform access instead of creating a customer organization.' },
+        { status: 409 },
       );
     }
 
