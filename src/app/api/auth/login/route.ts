@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       return response;
     }
 
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: body.email },
       include: {
         memberships: {
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       },
     });
 
-    let membership = user?.memberships[0];
+    const membership = user?.memberships[0];
     const localPasswordValid = Boolean(
       user &&
         user.memberships.length > 0 &&
