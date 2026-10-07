@@ -150,7 +150,7 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
                 {workflow.kind === 'EVENT' ? 'Notes / accessibility needs' : 'Application notes / qualification details'}
                 <textarea name="notes" rows={5} />
               </label>
-              <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
+              <TurnstileWidget action="unified_workflow_submit" onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
               <button
                 disabled={working || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}
               >
