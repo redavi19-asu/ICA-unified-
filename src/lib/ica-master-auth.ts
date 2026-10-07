@@ -65,6 +65,41 @@ async function hashPassword(password: string, saltHex: string) {
   return bytesToHex(new Uint8Array(bits));
 }
 
+export async function findIcaMasterOwnerByEmail(
+  email: string
+): Promise<IcaMasterOwner | null> {
+  const { env } = getCloudflareContext();
+  const db = (env as any).ICA_DB;
+
+  if (!db || !email) return null;
+
+  const row = await db
+    .prepare(
+      `SELECT
+        id,
+        email,
+        display_name,
+        role,
+        status,
+        password_hash,
+        password_salt
+      FROM users
+      WHERE lower(email) = lower(?)
+      LIMIT 1`
+    )
+    .bind(email.trim())
+    .first() as IcaMasterRow | null;
+
+  if (!row || row.role !== 'owner' || row.status !== 'active') return null;
+
+  return {
+    id: row.id,
+    email: row.email,
+    displayName: row.display_name || 'ICA Master Owner',
+    role: 'owner',
+  };
+}
+
 export async function authenticateIcaMasterOwner(
   email: string,
   password: string
