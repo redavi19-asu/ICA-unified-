@@ -1,10 +1,13 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
+type Grant = { email: string; expires_at: number | null };
+interface GrantDatabase { prepare(sql: string): { bind(...values: (string | number)[]): { first(): Promise<unknown> } } }
+
 export async function unifiedFreeAccess(email: string) {
   if (!email) return null;
   try {
     const { env } = getCloudflareContext();
-    const database = (env as any).ICA_DB;
+    const database = (env as unknown as { ICA_DB?: GrantDatabase }).ICA_DB;
     if (!database) return null;
     return readUnifiedEmailGrant(database, email);
   } catch {
@@ -31,9 +34,9 @@ export async function organizationFreeAccess(organizationId: string, userEmail?:
   return null;
 }
 
-export async function readUnifiedEmailGrant(database: any, email: string, now = Date.now()) {
+export async function readUnifiedEmailGrant(database: GrantDatabase, email: string, now = Date.now()) {
   return await database.prepare(`SELECT email, expires_at FROM email_access_grants
       WHERE email=? AND product_slug='ica-unified' AND status='active'
       AND (expires_at IS NULL OR expires_at > ?) LIMIT 1`)
-      .bind(email.trim().toLowerCase(), now).first() as { email: string; expires_at: number | null } | null;
+      .bind(email.trim().toLowerCase(), now).first() as Grant | null;
 }
