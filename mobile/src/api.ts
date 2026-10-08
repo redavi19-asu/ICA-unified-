@@ -23,6 +23,11 @@ export function login(email: string, password: string, organizationSlug: string)
 }
 
 export const logout = (token: string) => request('/api/mobile/auth/logout', token, { method: 'POST' });
+export const requestAccountDeletion = (token: string, confirmation: string) =>
+  request('/api/account/deletion-request', token, {
+    method: 'POST',
+    body: JSON.stringify({ scope: 'ACCOUNT', confirmation }),
+  });
 export const getMe = (token: string) => request('/api/mobile/me', token);
 export const getWallet = (token: string) => request('/api/mobile/wallet', token);
 export const getNotifications = (token: string) => request('/api/mobile/notifications', token);

@@ -42,7 +42,7 @@ External release operations still include:
 ### Remaining release gates
 
 1. Verify native organization sign-in and real-device event QR/member check-in, wallet, and error recovery. Native login currently uses email/password; Google/Apple/Microsoft web sign-in does not yet create a native session.
-2. Add an authenticated account-deletion request flow within the native app. The web route currently accepts cookie sessions, so a policy link alone does not complete this requirement.
+2. Test the native Account + Privacy screen and its authenticated account-deletion request. The route accepts verified native bearer sessions and scopes requests to the current membership. Requests remain pending review; verify the actual deletion fulfillment process and access for expired/suspended accounts before claiming Apple policy compliance.
 3. Verify roles and access for organization accounts and platform-owner routing; the mobile event companion currently targets organization memberships.
 4. Review the six privacy data categories against production providers and SDK manifests, then complete Apple's age rating, content-rights, privacy, and review metadata.
 5. Capture real iPhone/iPad screenshots and an appropriately scoped reviewer account.

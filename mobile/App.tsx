@@ -26,11 +26,12 @@ import {
   getWallet,
   login,
   logout,
+  requestAccountDeletion,
   searchMembers,
   staffCheckIn,
 } from './src/api';
 
-type Screen = 'home' | 'scanner' | 'staffScanner' | 'myqr' | 'members' | 'wallet' | 'notifications';
+type Screen = 'home' | 'scanner' | 'staffScanner' | 'myqr' | 'members' | 'wallet' | 'notifications' | 'account';
 
 type MeData = {
   user: { id: string; name: string; email: string; role: string; status: string; jobTitle?: string | null };
@@ -106,6 +107,7 @@ export default function App() {
   if (screen === 'members') return <MembersScreen token={token} onBack={() => setScreen('home')} />;
   if (screen === 'wallet') return <WalletScreen token={token} onBack={() => setScreen('home')} />;
   if (screen === 'notifications') return <NotificationsScreen token={token} onBack={() => setScreen('home')} />;
+  if (screen === 'account') return <AccountScreen token={token} onBack={() => setScreen('home')} />;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -132,6 +134,7 @@ export default function App() {
         )}
         <Action title="CE + CREDENTIAL WALLET" copy="View earned credits, renewal progress, certificates, and credentials." onPress={() => setScreen('wallet')} />
         <Action title="NOTIFICATIONS" copy="See recent ICA activity and event-related updates." onPress={() => setScreen('notifications')} />
+        <Action title="ACCOUNT + PRIVACY" copy="Read the privacy policy or request deletion of your account." onPress={() => setScreen('account')} />
 
         <View style={styles.cloudNote}>
           <Text style={styles.cloudTitle}>ONE CLOUD RECORD</Text>
@@ -354,6 +357,33 @@ function NotificationsScreen({ token, onBack }: { token: string; onBack: () => v
     {error ? <Text style={styles.error}>{error}</Text> : null}
     {rows.map((item) => <View key={item.id} style={styles.listCard}><Text style={styles.cardTitle}>{item.message}</Text><Text style={styles.muted}>{new Date(item.createdAt).toLocaleString()}</Text></View>)}
   </Shell>;
+}
+
+function AccountScreen({ token, onBack }: { token: string; onBack: () => void }) {
+  const [confirmation, setConfirmation] = useState('');
+  const [working, setWorking] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  async function submit() {
+    setWorking(true); setError('');
+    try {
+      const result = await requestAccountDeletion(token, confirmation);
+      setMessage(result.message || 'Account deletion request submitted for review.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to submit your request. Please try again.'); }
+    finally { setWorking(false); }
+  }
+  return <Shell title="ACCOUNT" onBack={onBack}><ScrollView keyboardShouldPersistTaps="handled">
+    <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/privacy')}><Text style={styles.link}>PRIVACY POLICY</Text></Pressable>
+    <Text style={styles.resultTitle}>Request account deletion</Text>
+    <Text style={styles.body}>This submits a request for review. It does not immediately delete your account or the organization's workspace. Your request applies to your signed-in account in this organization.</Text>
+    {!message ? <>
+      <TextInput style={styles.input} accessibilityLabel="Type DELETE to confirm account deletion request" placeholder="Type DELETE" value={confirmation} onChangeText={setConfirmation} autoCapitalize="characters" autoCorrect={false} editable={!working} />
+      <Pressable style={styles.primaryButton} accessibilityRole="button" disabled={working || confirmation !== 'DELETE'} onPress={() => void submit()}>
+        <Text style={styles.primaryButtonText}>{working ? 'SUBMITTING…' : 'REQUEST ACCOUNT DELETION'}</Text>
+      </Pressable>
+    </> : <Text style={styles.body} accessibilityLiveRegion="polite">{message}</Text>}
+    {error ? <Text style={styles.error} accessibilityLiveRegion="polite">{error}</Text> : null}
+  </ScrollView></Shell>;
 }
 
 function Shell({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {

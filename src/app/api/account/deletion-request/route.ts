@@ -2,6 +2,15 @@ import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { readMobileSession } from '../../../../lib/mobile-auth';
+
+async function deletionMembership(request: Request) {
+  if (request.headers.has('authorization')) {
+    const mobile = await readMobileSession(request);
+    return mobile?.membership || null;
+  }
+  return (await requireSession({ allowUnentitled: true })).membership;
+}
 
 async function ensureTable() {
   await prisma.$executeRawUnsafe(`
@@ -22,8 +31,9 @@ async function ensureTable() {
   `);
 }
 
-export async function GET() {
-  const { membership } = await requireSession({ allowUnentitled: true });
+export async function GET(request: Request) {
+  const membership = await deletionMembership(request);
+  if (!membership) return NextResponse.json({ error: 'Sign in to manage your account.' }, { status: 401 });
   await ensureTable();
   const requests = await prisma.$queryRawUnsafe<Array<{
     id: string;
@@ -43,7 +53,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { membership } = await requireSession({ allowUnentitled: true });
+  const membership = await deletionMembership(request);
+  if (!membership) return NextResponse.json({ error: 'Sign in to manage your account.' }, { status: 401 });
   await ensureTable();
   const body = await request.json().catch(() => ({}));
   const scope = String(body?.scope || '').toUpperCase();
