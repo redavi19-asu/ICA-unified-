@@ -4,6 +4,11 @@ on:
     branches: [main]
     paths: ['.github/workflows/ios-release.yml', 'mobile/app.json', 'mobile/assets/**']
   workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload a signed build to TestFlight (no public release)
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -18,9 +23,60 @@ jobs:
         working-directory: mobile
     env:
       CI: '1'
+      UPLOAD: ${{ inputs.upload == true || (github.event_name == 'push' && contains(github.event.head_commit.message, '[testflight-upload]')) }}
       EXPO_PUBLIC_ICA_API_URL: https://unified.icomputeranything.com
     steps:
       - uses: actions/checkout@v7
+      - name: Check upload credentials
+        if: env.UPLOAD == 'true'
+        env:
+          IOS_DISTRIBUTION_CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_PRIVATE_KEY: ${{ secrets.APP_STORE_PRIVATE_KEY }}
+        run: |
+          missing=0
+          for name in IOS_DISTRIBUTION_CERTIFICATE IOS_DISTRIBUTION_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE APP_STORE_KEY_ID APP_STORE_ISSUER_ID APP_STORE_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then echo "::error::Missing $name"; missing=1; fi
+          done
+          exit "$missing"
+      - name: Prepare distribution signing
+        if: env.UPLOAD == 'true'
+        env:
+          CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          APP_STORE_PRIVATE_KEY: ${{ secrets.APP_STORE_PRIVATE_KEY }}
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified.keychain-db"
+          security set-keychain-settings -lut 21600 "$RUNNER_TEMP/unified.keychain-db"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified.keychain-db"
+          printf '%s' "$CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          security import "$RUNNER_TEMP/distribution.p12" -k "$RUNNER_TEMP/unified.keychain-db" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified.keychain-db"
+          security list-keychains -d user -s "$RUNNER_TEMP/unified.keychain-db" login.keychain-db
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/private_keys"
+          printf '%s' "$PROFILE" | base64 --decode > "$RUNNER_TEMP/unified.mobileprovision"
+          security cms -D -i "$RUNNER_TEMP/unified.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$RUNNER_TEMP/profile.plist")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$RUNNER_TEMP/profile.plist")
+          python3 - <<'PYVALIDATE'
+          import os, plistlib
+          with open(os.environ['RUNNER_TEMP']+'/profile.plist','rb') as source: profile=plistlib.load(source)
+          application_id=profile['Entitlements']['application-identifier']
+          assert application_id == '8RW4WF59X8.com.icomputeranything.icaunified', 'The signing profile must be for ICA Unified, not another ICA product'
+          assert 'ProvisionedDevices' not in profile and not profile.get('ProvisionsAllDevices'), 'An App Store distribution profile is required'
+          PYVALIDATE
+          echo "IOS_PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+          cp "$RUNNER_TEMP/unified.mobileprovision" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          printf '%s' "$APP_STORE_PRIVATE_KEY" > "$HOME/private_keys/AuthKey_$APP_STORE_KEY_ID.p8"
+          chmod 600 "$HOME/private_keys/AuthKey_$APP_STORE_KEY_ID.p8"
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -36,13 +92,39 @@ jobs:
           npx expo prebuild --platform ios
           xcodebuild -version
           xcodebuild -list -workspace ios/ICAUnified.xcworkspace
-      - name: Compile unsigned App Store archive
+      - name: Compile App Store archive
         run: |
-          xcodebuild -workspace ios/ICAUnified.xcworkspace -scheme ICAUnified -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ICAUnified.xcarchive" CURRENT_PROJECT_VERSION="${{ github.run_number }}" CODE_SIGNING_ALLOWED=NO archive
+          set -euo pipefail
+          signing=(CODE_SIGNING_ALLOWED=NO)
+          if [ "$UPLOAD" = "true" ]; then signing=(CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' DEVELOPMENT_TEAM=8RW4WF59X8 "PROVISIONING_PROFILE_SPECIFIER=$IOS_PROFILE_NAME"); fi
+          xcodebuild -workspace ios/ICAUnified.xcworkspace -scheme ICAUnified -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/ICAUnified.xcarchive" CURRENT_PROJECT_VERSION="${{ github.run_number }}" "${signing[@]}" archive
+      - name: Export and upload to Apple
+        if: env.UPLOAD == 'true'
+        env:
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, plistlib
+          options = {'method':'app-store-connect','destination':'export','signingStyle':'manual','teamID':'8RW4WF59X8','signingCertificate':'Apple Distribution','provisioningProfiles':{'com.icomputeranything.icaunified':os.environ['IOS_PROFILE_NAME']}}
+          with open(os.environ['RUNNER_TEMP']+'/ExportOptions.plist','wb') as output: plistlib.dump(options,output)
+          PY
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/ICAUnified.xcarchive" -exportPath "$RUNNER_TEMP/ICAUnifiedExport" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+          IPA="$(find "$RUNNER_TEMP/ICAUnifiedExport" -name '*.ipa' -print -quit)"
+          test -n "$IPA"
+          xcrun altool --validate-app -f "$IPA" -t ios --apiKey "$APP_STORE_KEY_ID" --apiIssuer "$APP_STORE_ISSUER_ID"
+          xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$APP_STORE_KEY_ID" --apiIssuer "$APP_STORE_ISSUER_ID"
       - name: Preserve archive for signing
-        run: ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/ICAUnified.xcarchive" "$RUNNER_TEMP/ICAUnified-unsigned-archive.zip"
+        run: ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/ICAUnified.xcarchive" "$RUNNER_TEMP/ICAUnified-archive.zip"
       - uses: actions/upload-artifact@v7
         with:
-          name: ICA-Unified-unsigned-iOS-archive
-          path: ${{ runner.temp }}/ICAUnified-unsigned-archive.zip
+          name: ICA-Unified-iOS-archive
+          path: ${{ runner.temp }}/ICAUnified-archive.zip
           retention-days: 14
+      - name: Clean signing material
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/unified.keychain-db" || true
+          rm -f "$RUNNER_TEMP/distribution.p12" "$RUNNER_TEMP/unified.mobileprovision" "$RUNNER_TEMP/profile.plist"
+          rm -f "$HOME"/private_keys/AuthKey_*.p8
