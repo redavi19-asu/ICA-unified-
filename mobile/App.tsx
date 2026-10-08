@@ -375,7 +375,7 @@ function AccountScreen({ token, onBack }: { token: string; onBack: () => void })
   return <Shell title="ACCOUNT" onBack={onBack}><ScrollView keyboardShouldPersistTaps="handled">
     <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/privacy')}><Text style={styles.link}>PRIVACY POLICY</Text></Pressable>
     <Text style={styles.resultTitle}>Request account deletion</Text>
-    <Text style={styles.body}>This submits a request for review. It does not immediately delete your account or the organization's workspace. Your request applies to your signed-in account in this organization.</Text>
+    <Text style={styles.body}>This submits a request for review. It does not immediately delete your account or the organization workspace. Your request applies to your signed-in account in this organization.</Text>
     {!message ? <>
       <TextInput style={styles.input} accessibilityLabel="Type DELETE to confirm account deletion request" placeholder="Type DELETE" value={confirmation} onChangeText={setConfirmation} autoCapitalize="characters" autoCorrect={false} editable={!working} />
       <Pressable style={styles.primaryButton} accessibilityRole="button" disabled={working || confirmation !== 'DELETE'} onPress={() => void submit()}>
