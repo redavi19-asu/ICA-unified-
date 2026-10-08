@@ -1,3 +1,4 @@
+import { organizationFreeAccess } from '../../../lib/master-free-access';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { ensureBillingProfile, PROFESSIONAL_PRICE_CENTS } from '../../../lib/organization-ops';
@@ -16,6 +17,8 @@ export default async function BillingSetupPage({
   if (membership.organization.plan === 'internal' || membership.organization.slug === 'ica-master') {
     redirect('/workspace');
   }
+
+  if (await organizationFreeAccess(membership.organizationId, membership.user.email)) redirect('/downloads');
 
   const billing = await ensureBillingProfile(membership.organizationId);
   if (isStripeEntitledStatus(billing?.subscriptionStatus || '')) redirect('/downloads');

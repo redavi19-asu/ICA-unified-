@@ -1,3 +1,4 @@
+import { organizationFreeAccess } from '../../../lib/master-free-access';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { ensureBillingProfile, PROFESSIONAL_PRICE_CENTS } from '../../../lib/organization-ops';
@@ -10,6 +11,7 @@ export default async function BillingPage({
   searchParams: Promise<{ connect?: string }>;
 }) {
   const { membership } = await requireSession();
+  const freeAccess = await organizationFreeAccess(membership.organizationId, membership.user.email);
   const params = await searchParams;
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
@@ -33,6 +35,7 @@ export default async function BillingPage({
   return (
     <main className={styles.shell}>
       <a href="/workspace" className={styles.back}>← WORKSPACE</a>
+      {freeAccess && <p role="status">Comped — no payment required{freeAccess.expires_at ? ` until ${new Date(freeAccess.expires_at).toLocaleDateString()}` : ''}. Existing paid subscriptions can still be managed below.</p>}
       <header className={styles.header}>
         <div>
           <p>ICA UNIFIED / COMPANY SUBSCRIPTION</p>

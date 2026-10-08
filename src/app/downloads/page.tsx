@@ -1,3 +1,4 @@
+import { organizationFreeAccess } from '../../lib/master-free-access';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../lib/auth';
@@ -12,6 +13,7 @@ export default async function DownloadsPage({
 }) {
   const { membership } = await requireSession();
   const params = await searchParams;
+  const freeAccess = await organizationFreeAccess(membership.organizationId, membership.user.email);
   const billing = await ensureBillingProfile(membership.organizationId);
 
   const localTrialExpired =
@@ -19,7 +21,7 @@ export default async function DownloadsPage({
     Boolean(membership.organization.trialEndsAt && membership.organization.trialEndsAt.getTime() <= Date.now());
 
   if (
-    membership.organization.plan !== 'internal' &&
+    !freeAccess && membership.organization.plan !== 'internal' &&
     membership.organization.slug !== 'ica-master'
   ) {
     if (isStripeCheckoutConfigured() && !isStripeEntitledStatus(billing?.subscriptionStatus || '')) {
@@ -33,7 +35,7 @@ export default async function DownloadsPage({
   const windowsUrl = (process.env.ICA_WINDOWS_DOWNLOAD_URL || '').trim();
   const macUrl = (process.env.ICA_MAC_DOWNLOAD_URL || '').trim();
   const macIntelUrl = (process.env.ICA_MAC_INTEL_DOWNLOAD_URL || '').trim();
-  const subscriptionLabel = String(billing?.subscriptionStatus || membership.organization.status).toUpperCase();
+  const subscriptionLabel = freeAccess ? 'COMPED — NO PAYMENT REQUIRED' : String(billing?.subscriptionStatus || membership.organization.status).toUpperCase();
 
   return (
     <main className={styles.shell}>

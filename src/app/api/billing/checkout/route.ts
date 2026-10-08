@@ -1,3 +1,4 @@
+import { organizationFreeAccess } from '../../../../lib/master-free-access';
 import { NextResponse } from 'next/server';
 import { requireSession } from '../../../../lib/auth';
 import { createProfessionalCheckout, isStripeCheckoutConfigured } from '../../../../lib/stripe-billing';
@@ -7,6 +8,10 @@ export async function POST(request: Request) {
 
   if (!['OWNER', 'ADMIN'].includes(membership.role)) {
     return NextResponse.json({ error: 'Only an organization owner or admin can start billing.' }, { status: 403 });
+  }
+
+  if (await organizationFreeAccess(membership.organizationId, membership.user.email)) {
+    return NextResponse.json({ error: 'Comped — no payment required. Open your workspace.', code: 'FREE_ACCESS_ACTIVE' }, { status: 409 });
   }
 
   if (!isStripeCheckoutConfigured()) {

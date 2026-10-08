@@ -70,7 +70,7 @@ export async function readMobileSession(request: Request) {
     membership.organization.status === 'CANCELLED'
   ) return null;
 
-  if (!(await organizationHasUnifiedAccess(membership.organization))) return null;
+  if (!(await organizationHasUnifiedAccess(membership.organization, membership.user.email))) return null;
 
   return { session, membership };
 }

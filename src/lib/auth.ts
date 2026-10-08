@@ -1,3 +1,4 @@
+import { organizationFreeAccess } from './master-free-access';
 import { randomUUID } from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
@@ -120,9 +121,10 @@ export async function organizationHasUnifiedAccess(organization: {
   status: string;
   plan: string;
   trialEndsAt: Date | null;
-}) {
+}, userEmail?: string) {
   if (organization.status === 'SUSPENDED' || organization.status === 'CANCELLED') return false;
   if (organization.plan === 'internal' || organization.slug === 'ica-master') return true;
+  if (await organizationFreeAccess(organization.id, userEmail)) return true;
 
   if (isStripeCheckoutConfigured()) {
     const billing = await getBillingProfile(organization.id);
@@ -166,7 +168,7 @@ export async function requireSession(options: RequireSessionOptions = {}) {
     redirect('/verify-email/pending');
   }
 
-  if (!options.allowUnentitled && !(await organizationHasUnifiedAccess(membership.organization))) {
+  if (!options.allowUnentitled && !(await organizationHasUnifiedAccess(membership.organization, membership.user.email))) {
     const localTrialExpired =
       !isStripeCheckoutConfigured() &&
       membership.organization.status === 'TRIAL' &&
