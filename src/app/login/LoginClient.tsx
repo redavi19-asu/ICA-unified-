@@ -66,7 +66,7 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget action="unified_login" onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
-          <button disabled={loading || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
+          <button disabled={loading || !turnstileToken}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
           <a className={styles.forgot} href="/forgot-password">Forgot password?</a>
         </form>
         {error && <p className={styles.error} role="alert">{error}</p>}

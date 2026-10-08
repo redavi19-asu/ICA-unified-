@@ -152,7 +152,7 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
               </label>
               <TurnstileWidget action="unified_workflow_submit" onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
               <button
-                disabled={working || (Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}
+                disabled={working || !turnstileToken}
               >
                 {working ? 'SUBMITTING…' : workflow.kind === 'EVENT' ? 'SUBMIT REGISTRATION →' : 'SUBMIT APPLICATION →'}
               </button>

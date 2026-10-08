@@ -471,6 +471,7 @@ export async function emitOrganizationEvent(
     try {
       const response = await fetch(endpoint.url, {
         method: 'POST',
+        redirect: 'error', // Never forward signed organization data to a redirected host.
         headers: {
           'Content-Type': 'application/json',
           'X-ICA-Event': eventType,

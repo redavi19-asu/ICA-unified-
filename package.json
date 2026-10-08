@@ -20,25 +20,25 @@
     "@prisma/client": "^6.19.0",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
-    "next": "15.5.24",
+    "maplibre-gl": "6.9.1",
+    "next": "15.5.27",
     "qrcode.react": "^4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "zod": "^3.24.1",
-    "maplibre-gl": "6.9.1"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@opennextjs/cloudflare": "^1.20.6",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^15.5.24",
+    "eslint-config-next": "15.5.27",
     "prisma": "^6.19.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "@eslint/eslintrc": "^3.3.7",
-    "@opennextjs/cloudflare": "^1.20.6",
     "wrangler": "^4.129.0"
   },
   "overrides": {

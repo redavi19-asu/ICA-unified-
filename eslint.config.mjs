@@ -14,6 +14,7 @@ const eslintConfig = [
       '.open-next/**',
       '.wrangler/**',
       'node_modules/**',
+      'public/maplibre/**', // Generated upstream bundles, not application source.
       'next-env.d.ts',
     ],
   },

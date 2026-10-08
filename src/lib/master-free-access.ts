@@ -9,7 +9,7 @@ export async function unifiedFreeAccess(email: string) {
     const { env } = getCloudflareContext();
     const database = (env as unknown as { ICA_DB?: GrantDatabase }).ICA_DB;
     if (!database) return null;
-    return readUnifiedEmailGrant(database, email);
+    return await readUnifiedEmailGrant(database, email);
   } catch {
     console.error('ICA Unified free-access lookup unavailable');
     return null;

@@ -164,7 +164,7 @@ export default function RegisterPage() {
               <TurnstileWidget action={mode === 'login' ? 'unified_login' : 'unified_register'} onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
             </>
           )}
-          <button disabled={loading || (!socialProfile && Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) && !turnstileToken)}>{loading ? (mode === 'login' ? 'VERIFYING…' : 'BUILDING WORKSPACE…') : (mode === 'login' ? 'ENTER UNIFIED →' : 'CREATE ICA UNIFIED →')}</button>
+          <button disabled={loading || (!socialProfile && !turnstileToken)}>{loading ? (mode === 'login' ? 'VERIFYING…' : 'BUILDING WORKSPACE…') : (mode === 'login' ? 'ENTER UNIFIED →' : 'CREATE ICA UNIFIED →')}</button>
           {mode === 'login' && <a className={styles.forgot} href="/forgot-password">Forgot password?</a>}
         </form>
         {error && <p className={styles.error}>{error}</p>}

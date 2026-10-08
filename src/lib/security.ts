@@ -271,9 +271,9 @@ export async function consumeSecurityToken(raw: string, purpose: string) {
   if (!row?.id || !row.userId) return null;
 
   const result = await database.prepare(
-    'UPDATE SecurityToken SET usedAt = ? WHERE id = ? AND usedAt IS NULL',
-  ).bind(now, row.id).run();
+    'UPDATE SecurityToken SET usedAt = ? WHERE id = ? AND usedAt IS NULL AND expiresAt > ?',
+  ).bind(now, row.id, now).run();
 
-  if (!result?.success) return null;
+  if (!result?.success || Number(result.meta?.changes || 0) !== 1) return null;
   return row.userId;
 }
