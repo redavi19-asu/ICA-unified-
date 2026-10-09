@@ -169,7 +169,10 @@ export async function beginSocialAuth(request: Request, provider: SocialProvider
   target.searchParams.set('nonce', nonce);
   target.searchParams.set('code_challenge', createHash('sha256').update(verifier).digest('base64url'));
   target.searchParams.set('code_challenge_method', 'S256');
-  if (provider === 'google') target.searchParams.set('access_type', 'online');
+  if (provider === 'google') {
+    target.searchParams.set('access_type', 'online');
+    target.searchParams.set('prompt', 'select_account');
+  }
   if (provider === 'microsoft') target.searchParams.set('response_mode', 'query');
   if (provider === 'apple') target.searchParams.set('response_mode', 'form_post');
   return target.toString();
