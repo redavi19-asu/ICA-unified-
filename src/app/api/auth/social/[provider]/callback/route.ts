@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { socialCallbackRedirect } from '../../../../../../lib/social-callback-response';
 import { finishSocialCallback, sessionCookie, type SocialProvider } from '../../../../../../lib/social-auth';
 import { platformSessionCookie } from '../../../../../../lib/platform-auth';
 
@@ -11,29 +11,29 @@ async function handle(request: Request, context: { params: Promise<{ provider: s
   const origin = new URL(request.url).origin;
 
   if (!validProvider(params.provider)) {
-    return NextResponse.redirect(origin + '/login?social_error=Unknown+social+provider');
+    return socialCallbackRedirect(origin + '/login?social_error=Unknown+social+provider');
   }
 
   try {
     const result = await finishSocialCallback(request, params.provider);
 
     if (result.kind === 'register') {
-      return NextResponse.redirect(origin + '/register?social_ticket=' + encodeURIComponent(result.ticket));
+      return socialCallbackRedirect(origin + '/register?social_ticket=' + encodeURIComponent(result.ticket));
     }
 
     if (result.kind === 'platform') {
-      const response = NextResponse.redirect(origin + '/platform');
+      const response = socialCallbackRedirect(origin + '/platform');
       response.cookies.set(platformSessionCookie.name, result.token, platformSessionCookie.options);
       response.cookies.delete(sessionCookie.name);
       return response;
     }
 
-    const response = NextResponse.redirect(origin + '/workspace');
+    const response = socialCallbackRedirect(origin + '/workspace');
     response.cookies.set(sessionCookie.name, result.token, sessionCookie.options);
     return response;
   } catch (error) {
     const message = encodeURIComponent(error instanceof Error ? error.message : 'Social sign-in failed.');
-    return NextResponse.redirect(origin + '/login?social_error=' + message);
+    return socialCallbackRedirect(origin + '/login?social_error=' + message);
   }
 }
 
