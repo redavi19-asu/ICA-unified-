@@ -25,8 +25,9 @@ jobs:
       - id: check
         shell: bash
         env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -36,11 +37,11 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
         run: |
-          if [ -n "$WINDOWS_CERTIFICATE" ] && [ -n "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
+          if [ -n "$AZURE_CLIENT_ID" ] && [ -n "$AZURE_CLIENT_SECRET" ] && [ -n "$AZURE_TENANT_ID" ]; then
             echo "windows_ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "windows_ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Windows signing credentials are not configured yet."
+            echo "::notice::Azure Artifact Signing requires AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID."
           fi
           apple_notary_ready=false
           if [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ] && [ -n "$APPLE_API_KEY_P8_BASE64" ]; then
@@ -65,22 +66,61 @@ jobs:
         with:
           node-version: 22
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
-      - name: Import Windows signing certificate
+      - name: Install Azure Artifact Signing CLI
+        shell: pwsh
+        run: |
+          cargo install artifact-signing-cli --locked
+          artifact-signing-cli --help | Out-Null
+          Write-Host "Azure Artifact Signing CLI ready."
+
+      - name: Configure Tauri to sign every Windows binary with Azure Artifact Signing
+        shell: pwsh
+        run: |
+          $config = @{
+            bundle = @{
+              windows = @{
+                signCommand = @{
+                  cmd = "artifact-signing-cli"
+                  args = @(
+                    "-e", "https://eus.codesigning.azure.net",
+                    "-a", "ica-code-signing",
+                    "-c", "ica-control-production",
+                    "-d", "ICA Unified",
+                    "%1"
+                  )
+                }
+              }
+            }
+          } | ConvertTo-Json -Depth 8
+          Set-Content -Path "desktop\src-tauri\tauri.windows.conf.json" -Value $config
+          Write-Host "Tauri Windows signing configured for ica-code-signing / ica-control-production."
+
+      - name: Smoke-test Azure Artifact Signing access
         shell: pwsh
         env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\ica-signing" | Out-Null
-          Set-Content -Path "$env:RUNNER_TEMP\ica-signing\certificate.txt" -Value $env:WINDOWS_CERTIFICATE -NoNewline
-          certutil -decode "$env:RUNNER_TEMP\ica-signing\certificate.txt" "$env:RUNNER_TEMP\ica-signing\certificate.pfx" | Out-Null
-          $securePassword = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
-          $cert = Import-PfxCertificate -FilePath "$env:RUNNER_TEMP\ica-signing\certificate.pfx" -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword | Where-Object { $_.HasPrivateKey } | Select-Object -First 1
-          if (-not $cert) { throw "Windows signing certificate import failed." }
-          $config = @{ bundle = @{ windows = @{ certificateThumbprint = $cert.Thumbprint; digestAlgorithm = "sha256"; timestampUrl = "http://timestamp.digicert.com"; tsp = $false } } } | ConvertTo-Json -Depth 6
-          Set-Content -Path "desktop\src-tauri\tauri.windows.conf.json" -Value $config
+          $probe = Join-Path $env:RUNNER_TEMP "ica-artifact-signing-probe.exe"
+          Copy-Item "$env:SystemRoot\System32\where.exe" $probe -Force
+          Write-Host "Testing Azure Artifact Signing access before the full Windows build..."
+          & artifact-signing-cli -e "https://eus.codesigning.azure.net" -a "ica-code-signing" -c "ica-control-production" -d "ICA Unified Signing Probe" $probe 2>&1 | ForEach-Object { Write-Host $_ }
+          if ($LASTEXITCODE -ne 0) {
+            throw "Azure Artifact Signing probe failed. Review the error above for account/profile/RBAC details."
+          }
+          $signature = Get-AuthenticodeSignature $probe
+          if ($signature.Status -ne "Valid") {
+            throw "Azure Artifact Signing probe did not produce a valid Authenticode signature: $($signature.Status)"
+          }
+          Write-Host "Azure Artifact Signing probe succeeded with a valid Authenticode signature."
+
       - name: Build signed Windows installer
         working-directory: desktop
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           npm ci --no-audit --no-fund
           npm run build
