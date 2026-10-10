@@ -2,6 +2,12 @@ name: ICA Unified Production Desktop Packages
 
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build
+        type: choice
+        default: all
+        options: [all, windows, macos]
   push:
     branches: [main]
     paths:
@@ -58,7 +64,7 @@ jobs:
 
   windows:
     needs: signing-preflight
-    if: needs.signing-preflight.outputs.windows_ready == 'true'
+    if: needs.signing-preflight.outputs.windows_ready == 'true' && (github.event_name != 'workflow_dispatch' || inputs.platform != 'macos')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -80,14 +86,8 @@ jobs:
             bundle = @{
               windows = @{
                 signCommand = @{
-                  cmd = "artifact-signing-cli"
-                  args = @(
-                    "-e", "https://eus.codesigning.azure.net",
-                    "-a", "ica-code-signing",
-                    "-c", "ica-control-production",
-                    "-d", "ICA Unified",
-                    "%1"
-                  )
+                  cmd = "pwsh"
+                  args = @("-NoProfile", "-File", (Join-Path $env:GITHUB_WORKSPACE "scripts\sign-windows.ps1"), "%1")
                 }
               }
             }
@@ -133,6 +133,7 @@ jobs:
           if (-not $installer) { throw "No Windows EXE installer was produced." }
           $signature = Get-AuthenticodeSignature $installer.FullName
           if ($signature.Status -ne "Valid") { throw "Windows signature is not valid: $($signature.Status)" }
+          if ($env:GITHUB_REF -ne "refs/heads/main") { Write-Host "Branch signing validation passed; production release is reserved for main."; exit 0 }
           New-Item -ItemType Directory -Force release | Out-Null
           Copy-Item $installer.FullName "release\ICA-Unified-Windows-x64.exe"
           gh release view unified-desktop-production --repo "$env:GITHUB_REPOSITORY" *> $null
@@ -141,7 +142,7 @@ jobs:
 
   macos:
     needs: signing-preflight
-    if: needs.signing-preflight.outputs.apple_ready == 'true'
+    if: needs.signing-preflight.outputs.apple_ready == 'true' && (github.event_name != 'workflow_dispatch' || inputs.platform != 'windows')
     strategy:
       fail-fast: false
       matrix:
@@ -243,7 +244,7 @@ jobs:
 
   publish-download-urls:
     needs: [signing-preflight, windows, macos]
-    if: always() && (needs.windows.result == 'success' || needs.macos.result == 'success')
+    if: always() && github.ref == 'refs/heads/main' && (needs.windows.result == 'success' || needs.macos.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
