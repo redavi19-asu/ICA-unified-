@@ -28,7 +28,7 @@ function stripePriceId() {
 }
 
 export function isStripeCheckoutConfigured() {
-  return Boolean(stripeSecret() && stripePriceId());
+  return Boolean(stripeSecret() && stripePriceId() && (process.env.STRIPE_WEBHOOK_SECRET || '').trim());
 }
 
 export function isStripeEntitledStatus(status: string) {
