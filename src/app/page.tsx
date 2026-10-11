@@ -149,7 +149,7 @@ const capabilityGroups = [
       'Native ICA Mobile app code for iPhone/iPad with production build profiles and secure token storage.',
       'Member QR, staff QR scanning, event check-in, member lookup, CE/credential wallet, and organization activity notifications.',
       'Web and mobile use the same organization, member, attendance, CE, credential, and permission data.',
-      'Windows/macOS Tauri desktop wrapper is built; signed installer release remains the external release step.',
+      'Signed Windows and macOS desktop installers are released; access uses the same ICA Unified cloud account.',
     ],
   },
   {
@@ -324,7 +324,7 @@ export default async function Home() {
           <p className={styles.microcopy}>No separate LMS account. No duplicate member database. No disconnected admin stack.</p>
           <div className={styles.platformStrip} aria-label="ICA Unified platform availability">
             <span><i><PlatformIcon type="web" /></i><b>WEB</b><small>LIVE</small></span>
-            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>SIGNING PENDING</small></span>
+            <span><i><PlatformIcon type="windows" /></i><b>WINDOWS</b><small>SIGNED + RELEASED</small></span>
             <span><i><PlatformIcon type="mac" /></i><b>MAC</b><small>SIGNED + RELEASED</small></span>
             <span className={styles.mobilePair}><i><PlatformIcon type="iphone" /><PlatformIcon type="ipad" /></i><b>IPHONE + IPAD</b><small>STORE RELEASE PENDING</small></span>
           </div>
@@ -464,7 +464,7 @@ export default async function Home() {
           <div><span>WEB</span><strong>LIVE</strong></div>
           <div><span>IPHONE + IPAD</span><strong>STORE RELEASE PENDING</strong></div>
           <div><span>ANDROID</span><strong>BUILD CONFIG READY</strong></div>
-          <div><span>WINDOWS + MAC</span><strong>SIGNING / RELEASE</strong></div>
+          <div><span>WINDOWS + MAC</span><strong>SIGNED + RELEASED</strong></div>
         </div>
       </section>
 
