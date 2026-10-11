@@ -25,10 +25,12 @@ test('checkout retries reuse a session and cancellation starts a new subscriptio
   context[contextKey] = { env: { DB: { prepare: (sql: string) => wrap(sql) } } };
   const previousSecret = process.env.STRIPE_SECRET_KEY;
   const previousPrice = process.env.STRIPE_PROFESSIONAL_PRICE_ID;
+  const previousWebhook = process.env.STRIPE_WEBHOOK_SECRET;
   const previousFetch = globalThis.fetch;
   const previousNow = Date.now;
   process.env.STRIPE_SECRET_KEY = 'rk_test_synthetic_local_only';
   process.env.STRIPE_PROFESSIONAL_PRICE_ID = 'price_synthetic';
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_synthetic';
   const sessions = new Map<string, { body: string; id: string }>();
   let requests = 0;
   globalThis.fetch = async (_url, init) => {
@@ -61,6 +63,7 @@ test('checkout retries reuse a session and cancellation starts a new subscriptio
     Date.now = previousNow;
     if (previousSecret === undefined) delete process.env.STRIPE_SECRET_KEY; else process.env.STRIPE_SECRET_KEY = previousSecret;
     if (previousPrice === undefined) delete process.env.STRIPE_PROFESSIONAL_PRICE_ID; else process.env.STRIPE_PROFESSIONAL_PRICE_ID = previousPrice;
+    if (previousWebhook === undefined) delete process.env.STRIPE_WEBHOOK_SECRET; else process.env.STRIPE_WEBHOOK_SECRET = previousWebhook;
     delete context[contextKey];
     sqlite.close();
   }
