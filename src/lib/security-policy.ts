@@ -6,6 +6,14 @@ export function accountUnavailable(membershipStatus: string, organizationStatus:
   return membershipStatus === 'SUSPENDED' || ['SUSPENDED', 'CANCELLED'].includes(organizationStatus);
 }
 
+export function signedInLoginDestination(role: string, membershipStatus: string, organizationStatus: string) {
+  if (membershipStatus !== 'ACTIVE') return null;
+  if (['SUSPENDED', 'CANCELLED'].includes(organizationStatus)) {
+    return ['OWNER', 'ADMIN'].includes(role) ? '/setup/billing' : null;
+  }
+  return '/workspace';
+}
+
 export function memberCourseAllowed(role: string, published: boolean, enrolled: boolean) {
   return isAdminRole(role) || (role === 'MEMBER' && published && enrolled);
 }

@@ -4,7 +4,7 @@ The `wrangler.billing-sandbox.jsonc` configuration deploys the existing applicat
 
 Validated October 10, 2026:
 
-- 18 local tests passed, including webhook signature validation against altered bodies, forged signatures, and expired requests.
+- 19 local tests passed, including webhook signature validation against altered bodies, forged signatures, and expired requests.
 - Local OpenNext production build completed successfully.
 - The deployed authenticated checkout route created a Professional test subscription checkout at $299 per month with the configured trial.
 - Checkout completed using Stripe test card 4242; the signed webhook updated the synthetic organization and billing profile to trialing.
@@ -14,4 +14,6 @@ Validated October 10, 2026:
 - Canceling the synthetic test subscription updated both the billing profile and organization to canceled via the real webhook. No real charge was made.
 - Restarting checkout after cancellation returned a new checkout successfully; two retries reused that same session. Relative trial duration keeps retries stable over time, and idempotency keys are scoped to subscription lifecycles.
 
-The test fixture used a synthetic authenticated owner session; this does not certify registration, email delivery, or social sign-in. Full browser return, failed-payment handling, duplicate/out-of-order webhook delivery, other roles, and live-mode credentials/catalog remain to validate.
+The test fixture used a synthetic authenticated owner session; this does not certify registration, email delivery, or social sign-in. Additional browser checks passed: canceled owners return to renewal billing without a redirect loop; a foreign checkout is rejected without assigning it to the organization. Repeated signed cancellation deliveries returned success while preserving cancellation.
+
+An active-subscription browser return, a real failed-payment renewal, out-of-order deliveries, other roles, and live-mode credentials/catalog remain to validate.
