@@ -66,10 +66,10 @@ function digest(value: string) {
 function safeScopes(value: string) {
   try {
     const parsed = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [...DEFAULT_SCOPES];
+    if (!Array.isArray(parsed)) return [];
     return parsed.filter((scope): scope is string => typeof scope === 'string');
   } catch {
-    return [...DEFAULT_SCOPES];
+    return [];
   }
 }
 

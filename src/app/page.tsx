@@ -296,6 +296,7 @@ export default async function Home() {
           <a href="#mobile">Mobile</a>
           <a href="#plans">Plans</a>
           <a href="/downloads">Apps</a>
+          <a href="/developers">Developers</a>
           <a href="/register?mode=login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>

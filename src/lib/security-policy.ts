@@ -36,5 +36,5 @@ export function apiScopeAllowed(scopes: string[], requiredScope: string) {
 
 export function apiKeyExpired(expiresAtMs: number | null | undefined, nowMs = Date.now()) {
   const expiresAt = Number(expiresAtMs || 0);
-  return expiresAt > 0 && expiresAt <= nowMs;
+  return !Number.isFinite(expiresAt) || expiresAt <= 0 || expiresAt <= nowMs;
 }

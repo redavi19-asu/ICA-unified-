@@ -1,23 +1,28 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
-import { z } from 'zod';
-import { prisma } from '../../../../lib/prisma';
-import { createSession, sessionCookie } from '../../../../lib/auth';
-import { verifyTurnstile } from '../../../../lib/turnstile';
-import { queueEmail } from '../../../../lib/organization-ops';
-import { findIcaMasterOwnerByEmail } from '../../../../lib/ica-master-auth';
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { randomBytes, randomUUID } from "crypto";
+import { applicationDatabase } from "../../../../lib/application-database";
+import { z } from "zod";
+import { prisma } from "../../../../lib/prisma";
+import { createSession, sessionCookie } from "../../../../lib/auth";
+import { verifyTurnstile } from "../../../../lib/turnstile";
+import { queueEmail } from "../../../../lib/organization-ops";
+import { findIcaMasterOwnerByEmail } from "../../../../lib/ica-master-auth";
 import {
   consumeRateLimit,
   createSecurityToken,
   emailVerificationIsEnforced,
   ensureUserSecurityState,
-} from '../../../../lib/security';
+} from "../../../../lib/security";
 
 const schema = z.object({
   organizationName: z.string().trim().min(2).max(100),
   name: z.string().trim().min(2).max(100),
-  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .transform((value) => value.toLowerCase()),
   password: z.string().min(12).max(200),
   termsAccepted: z.literal(true),
   turnstileToken: z.string().optional(),
@@ -25,11 +30,13 @@ const schema = z.object({
 
 async function issueCompanyId() {
   for (let attempt = 0; attempt < 12; attempt += 1) {
-    const code = `ica-${randomBytes(3).toString('hex')}`;
-    const existing = await prisma.organization.findUnique({ where: { slug: code } });
+    const code = `ica-${randomBytes(3).toString("hex")}`;
+    const existing = await prisma.organization.findUnique({
+      where: { slug: code },
+    });
     if (!existing) return code;
   }
-  throw new Error('Unable to issue a unique ICA Company ID.');
+  throw new Error("Unable to issue a unique ICA Company ID.");
 }
 
 export async function POST(request: Request) {
@@ -37,22 +44,33 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
 
     const limit = await consumeRateLimit(request, {
-      scope: 'register',
+      scope: "register",
       identity: body.email,
       limit: 5,
       windowSeconds: 60 * 60,
     });
     if (!limit.allowed) {
       return NextResponse.json(
-        { error: 'Too many account creation attempts. Try again later.' },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } },
+        { error: "Too many account creation attempts. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSeconds) },
+        },
       );
     }
 
-    const challenge = await verifyTurnstile(body.turnstileToken, request, 'unified_register');
+    const challenge = await verifyTurnstile(
+      body.turnstileToken,
+      request,
+      "unified_register",
+    );
     if (!challenge.success) {
       return NextResponse.json(
-        { error: challenge.configured ? 'Security verification failed. Please try again.' : 'Security verification is temporarily unavailable.' },
+        {
+          error: challenge.configured
+            ? "Security verification failed. Please try again."
+            : "Security verification is temporarily unavailable.",
+        },
         { status: 403 },
       );
     }
@@ -60,15 +78,23 @@ export async function POST(request: Request) {
     const masterOwner = await findIcaMasterOwnerByEmail(body.email);
     if (masterOwner) {
       return NextResponse.json(
-        { error: 'This email belongs to ICA Master. Use Sign in with Google or ICA Master / platform access instead of creating a customer organization.' },
+        {
+          error:
+            "This email belongs to ICA Master. Use Sign in with Google or ICA Master / platform access instead of creating a customer organization.",
+        },
         { status: 409 },
       );
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email: body.email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email: body.email },
+    });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'That email already has an ICA Unified account. Sign in first.' },
+        {
+          error:
+            "That email already has an ICA Unified account. Sign in first.",
+        },
         { status: 409 },
       );
     }
@@ -79,47 +105,50 @@ export async function POST(request: Request) {
     ]);
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
-    // Organization + owner identity + membership are created in one nested Prisma write.
-    // If any nested record fails, Prisma rolls the mutation back instead of leaving a partial tenant.
-    const organization = await prisma.organization.create({
-      data: {
-        name: body.organizationName,
-        slug: companyId,
-        status: 'TRIAL',
-        plan: 'trial',
-        trialEndsAt,
-        memberships: {
-          create: {
-            role: 'OWNER',
-            status: 'ACTIVE',
-            jobTitle: 'Organization Owner',
-            user: {
-              create: {
-                name: body.name,
-                email: body.email,
-                passwordHash,
-              },
-            },
-          },
-        },
-      },
-      include: {
-        memberships: {
-          include: { user: true },
-          take: 1,
-        },
-      },
+    // Use D1's atomic batch rather than Prisma's unsupported implicit transaction.
+    const database = applicationDatabase();
+    const organizationId = randomUUID(),
+      userId = randomUUID(),
+      membershipId = randomUUID();
+    const now = Date.now();
+    await database.batch([
+      database
+        .prepare(
+          `INSERT INTO User(id,email,name,passwordHash,createdAt,updatedAt) VALUES (?,?,?,?,?,?)`,
+        )
+        .bind(userId, body.email, body.name, passwordHash, now, now),
+      database
+        .prepare(
+          `INSERT INTO Organization(id,name,slug,status,plan,trialEndsAt,createdAt,updatedAt) VALUES (?,?,?,'TRIAL','trial',?,?,?)`,
+        )
+        .bind(
+          organizationId,
+          body.organizationName,
+          companyId,
+          trialEndsAt.getTime(),
+          now,
+          now,
+        ),
+      database
+        .prepare(
+          `INSERT INTO Membership(id,userId,organizationId,role,status,jobTitle,joinedAt) VALUES (?,?,?,'OWNER','ACTIVE','Organization Owner',?)`,
+        )
+        .bind(membershipId, userId, organizationId, now),
+    ]);
+    const organization = await prisma.organization.findUniqueOrThrow({
+      where: { id: organizationId },
+      include: { memberships: { include: { user: true } } },
     });
 
     const membership = organization.memberships[0];
     const user = membership?.user;
-    if (!membership || !user) throw new Error('OWNER_CREATION_FAILED');
+    if (!membership || !user) throw new Error("OWNER_CREATION_FAILED");
 
     await prisma.activity.create({
       data: {
         organizationId: organization.id,
         actorId: user.id,
-        type: 'organization.created',
+        type: "organization.created",
         message: `${body.organizationName} workspace created.`,
       },
     });
@@ -128,15 +157,18 @@ export async function POST(request: Request) {
     await ensureUserSecurityState(user.id, !verificationRequired);
 
     if (verificationRequired) {
-      const verificationToken = await createSecurityToken(user.id, 'EMAIL_VERIFY', 24 * 60 * 60);
+      const verificationToken = await createSecurityToken(
+        user.id,
+        "EMAIL_VERIFY",
+        24 * 60 * 60,
+      );
       const verifyUrl = `${new URL(request.url).origin}/api/auth/verify-email?token=${encodeURIComponent(verificationToken)}`;
       await queueEmail({
         organizationId: organization.id,
         recipient: user.email,
-        templateKey: 'EMAIL_VERIFICATION',
-        subject: 'Verify your ICA Unified email',
-        bodyText:
-          `Hello ${user.name},\n\nVerify your email to activate your ICA Unified trial:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nICA Unified · Built by I Computer Anything`,
+        templateKey: "EMAIL_VERIFICATION",
+        subject: "Verify your ICA Unified email",
+        bodyText: `Hello ${user.name},\n\nVerify your email to activate your ICA Unified trial:\n\n${verifyUrl}\n\nThis link expires in 24 hours.\n\nICA Unified · Built by I Computer Anything`,
       });
     }
 
@@ -162,12 +194,18 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Check the company name, email, 12+ character password, and security verification.' },
+        {
+          error:
+            "Check the company name, email, 12+ character password, and security verification.",
+        },
         { status: 400 },
       );
     }
 
-    console.error('ICA_REGISTER_ERROR', error);
-    return NextResponse.json({ error: 'Unable to create the organization.' }, { status: 500 });
+    console.error("ICA_REGISTER_ERROR", error);
+    return NextResponse.json(
+      { error: "Unable to create the organization." },
+      { status: 500 },
+    );
   }
 }

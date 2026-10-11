@@ -1,5 +1,6 @@
 import { appleSigningConfigured, appleClientSecret } from './apple-client-secret';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
+import { applicationDatabase } from './application-database';
 import bcrypt from 'bcryptjs';
 import { importJWK, jwtVerify } from 'jose';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
@@ -437,46 +438,27 @@ export async function completeSocialRegistration(ticket: string, organizationNam
   const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const generatedPasswordHash = existingUser ? null : await bcrypt.hash(randomToken(48), 12);
 
-  const result = await prisma.$transaction(async (tx) => {
-    const user = existingUser || await tx.user.create({
-      data: {
-        name: profile.displayName,
-        email: profile.email,
-        passwordHash: generatedPasswordHash as string,
-      },
-    });
-
-    const organization = await tx.organization.create({
-      data: {
-        name: safeOrganizationName,
-        slug: companyId,
-        status: 'TRIAL',
-        plan: 'trial',
-        trialEndsAt,
-      },
-    });
-
-    const membership = await tx.membership.create({
-      data: {
-        userId: user.id,
-        organizationId: organization.id,
-        role: 'OWNER',
-        status: 'ACTIVE',
-        jobTitle: 'Organization Owner',
-      },
-    });
-
-    await tx.activity.create({
-      data: {
-        organizationId: organization.id,
-        actorId: user.id,
-        type: 'organization.created',
-        message: organization.name + ' workspace created with ' + profile.provider + ' identity verification.',
-      },
-    });
-
-    return { user, organization, membership };
-  });
+  const db = applicationDatabase();
+  const organizationId = randomUUID();
+  const membershipId = randomUUID();
+  const userId = existingUser?.id || randomUUID();
+  const now = Date.now();
+  await db.batch([
+    db.prepare(`INSERT INTO User(id,email,name,passwordHash,createdAt,updatedAt) VALUES (?,?,?,?,?,?) ON CONFLICT(email) DO NOTHING`)
+      .bind(userId, profile.email, profile.displayName, existingUser?.passwordHash || generatedPasswordHash!, now, now),
+    db.prepare(`INSERT INTO Organization(id,name,slug,status,plan,trialEndsAt,createdAt,updatedAt) VALUES (?,?,?,'TRIAL','trial',?,?,?)`)
+      .bind(organizationId, safeOrganizationName, companyId, trialEndsAt.getTime(), now, now),
+    db.prepare(`INSERT INTO Membership(id,userId,organizationId,role,status,jobTitle,joinedAt)
+      SELECT ?,id,?,'OWNER','ACTIVE','Organization Owner',? FROM User WHERE email=?`)
+      .bind(membershipId, organizationId, now, profile.email),
+    db.prepare(`INSERT INTO Activity(id,organizationId,actorId,type,message,createdAt)
+      SELECT ?,?,id,'organization.created',?,? FROM User WHERE email=?`)
+      .bind(randomUUID(), organizationId, safeOrganizationName + ' workspace created with ' + profile.provider + ' identity verification.', now, profile.email),
+  ]);
+  const user = await prisma.user.findUniqueOrThrow({where:{email:profile.email}});
+  const organization = await prisma.organization.findUniqueOrThrow({where:{id:organizationId}});
+  const membership = await prisma.membership.findUniqueOrThrow({where:{id:membershipId}});
+  const result = {user, organization, membership};
 
   await markUserEmailVerified(result.user.id);
   await linkIdentity(profile.provider, profile.providerSubject, result.user.id, profile.email);
