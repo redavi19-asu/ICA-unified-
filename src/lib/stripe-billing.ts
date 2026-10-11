@@ -92,7 +92,7 @@ export async function createProfessionalCheckout(input: {
   params.set('metadata[organizationName]', input.organizationName);
   params.set('subscription_data[metadata][organizationId]', input.organizationId);
   params.set('subscription_data[metadata][plan]', PROFESSIONAL_PLAN);
-  params.set('subscription_data[trial_end]', String(Math.floor(Date.now() / 1000) + (14 * 24 * 60 * 60)));
+  params.set('subscription_data[trial_period_days]', '14');
   params.set('success_url', `${input.origin}/setup/complete?session_id={CHECKOUT_SESSION_ID}`);
   params.set('cancel_url', `${input.origin}/setup/billing?cancelled=1`);
 
@@ -102,7 +102,9 @@ export async function createProfessionalCheckout(input: {
   const session = await stripeRequest<StripeCheckoutSession>('/v1/checkout/sessions', {
     method: 'POST',
     headers: {
-      'Idempotency-Key': `ica-professional-checkout-${input.organizationId}`,
+      // Retrying an unfinished checkout reuses its session; a canceled
+      // subscription starts a new lifecycle and needs a different key.
+      'Idempotency-Key': `ica-professional-checkout-${input.organizationId}-${billing?.providerSubscriptionId || 'initial'}`,
     },
     body: params,
   });
