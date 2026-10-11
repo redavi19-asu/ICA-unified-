@@ -1,12 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { createProfessionalCheckout } from '../src/lib/stripe-billing';
 
 test('checkout retries reuse a session and cancellation starts a new subscription lifecycle', async () => {
   const sqlite = new DatabaseSync(':memory:');
-  const wrap = (sql: string, values: any[] = []): any => ({
-    bind: (...args: any[]) => wrap(sql, args),
+  type Statement = {
+    bind: (...args: SQLInputValue[]) => Statement;
+    run: () => Promise<{ meta: { changes: number | bigint } }>;
+    raw: () => Promise<unknown[]>;
+  };
+  const wrap = (sql: string, values: SQLInputValue[] = []): Statement => ({
+    bind: (...args: SQLInputValue[]) => wrap(sql, args),
     async run() { return { meta: { changes: sqlite.prepare(sql).run(...values).changes } }; },
     async raw() {
       const statement = sqlite.prepare(sql);
