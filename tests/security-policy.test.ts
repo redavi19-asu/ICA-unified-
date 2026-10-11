@@ -51,6 +51,9 @@ test('API scopes and expiry are enforced', () => {
   assert.equal(apiScopeAllowed(['*'], 'members:write'), true);
   assert.equal(apiKeyExpired(Date.now() - 1), true);
   assert.equal(apiKeyExpired(Date.now() + 60_000), false);
+  assert.equal(apiKeyExpired(0), true);
+  assert.equal(apiKeyExpired(null), true);
+  assert.equal(apiKeyExpired(Number.NaN), true);
 });
 
 test('inactive organizations route owners to renewal without redirecting members into an authentication loop', () => {
