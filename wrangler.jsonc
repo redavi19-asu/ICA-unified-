@@ -10,7 +10,8 @@
 	"vars": {
 		"SOCIAL_GOOGLE_CLIENT_ID": "493512781101-54s3bmlkvdl28oe4umjssknrv53cia5c.apps.googleusercontent.com",
 		"SOCIAL_AUTH_ORIGIN": "https://unified.icomputeranything.com",
-		"STRIPE_PROFESSIONAL_PRICE_ID": "price_1UPQfeGzgYAIrLjGLfBlD5Y0"
+		"STRIPE_PROFESSIONAL_PRICE_ID": "price_1UPQfeGzgYAIrLjGLfBlD5Y0",
+		"STRIPE_BILLING_PORTAL_CONFIGURATION_ID": "bpc_1UPQjSGzgYAIrLjGTll8Lcta"
 	},
 	"d1_databases": [
 		{
