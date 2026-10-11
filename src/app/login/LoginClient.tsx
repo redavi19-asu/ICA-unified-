@@ -62,8 +62,8 @@ export default function LoginClient({ defaultOrganizationSlug = '', portalOrgani
         <h2>{portalOrganizationName ? `Enter ${portalOrganizationName}.` : 'Enter your workspace.'}</h2>
         <SocialAuthButtons purpose="login" organizationSlug={organizationSlug} />
         <form onSubmit={submit}>
-          <label>ICA Company ID <span style={{opacity:.55}}>{portalOrganizationName ? '(verified by portal domain)' : '(issued by ICA)'}</span><input name="organizationSlug" autoComplete="organization" placeholder="ICA-A3F9C2" value={organizationSlug} onChange={(event) => setOrganizationSlug(event.target.value)} readOnly={Boolean(portalOrganizationName)} /></label>
-          <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@company.com" required /></label>
+          <label>ICA Company ID <span style={{opacity:.55}}>{portalOrganizationName ? '(verified by portal domain)' : '(issued by ICA)'}</span><input name="organizationSlug" autoComplete="off" placeholder="ICA-A3F9C2" value={organizationSlug} onChange={(event) => setOrganizationSlug(event.target.value)} readOnly={Boolean(portalOrganizationName)} /></label>
+          <label>Email<input name="email" type="email" autoComplete="username" placeholder="you@company.com" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength={8} required /></label>
           <TurnstileWidget action="unified_login" onToken={setTurnstileToken} resetKey={turnstileReset} theme="light" />
           <button disabled={loading || !turnstileToken}>{loading ? 'VERIFYING…' : 'ENTER UNIFIED →'}</button>
