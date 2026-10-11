@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "ica-unified-billing-sandbox",
+  "compatibility_date": "2026-09-05",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "vars": {
+    "SOCIAL_AUTH_ORIGIN": "https://ica-unified-billing-sandbox.ryanedavis.workers.dev",
+    "STRIPE_PROFESSIONAL_PRICE_ID": "price_1UOEokGzgYAIrLjGvldaPJbx",
+    "APP_BASE_URL": "https://example.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ica-unified-billing-sandbox",
+      "database_id": "02055607-1d8d-404f-bac1-1a9c15de412b"
+    }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "ica-unified-billing-sandbox"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  }
+}

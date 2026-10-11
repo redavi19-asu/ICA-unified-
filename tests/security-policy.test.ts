@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { signedInLoginDestination } from '../src/lib/security-policy';
 import {
   accountUnavailable,
   apiKeyExpired,
@@ -50,4 +51,13 @@ test('API scopes and expiry are enforced', () => {
   assert.equal(apiScopeAllowed(['*'], 'members:write'), true);
   assert.equal(apiKeyExpired(Date.now() - 1), true);
   assert.equal(apiKeyExpired(Date.now() + 60_000), false);
+});
+
+test('inactive organizations route owners to renewal without redirecting members into an authentication loop', () => {
+  assert.equal(signedInLoginDestination('OWNER', 'ACTIVE', 'CANCELLED'), '/setup/billing');
+  assert.equal(signedInLoginDestination('ADMIN', 'ACTIVE', 'SUSPENDED'), '/setup/billing');
+  assert.equal(signedInLoginDestination('MEMBER', 'ACTIVE', 'CANCELLED'), null);
+  assert.equal(signedInLoginDestination('MANAGER', 'ACTIVE', 'SUSPENDED'), null);
+  assert.equal(signedInLoginDestination('OWNER', 'SUSPENDED', 'ACTIVE'), null);
+  assert.equal(signedInLoginDestination('OWNER', 'ACTIVE', 'ACTIVE'), '/workspace');
 });
