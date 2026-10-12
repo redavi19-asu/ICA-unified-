@@ -46,7 +46,7 @@ export async function verifyMemberQrToken(token: string) {
 }
 
 
-export async function readMobileSession(request: Request) {
+export async function readMobileSession(request: Request, options: { allowUnentitled?: boolean } = {}) {
   const header = request.headers.get('authorization') || '';
   if (!header.toLowerCase().startsWith('bearer ')) return null;
 
@@ -66,11 +66,10 @@ export async function readMobileSession(request: Request) {
   if (!membership) return null;
   if (
     membership.status === 'SUSPENDED' ||
-    membership.organization.status === 'SUSPENDED' ||
-    membership.organization.status === 'CANCELLED'
+    (!options.allowUnentitled && (membership.organization.status === 'SUSPENDED' || membership.organization.status === 'CANCELLED'))
   ) return null;
 
-  if (!(await organizationHasUnifiedAccess(membership.organization, membership.user.email))) return null;
+  if (!options.allowUnentitled && !(await organizationHasUnifiedAccess(membership.organization, membership.user.email))) return null;
 
   return { session, membership };
 }

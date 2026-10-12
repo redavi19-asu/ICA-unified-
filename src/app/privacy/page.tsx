@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <p>ICA Unified may use service providers such as Cloudflare for application infrastructure, Stripe for billing and payments, and configured email or media providers. Those providers process information needed to perform their services under their own terms and privacy commitments.</p>
       </LegalSection>
       <LegalSection title="Retention and deletion">
-        <p>Operational data is generally retained while an organization account is active and for a reasonable period afterward for account recovery, security, legal, billing, backup, and audit purposes. An organization may request an export or deletion review through I Computer Anything support. Some information may be retained when required for legal, financial, security, or fraud-prevention reasons.</p>
+        <p>Operational data is generally retained while an organization account is active and for a reasonable period afterward for account recovery, security, legal, billing, backup, and audit purposes. An organization may request an export or deletion review through I Computer Anything support. When an individual account is removed, limited de-identified training/compliance facts are retained for 90 days and then purged by scheduled cleanup. Some separate information may be retained when required for legal, financial, security, or fraud-prevention reasons; those exceptions require review.</p>
       </LegalSection>
       <LegalSection title="Security">
         <p>ICA Unified uses tenant-scoped access controls, signed sessions, rate limiting, bot protection on public authentication paths, password hashing, and other safeguards intended to protect customer information. No internet service can guarantee absolute security.</p>

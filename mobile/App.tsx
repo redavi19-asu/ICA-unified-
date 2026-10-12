@@ -27,6 +27,7 @@ import {
   login,
   logout,
   requestAccountDeletion,
+  getAccountDeletionRequests,
   searchMembers,
   staffCheckIn,
 } from './src/api';
@@ -364,18 +365,36 @@ function AccountScreen({ token, onBack }: { token: string; onBack: () => void })
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [requests, setRequests] = useState<Array<{ id: string; scope: 'ACCOUNT' | 'ORGANIZATION'; status: string; message: string | null; expectedCompletionAt: string | null; receiptUrl: string | null }>>([]);
+  async function refresh() {
+    try { const result = await getAccountDeletionRequests(token); setRequests(result.requests || []); setError(''); }
+    catch { setError('Unable to load request status. Try again.'); }
+  }
+  useEffect(() => {
+    let active = true;
+    void getAccountDeletionRequests(token).then(result => { if (active) setRequests(result.requests || []); setError(''); }).catch(() => { if (active) setError('Unable to load request status. Try again.'); });
+    return () => { active = false; };
+  }, [token]);
   async function submit() {
     setWorking(true); setError('');
     try {
       const result = await requestAccountDeletion(token, confirmation);
       setMessage(result.message || 'Account deletion request submitted for review.');
+      await refresh();
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to submit your request. Please try again.'); }
     finally { setWorking(false); }
   }
   return <Shell title="ACCOUNT" onBack={onBack}><ScrollView keyboardShouldPersistTaps="handled">
     <Pressable onPress={() => void Linking.openURL('https://unified.icomputeranything.com/privacy')}><Text style={styles.link}>PRIVACY POLICY</Text></Pressable>
+    <Pressable onPress={() => void refresh()}><Text style={styles.link}>REFRESH REQUEST STATUS</Text></Pressable>
+    {requests.map(item => <View key={item.id} style={styles.listCard}>
+      <Text style={styles.resultTitle}>{item.scope === 'ORGANIZATION' ? 'Workspace' : 'Account'}: {item.status.replaceAll('_', ' ')}</Text>
+      {item.message && <Text style={styles.body}>{item.message}</Text>}
+      {item.receiptUrl && <Pressable onPress={() => void Linking.openURL(item.receiptUrl!)}><Text style={styles.link}>PRIVATE STATUS / COMPLETION LINK</Text></Pressable>}
+      {item.expectedCompletionAt && <Text style={styles.body}>Expected completion: {new Date(item.expectedCompletionAt).toLocaleDateString()}</Text>}
+    </View>)}
     <Text style={styles.resultTitle}>Request account deletion</Text>
-    <Text style={styles.body}>This submits a request for review. It does not immediately delete your account or the organization workspace. Your request applies to your signed-in account in this organization.</Text>
+    <Text style={styles.body}>This requests account removal from all your Unified workspaces after review. Transfer sole-owner responsibility first. Personal login access is removed when deletion completes; limited de-identified training history is retained for 90 days, then purged automatically. Company billing and workspaces are not silently cancelled or deleted.</Text>
     {!message ? <>
       <TextInput style={styles.input} accessibilityLabel="Type DELETE to confirm account deletion request" placeholder="Type DELETE" value={confirmation} onChangeText={setConfirmation} autoCapitalize="characters" autoCorrect={false} editable={!working} />
       <Pressable style={styles.primaryButton} accessibilityRole="button" disabled={working || confirmation !== 'DELETE'} onPress={() => void submit()}>

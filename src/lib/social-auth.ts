@@ -1,4 +1,5 @@
 import { appleSigningConfigured, appleClientSecret } from './apple-client-secret';
+import { storeAppleRevocationToken } from './apple-token-revocation';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { applicationDatabase } from './application-database';
 import bcrypt from 'bcryptjs';
@@ -234,11 +235,11 @@ async function exchangeCode(request: Request, provider: SocialProvider, code: st
     headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
     body,
   });
-  const payload = await response.json().catch(() => ({})) as { id_token?: string; error?: string; error_description?: string };
+  const payload = await response.json().catch(() => ({})) as { id_token?: string; refresh_token?: string; access_token?: string; error?: string; error_description?: string };
   if (!response.ok || !payload.id_token) {
     throw new Error(payload.error_description || payload.error || 'Identity provider token exchange failed.');
   }
-  return payload.id_token;
+  return { idToken: payload.id_token, revocationToken: payload.refresh_token || payload.access_token || '', tokenType: payload.refresh_token ? 'refresh_token' as const : 'access_token' as const, clientId: config.clientId };
 }
 
 async function issueRegistrationTicket(provider: SocialProvider, subject: string, email: string, displayName: string) {
@@ -254,13 +255,14 @@ async function issueRegistrationTicket(provider: SocialProvider, subject: string
 }
 
 async function linkIdentity(provider: SocialProvider, subject: string, userId: string, email: string) {
-  await db().prepare(
+  const result = await applicationDatabase().prepare(
     'INSERT INTO SocialIdentity ' +
     '(provider, providerSubject, userId, email, createdAt, updatedAt) ' +
-    'VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ' +
+    'SELECT ?, ?, id, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM User WHERE id=? ' +
     'ON CONFLICT(provider, providerSubject) DO UPDATE SET ' +
     'userId = excluded.userId, email = excluded.email, updatedAt = CURRENT_TIMESTAMP'
-  ).bind(provider, subject, userId, email).run();
+  ).bind(provider, subject, email, userId).run();
+  if (!result.meta.changes) throw new Error('The account is no longer available. Start account registration again.');
 }
 
 async function findMembership(userId: string, organizationSlug = '') {
@@ -301,8 +303,8 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
   await db().prepare('DELETE FROM SocialAuthState WHERE stateHash = ?')
     .bind(digest(String(params.state || ''))).run();
 
-  const idToken = await exchangeCode(request, provider, String(params.code || ''), row.codeVerifier);
-  const claims = await verifyIdToken(idToken, provider, row.nonce);
+  const exchange = await exchangeCode(request, provider, String(params.code || ''), row.codeVerifier);
+  const claims = await verifyIdToken(exchange.idToken, provider, row.nonce);
   const subject = String(claims.sub || '').trim();
   const email = String(claims.email || claims.preferred_username || '').trim().toLowerCase();
 
@@ -322,6 +324,8 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
   if (provider === 'google' && claims.email_verified !== true) {
     throw new Error('Google did not verify this email address.');
   }
+
+  if (provider === 'apple' && exchange.revocationToken) await storeAppleRevocationToken(subject, exchange.clientId, exchange.revocationToken, exchange.tokenType);
 
   const masterOwner = await findIcaMasterOwnerByEmail(email);
   if (masterOwner) {

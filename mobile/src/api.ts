@@ -23,10 +23,11 @@ export function login(email: string, password: string, organizationSlug: string)
 }
 
 export const logout = (token: string) => request('/api/mobile/auth/logout', token, { method: 'POST' });
+export const getAccountDeletionRequests = (token: string) => request('/api/account/deletion-request', token);
 export const requestAccountDeletion = (token: string, confirmation: string) =>
   request('/api/account/deletion-request', token, {
     method: 'POST',
-    body: JSON.stringify({ scope: 'ACCOUNT', confirmation }),
+    body: JSON.stringify({ scope: 'ACCOUNT', confirmation, allMemberships: true }),
   });
 export const getMe = (token: string) => request('/api/mobile/me', token);
 export const getWallet = (token: string) => request('/api/mobile/wallet', token);
