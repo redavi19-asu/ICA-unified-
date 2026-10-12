@@ -18,6 +18,7 @@ export const REQUIRED_APPLICATION_TABLES = [
   'ApiCredential',
   'WebhookEndpoint',
   'WebhookDelivery',
+  'WebhookOutbox',
   'CustomDomain',
   'WorkflowDefinition',
   'WorkflowSubmission',

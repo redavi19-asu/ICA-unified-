@@ -16,6 +16,7 @@ const eslintConfig = [
       'node_modules/**',
       'public/maplibre/**', // Generated upstream bundles, not application source.
       'next-env.d.ts',
+      'worker-configuration.d.ts', // Generated Worker runtime types.
     ],
   },
   {
@@ -24,6 +25,8 @@ const eslintConfig = [
   },
   {
     files: [
+      // Isolated SQLite/D1 and Next internals test shims use dynamic adapters.
+      'tests/customer-journey.test.ts',
       'src/lib/prisma.ts',
       'src/lib/ica-master-auth.ts',
       'src/lib/security.ts',

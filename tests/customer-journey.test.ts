@@ -77,6 +77,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
   const register = await import("../src/app/api/auth/register/route");
   const login = await import("../src/app/api/auth/login/route");
   const keys = await import("../src/app/api/integrations/keys/route");
+  const webhookRoutes = await import("../src/app/api/integrations/webhooks/route");
   const members = await import("../src/app/api/v1/members/route");
   const accept = await import("../src/app/api/invitations/accept/route");
   const courses = await import("../src/app/api/learning/courses/route");
@@ -378,6 +379,22 @@ test("customer signs in, integrates members, completes learning, and stays isola
       await emitOrganizationEvent(org.id, "integration.test", { qc: true });
       await emitOrganizationEvent(other.id, "integration.test", { qc: true });
       assert.equal(deliveries, 1);
+      assert.equal((await call(webhookRoutes.GET)).status, 403);
+      const beforeHookCookie = cookie;
+      cookie = ownerCookie;
+      globalThis.fetch = async () => new Response('', { status: 503 });
+      response = await call(webhookRoutes.POST, { action: 'TEST' });
+      assert.equal(response.status, 200);
+      const outcome = await response.json();
+      assert.deepEqual({ sent: outcome.sent, queued: outcome.queued, failed: outcome.failed }, { sent: 0, queued: 1, failed: 0 });
+      response = await call(webhookRoutes.GET);
+      assert.equal(response.status, 200);
+      const hookState = (await response.json()).webhooks;
+      assert.equal(hookState.length, 1);
+      assert.equal(hookState[0].pendingDeliveries, 1);
+      assert.equal(hookState[0].failedDeliveries, 0);
+      assert.notEqual(hookState[0].secret, hook.secret);
+      cookie = beforeHookCookie;
     } finally {
       globalThis.fetch = originalFetch;
     }

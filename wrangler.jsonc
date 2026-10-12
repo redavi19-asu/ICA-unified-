@@ -1,12 +1,13 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	"main": "custom-worker.ts",
 	"name": "ica-unified",
 	"compatibility_date": "2026-09-05",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	"triggers": { "crons": ["*/5 * * * *"] },
 	"vars": {
 		"SOCIAL_GOOGLE_CLIENT_ID": "493512781101-54s3bmlkvdl28oe4umjssknrv53cia5c.apps.googleusercontent.com",
 		"SOCIAL_AUTH_ORIGIN": "https://unified.icomputeranything.com",
