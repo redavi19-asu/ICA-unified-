@@ -22,13 +22,13 @@ Updated October 12, 2026 against the shipped web application. Native source chan
 ## API keys and webhooks
 
 1. As an owner/admin, open Integrations. Create only the required API scopes and set an expiry. Copy the key once to server-side secret storage; never place it in browser/mobile code or URLs.
-2. Use Bearer authentication with `/api/v1/members`. GET reads your organization's members; POST creates an invitation for acceptance. Rotate by creating a replacement, updating your integration and revoking the old key.
+2. Use Bearer authentication. The API now covers members, courses/lessons, learner assignments and progress, credentials, CE transcripts, events/registrations/attendance, and membership applications/status. Existing keys keep their old scopes; create a replacement with the added permissions when needed. Member POST creates an invitation for acceptance; new API writes require an Idempotency-Key and retain replay receipts for 24 hours. Rotate by creating a replacement, updating your integration and revoking the old key.
 3. Add an HTTPS webhook receiver, copy its secret once and choose events. Use **Send test event** to check delivery.
 4. Verify HMAC-SHA256 over the exact raw body against `X-ICA-Signature`; process only after verification and deduplicate `X-ICA-Event-ID`. Return 2xx promptly; requests time out after eight seconds and redirects are rejected.
 5. Saved deliveries retry network errors, timeouts, HTTP 408/425/429 and 5xx, up to eight attempts within 24 hours. The scheduled worker checks every five minutes. Other non-2xx responses stop delivery. Disabled/deleted endpoints are not retried.
-6. Inspect pending/failed counts in Integrations. Repair your receiver and reconcile failed/expired member events through the API. There is no manual retry button. Successful payloads clear immediately; failed payloads expire after seven days. Webhook secrets are separate from Stripe credentials.
+6. Inspect pending/failed counts in Integrations. Repair your receiver and reconcile failed/expired events through the relevant API. Use course.completed, credential.issued, event.attendance.recorded and membership.application.decided for the new workflows. There is no manual retry button. Successful payloads clear immediately; failed payloads expire after seven days. Webhook secrets are separate from Stripe credentials.
 
-See the public [developer guide](https://unified.icomputeranything.com/developers) for request bodies, events, response codes and access rules.
+See the public [developer guide](https://unified.icomputeranything.com/developers) for request bodies, events, pagination, idempotent writes, response codes and access rules. API scopes do not allow invented course completion, paid access or membership approval. Staff review and checkout use the existing workflow.
 
 ## Customer account deletion
 

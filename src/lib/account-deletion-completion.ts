@@ -99,6 +99,7 @@ export async function completeAccountDeletion(input: { requestId: string; review
     ON CONFLICT(scope,principalId) DO UPDATE SET invalidAfter=MAX(PrincipalSessionState.invalidAfter,excluded.invalidAfter),updatedAt=CURRENT_TIMESTAMP`,user.id,now+1,input.requestId,claim));
   statements.push(guarded('DELETE FROM SecurityToken WHERE userId=?',[user.id]));
   statements.push(guarded('DELETE FROM UserSecurityState WHERE userId=?',[user.id]));
+  statements.push(guarded(`DELETE FROM ApiMutation WHERE (credentialId IN (SELECT id FROM ApiCredential WHERE createdById=?) OR EXISTS (SELECT 1 FROM json_tree(responseJson) j WHERE j.type='text' AND j.value=?))`,[user.id,user.id]));
   statements.push(guarded('DELETE FROM ApiCredentialPolicy WHERE credentialId IN (SELECT id FROM ApiCredential WHERE createdById=?)',[user.id]));
   statements.push(guarded('DELETE FROM ApiCredential WHERE createdById=?',[user.id]));
   statements.push(guarded('DELETE FROM EmailOutbox WHERE lower(recipient)=lower(?)',[user.email]));

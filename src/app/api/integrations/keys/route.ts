@@ -3,9 +3,11 @@ import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { createApiKey, listApiKeys, revokeApiKey } from '../../../../lib/api-keys';
 
+import { API_SCOPES } from '../../../../lib/api-contract';
+
 const createSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  scopes: z.array(z.enum(['members:read', 'members:write'])).min(1).max(2).default(['members:read', 'members:write']),
+  scopes: z.array(z.enum(API_SCOPES)).min(1).max(API_SCOPES.length).default(['members:read', 'members:write']),
   expiresInDays: z.number().int().min(1).max(365).default(90),
   requestsPerMinute: z.number().int().min(10).max(1000).default(120),
 });
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
 
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Give this API key a name.' }, { status: 400 });
+    return NextResponse.json({ error: 'Choose a key name, at least one valid permission and an expiry of 1–365 days.' }, { status: 400 });
   }
 
   const key = await createApiKey({

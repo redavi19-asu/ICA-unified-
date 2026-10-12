@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
+import { emitOrganizationEvent } from '../../../../lib/organization-ops';
 import { awardCourseCredits } from '../../../../lib/compliance';
 
 const schema = z.object({
@@ -69,9 +70,9 @@ export async function POST(request: Request) {
       },
     });
 
-    await prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: { attempts: { increment: 1 }, score: quizScore, status: passed ? 'IN_PROGRESS' : enrollment.status },
+    await prisma.enrollment.updateMany({
+      where: { id: enrollment.id, status: { not: 'COMPLETE' } },
+      data: { attempts: { increment: 1 }, score: quizScore, status: enrollment.status === 'COMPLETE' ? 'COMPLETE' : passed ? 'IN_PROGRESS' : enrollment.status },
     });
 
     if (!passed) {
@@ -96,10 +97,10 @@ export async function POST(request: Request) {
 
   const progress = totalLessons ? Math.min(100, Math.round((completedLessons / totalLessons) * 100)) : 0;
   const complete = totalLessons > 0 && completedLessons >= totalLessons;
-  const completedAt = complete ? new Date() : null;
+  const completedAt = complete ? (enrollment.completedAt || new Date()) : null;
 
-  await prisma.enrollment.update({
-    where: { id: enrollment.id },
+  const progressUpdate = await prisma.enrollment.updateMany({
+    where: { id: enrollment.id, status: { not: 'COMPLETE' } },
     data: {
       progress,
       status: complete ? 'COMPLETE' : 'IN_PROGRESS',
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
     },
   });
 
+  const firstCompletion = complete && progressUpdate.count > 0;
   let credentialId: string | null = null;
   let creditAward: { category: string; credits: number } | null = null;
 
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
 
     const credential = await prisma.credential.upsert({
       where: { enrollmentId: enrollment.id },
-      update: { issuedAt: new Date(), expiresAt, status: 'active', name: `${lesson.course.title} Certificate` },
+      update: {},
       create: {
         organizationId: membership.organizationId,
         userId: membership.userId,
@@ -131,6 +133,10 @@ export async function POST(request: Request) {
       },
     });
     credentialId = credential.id;
+    if (firstCompletion) {
+      await emitOrganizationEvent(membership.organizationId, 'course.completed', { courseId: lesson.courseId, userId: membership.userId, enrollmentId: enrollment.id, completedAt });
+      await emitOrganizationEvent(membership.organizationId, 'credential.issued', { credentialId: credential.id, userId: membership.userId, courseId: lesson.courseId });
+    }
 
     try {
       creditAward = await awardCourseCredits(

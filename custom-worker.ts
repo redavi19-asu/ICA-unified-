@@ -4,6 +4,7 @@ import handler from './.open-next/worker.js';
 // @ts-expect-error: generated OpenNext durable-object exports.
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from './.open-next/worker.js';
 import { drainWebhookOutbox, type WebhookDatabase } from './src/lib/webhook-delivery';
+import { API_MUTATION_SCHEMA } from './src/lib/api-mutation-schema';
 import { purgeExpiredTrainingArchives } from './src/lib/training-retention';
 
 export default {
@@ -22,6 +23,10 @@ export default {
     ctx.waitUntil(drainWebhookOutbox(db).then(result => {
       console.log(JSON.stringify({ event: 'webhook-retry', processed: result.processed }));
     }));
+    ctx.waitUntil((async () => {
+      await db.run(API_MUTATION_SCHEMA);
+      await db.run('DELETE FROM ApiMutation WHERE id IN (SELECT id FROM ApiMutation WHERE expiresAt<=? LIMIT 100)', Date.now());
+    })());
     ctx.waitUntil(purgeExpiredTrainingArchives(db).then(result => {
       console.log(JSON.stringify({ event: 'training-retention-expiry', removed: result.removed }));
     }));

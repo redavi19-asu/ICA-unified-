@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { readMobileSession, verifyMemberQrToken } from '../../../../lib/mobile-auth';
+import { emitOrganizationEvent } from '../../../../lib/organization-ops';
 import { prisma } from '../../../../lib/prisma';
 import { recordEventAttendance } from '../../../../lib/compliance';
 import { canUserAttendPaidEvent } from '../../../../lib/workflow-execution';
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
       credentialCode = existing.code;
     } else {
       credentialCode = `ICA-${crypto.randomUUID().split('-')[0].toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-      await prisma.credential.create({
+      const issued = await prisma.credential.create({
         data: {
           organizationId: auth.membership.organizationId,
           userId: member.userId,
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
           status: 'active',
         },
       });
+      await emitOrganizationEvent(auth.membership.organizationId, 'credential.issued', { credentialId: issued.id, userId: member.userId, workflowId: event.id });
     }
   }
 

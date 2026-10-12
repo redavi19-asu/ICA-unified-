@@ -1,3 +1,4 @@
+import { API_MUTATION_SCHEMA } from './api-mutation-schema';
 import { ensureApiKeyTables } from './api-keys';
 import { ensureAccountDeletionTables } from './account-deletion';
 import { ensureTrainingArchive } from './training-retention';
@@ -42,11 +43,14 @@ export const REQUIRED_APPLICATION_TABLES = [
   'PrincipalSessionState',
   'RevokedSession',
   'ApiCredentialPolicy',
+  'ApiMutation',
 ] as const;
 
 let runtimeSchemaReady: Promise<void> | null = null;
 
 async function ensureStandaloneRuntimeTables() {
+  await prisma.$executeRawUnsafe(API_MUTATION_SCHEMA);
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS ApiMutation_expiry ON ApiMutation(expiresAt)');
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS WorkflowDefinition (
       id TEXT PRIMARY KEY NOT NULL,
