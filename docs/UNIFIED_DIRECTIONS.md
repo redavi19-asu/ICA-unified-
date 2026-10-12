@@ -58,7 +58,7 @@ The reviewed deletion flow and webhook recovery are deployed on the web. No real
 
 ## Separate API revenue preparation
 
-Separate API billing is prepared but not active until the owner approves the monthly price/allowance, Stripe price is configured, and paid API access is enabled. The software subscription does not substitute for an API plan once that launch happens. Organization owners/admins manage the API plan in Integrations; employees/developers do not need duplicate company subscriptions for each key.
+Separate API billing is prepared but not active until sandbox end-to-end validation passes and paid API access is enabled. The owner delegated launch pricing: $99/month for 100,000 requests per company per billing period. The matching live Stripe price is configured. The software subscription does not substitute for an API plan once that launch happens. Organization owners/admins manage the API plan in Integrations; employees/developers do not need duplicate company subscriptions for each key.
 
 Usage is counted across all company keys in the API subscription's billing period. Authenticated requests that pass scope/subscription/rate checks count, including idempotency retries and client errors; server failures are released. Requests rejected for missing API access or exhausted allowance do not consume allowance. Webhook deliveries are included in API plan access and are not counted as inbound API requests. No automatic overage fees exist: allowance exhaustion returns 429 until renewal or support arranges a plan change. The minute-rate limit remains separate.
 
