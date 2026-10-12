@@ -602,6 +602,27 @@ export async function expandedApi(request: Request, path: string[]) {
     const workflow = await ownedWorkflow(organizationId, resourceId, kind);
     if (workflow.status !== "ACTIVE")
       throw new ApiProblem(409, "Workflow is not active.");
+    const workflowConfig = JSON.parse(workflow.configJson) as Record<
+      string,
+      unknown
+    >;
+    const configuredPrice = Number(workflowConfig.price || 0),
+      configuredCapacity = Number(workflowConfig.capacity || 0);
+    if (
+      !Number.isFinite(configuredPrice) ||
+      configuredPrice < 0 ||
+      configuredPrice > 100000 ||
+      !Number.isInteger(configuredCapacity) ||
+      configuredCapacity < 0 ||
+      configuredCapacity > 100000 ||
+      (workflowConfig.approvalRequired !== undefined &&
+        typeof workflowConfig.approvalRequired !== "boolean")
+    ) {
+      throw new ApiProblem(
+        409,
+        "Review the workflow pricing, capacity and approval configuration first.",
+      );
+    }
     if (action === "registrations" || action === "submissions") {
       const b = submissionSchema.parse(raw);
       const r = await mutation(
@@ -643,8 +664,8 @@ export async function expandedApi(request: Request, path: string[]) {
           },
         ],
         {
-          sql: "EXISTS (SELECT 1 FROM WorkflowDefinition WHERE id=? AND organizationId=? AND kind=? AND status='ACTIVE')",
-          values: [resourceId, organizationId, kind],
+          sql: "EXISTS (SELECT 1 FROM WorkflowDefinition WHERE id=? AND organizationId=? AND kind=? AND status='ACTIVE' AND configJson=?)",
+          values: [resourceId, organizationId, kind, workflow.configJson],
         },
       );
       const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(

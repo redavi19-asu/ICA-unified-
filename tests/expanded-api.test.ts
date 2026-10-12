@@ -460,6 +460,25 @@ test("expanded API integrates learning, events and applications with scoped isol
       await call("events/" + paid.id + "/attendance", { userId: user.id }),
       201,
     );
+    await prisma.$executeRawUnsafe(
+      "UPDATE WorkflowDefinition SET configJson=? WHERE id=?",
+      JSON.stringify({ price: "invalid" }),
+      paid.id,
+    );
+    assert.equal(
+      (
+        await call("events/" + paid.id + "/registrations", {
+          name: "Invalid pricing",
+          email: "invalid-price@api.example",
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (await call("events/" + paid.id + "/attendance", { userId: user.id }))
+        .status,
+      409,
+    );
     const foreignEvent = "foreign-event";
     await prisma.$executeRawUnsafe(
       "INSERT INTO WorkflowDefinition(id,organizationId,kind,name,status,configJson) VALUES (?,?,'EVENT','Other','ACTIVE','{}')",
