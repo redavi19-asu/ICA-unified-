@@ -12,6 +12,7 @@ test('deletion review stays private, coalesces requests and previews ownership w
   sqlite.exec(readFileSync(new URL('./fixtures/application-schema.sql', import.meta.url), 'utf8'));
   type Value = string | number | null;
   const wrap = (sql: string, values: Value[] = []) => ({
+    sql, values,
     bind(...params: Value[]) { return wrap(sql, params); },
     async run() { return { success: true, meta: { changes: sqlite.prepare(sql).run(...values).changes } }; },
     async raw(options: { columnNames?: boolean } = {}) {
@@ -24,7 +25,21 @@ test('deletion review stays private, coalesces requests and previews ownership w
   });
   const context = globalThis as unknown as Record<symbol, unknown>;
   const contextKey = Symbol.for('__cloudflare-context__');
-  context[contextKey] = { env: { DB: { prepare: (sql: string) => wrap(sql) } } };
+  context[contextKey] = { env: { DB: {
+    prepare: (sql: string) => wrap(sql),
+    async batch(statements: Array<ReturnType<typeof wrap>>) {
+      sqlite.exec('BEGIN IMMEDIATE');
+      try {
+        const results = statements.map(statement => {
+          const rows = sqlite.prepare(statement.sql).all(...statement.values);
+          const changes = Number(sqlite.prepare('SELECT changes() AS n').get()!.n);
+          return { success: true, results: rows, meta: { changes } };
+        });
+        sqlite.exec('COMMIT'); return results;
+      } catch (error) { sqlite.exec('ROLLBACK'); throw error; }
+    },
+  } } };
+  sqlite.exec('PRAGMA foreign_keys=ON');
   const { prisma } = await import('../src/lib/prisma');
   const { ensureUnifiedRuntimeSchema } = await import('../src/lib/runtime-schema');
   await ensureUnifiedRuntimeSchema();
@@ -39,6 +54,9 @@ test('deletion review stays private, coalesces requests and previews ownership w
   const { readMobileSession } = await import('../src/lib/mobile-auth');
   const customer = await import('../src/app/api/account/deletion-request/route');
   const review = await import('../src/app/api/platform/deletion-requests/[id]/route');
+  const tracking = await import('../src/app/api/account/deletion-status/route');
+  const { verifySessionToken } = await import('../src/lib/auth');
+  const { purgeExpiredTrainingArchives } = await import('../src/lib/training-retention');
   type Handler = (request: Request, props: { params: Promise<{ id: string }> }) => Promise<Response>;
   let cookie = '';
   async function call(handler: Handler, id = '', body?: unknown, bearer?: string) {
@@ -97,6 +115,74 @@ test('deletion review stays private, coalesces requests and previews ownership w
     assert.equal((await call(review.POST, ids[0], { status: 'NEEDS_INFORMATION', message: 'Must not reopen a resolved request.', expectedCompletionAt: null })).status, 409);
     assert.equal(await prisma.user.count(), 2);
     assert.equal(await prisma.membership.count(), 3);
+    // Full completion uses only newly created fixture members. A last owner
+    // and unconfirmed legacy requests stay blocked without data mutation.
+    cookie = `ica_unified_session=${ownerToken}`;
+    const ownerRequest = await (await call(customer.POST, '', { scope: 'ACCOUNT', confirmation: 'DELETE', allMemberships: true })).json();
+    cookie = `ica_unified_platform_session=${await createPlatformSession({ platformAdminId: admin.id, role: 'PLATFORM_ADMIN' })}`;
+    await call(review.POST, ownerRequest.requestId, { status: 'UNDER_REVIEW', message: 'Fixture ownership is under review.', expectedCompletionAt: null });
+    const completeBody = (id: string) => ({ action: 'COMPLETE', confirmation: id, identityVerified: true, externalDataReviewed: true });
+    assert.equal((await call(review.POST, ownerRequest.requestId, completeBody(ownerRequest.requestId))).status, 409);
+    assert.ok(await prisma.user.findUnique({ where: { id: owner.id } }));
+    const memberRequestId = (await prisma.$queryRawUnsafe<Array<{id:string}>>("SELECT id FROM AccountDeletionRequest WHERE userId=? AND status='PENDING'", member.id))[0].id;
+    await call(review.POST, memberRequestId, { status: 'UNDER_REVIEW', message: 'Fixture member identity has been reviewed.', expectedCompletionAt: null });
+    assert.equal((await call(review.POST, memberRequestId, completeBody(memberRequestId))).status, 409);
+    const unrelated = await prisma.user.create({ data: { name: 'Unrelated fixture owner', email: 'unrelated@deletion.example', passwordHash: 'fixture-only' } });
+    await prisma.membership.create({ data: { organizationId: foreign.id, userId: unrelated.id, role: 'OWNER', status: 'ACTIVE' } });
+    const course = await prisma.course.create({ data: { organizationId: org.id, title: 'Fixture training' } });
+    const enrollment = await prisma.enrollment.create({ data: { organizationId: org.id, userId: member.id, courseId: course.id, status: 'COMPLETE', progress: 100, score: 90, completedAt: new Date() } });
+    await prisma.credential.create({ data: { organizationId: org.id, userId: member.id, enrollmentId: enrollment.id, name: 'Private fixture member certificate', code: 'private-fixture-code', issuedAt: new Date() } });
+    await prisma.$executeRawUnsafe("INSERT INTO CreditLedger(id,organizationId,userId,sourceType,sourceId,category,credits,description) VALUES (?,?,?,'COURSE',?,'GENERAL',2,?)", 'fixture-credit',org.id,member.id,course.id,'Private fixture member description');
+    await prisma.$executeRawUnsafe("INSERT INTO EmailOutbox(id,organizationId,recipient,subject,templateKey,bodyText) VALUES (?,?,?,'Fixture','fixture','Private fixture text')",'fixture-email',org.id,member.email);
+    await prisma.$executeRawUnsafe("INSERT INTO ApiCredential(id,organizationId,name,keyPrefix,keyHash,createdById) VALUES (?,?,?,'fixture','fixture-hash',?)",'fixture-key',org.id,'Fixture member key',member.id);
+    await prisma.$executeRawUnsafe("INSERT INTO ApiCredentialPolicy(credentialId,scopesJson,expiresAt,requestsPerMinute) VALUES ('fixture-key','[]',?,120)", Date.now()+60000);
+    cookie = `ica_unified_session=${memberToken}`;
+    const confirmationResponse = await call(customer.POST, '', { scope: 'ACCOUNT', confirmation: 'DELETE', allMemberships: true }, memberToken);
+    const memberReceipt = await confirmationResponse.json(); assert.equal(memberReceipt.requestId, memberRequestId);
+    const receipt = new URLSearchParams(new URL(memberReceipt.receiptUrl).hash.slice(1)).get('receipt')!;
+    cookie = `ica_unified_platform_session=${await createPlatformSession({ platformAdminId: admin.id, role: 'PLATFORM_ADMIN' })}`;
+    const completionRace = await Promise.all([call(review.POST, memberRequestId, completeBody(memberRequestId)),call(review.POST, memberRequestId, completeBody(memberRequestId))]);
+    assert.equal(completionRace.filter(response=>response.status===200).length,1);
+    assert.equal(completionRace.filter(response=>response.status===409).length,1);
+    const completed = await completionRace.find(response=>response.status===200)!.json();
+    assert.equal(completed.trainingExpiresAt-completed.completedAt,90*86400000);
+    assert.equal(await prisma.user.findUnique({where:{id:member.id}}),null);
+    assert.equal(await prisma.membership.count({where:{userId:member.id}}),0);
+    assert.equal(await prisma.enrollment.count({where:{userId:member.id}}),0);
+    assert.equal(await verifySessionToken(memberToken),null);
+    for(const table of ['CreditLedger','EmailOutbox','ApiCredential','ApiCredentialPolicy']) assert.equal(sqlite.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get()!.n,0);
+    const archives = await prisma.$queryRawUnsafe<Array<{recordsJson:string}>>('SELECT recordsJson FROM AccountTrainingArchive');
+    assert.equal(archives.length,2);
+    const encoded = archives.map(row=>row.recordsJson).join('');
+    for(const forbidden of [member.id,member.email,member.name,'private-fixture-code','Private fixture member description']) assert.ok(!encoded.includes(forbidden));
+    assert.ok(encoded.includes('"score":90'));
+    assert.ok(await prisma.user.findUnique({where:{id:unrelated.id}}));
+    assert.equal(await prisma.organization.count(),2);
+    assert.equal((await call(review.POST,memberRequestId,completeBody(memberRequestId))).status,200); // Idempotent.
+    cookie='';
+    const receiptState = await (await call(tracking.POST,'',{receipt})).json();
+    assert.equal(receiptState.status,'COMPLETED'); assert.equal(receiptState.trainingExpiresAt,completed.trainingExpiresAt);
+    assert.equal(JSON.stringify(receiptState).includes(member.email),false);
+    assert.equal((await call(tracking.POST,'',{receipt:'invalid'})).status,404);
+    const archiveDb={run:(sql:string,...values:Value[])=>prisma.$executeRawUnsafe(sql,...values)};
+    assert.equal((await purgeExpiredTrainingArchives(archiveDb,completed.trainingExpiresAt-1)).removed,0);
+    assert.equal((await purgeExpiredTrainingArchives(archiveDb,completed.trainingExpiresAt)).removed,2);
+    const oldNow=Date.now;Date.now=()=>completed.trainingExpiresAt+1;
+    try { assert.equal((await (await call(tracking.POST,'',{receipt})).json()).archivedRecordsRemoved,true); }
+    finally { Date.now=oldNow; }
+    // Any database failure rolls back the claim, archive and every delete.
+    const rollbackUser=await prisma.user.create({data:{email:'rollback@deletion.example',name:'Rollback fixture',passwordHash:'fixture-only'}});
+    await prisma.membership.create({data:{organizationId:org.id,userId:rollbackUser.id,role:'MEMBER',status:'ACTIVE'}});
+    const rollbackToken=await createSession({userId:rollbackUser.id,organizationId:org.id,organizationSlug:org.slug,role:'MEMBER'});
+    const rollbackRequest=await (await call(customer.POST,'',{scope:'ACCOUNT',confirmation:'DELETE',allMemberships:true},rollbackToken)).json();
+    cookie=`ica_unified_platform_session=${await createPlatformSession({platformAdminId:admin.id,role:'PLATFORM_ADMIN'})}`;
+    await call(review.POST,rollbackRequest.requestId,{status:'UNDER_REVIEW',message:'Rollback fixture review update.',expectedCompletionAt:null});
+    sqlite.exec(`CREATE TRIGGER fail_fixture_delete BEFORE DELETE ON User WHEN OLD.id='${rollbackUser.id}' BEGIN SELECT RAISE(ABORT,'fixture rollback'); END;`);
+    assert.equal((await call(review.POST,rollbackRequest.requestId,completeBody(rollbackRequest.requestId))).status,503);
+    assert.ok(await prisma.user.findUnique({where:{id:rollbackUser.id}}));
+    assert.ok(await verifySessionToken(rollbackToken));
+    assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM AccountTrainingArchive').get()!.n,0);
+    assert.equal((await prisma.$queryRawUnsafe<Array<{n:number}>>('SELECT COUNT(*) AS n FROM AccountDeletionExecution WHERE requestId=?',rollbackRequest.requestId))[0].n,0);
     await prisma.platformAdmin.update({ where: { id: admin.id }, data: { active: false } });
     assert.equal((await call(review.GET, ids[0])).status, 403);
   } finally { await prisma.$disconnect(); delete context[contextKey]; sqlite.close(); }

@@ -1,5 +1,6 @@
 import { ensureApiKeyTables } from './api-keys';
 import { ensureAccountDeletionTables } from './account-deletion';
+import { ensureTrainingArchive } from './training-retention';
 import { ensureComplianceTables } from './compliance';
 import { ensureOperationsTables } from './organization-ops';
 import { prisma } from './prisma';
@@ -9,6 +10,10 @@ import { ensureWorkflowExecutionTables } from './workflow-execution';
 export const REQUIRED_APPLICATION_TABLES = [
   'AccountDeletionRequest',
   'AccountDeletionReview',
+  'AccountDeletionReceipt',
+  'AccountDeletionExecution',
+  'AccountTrainingArchive',
+  'AppleRevocationToken',
   'Organization',
   'User',
   'Membership',
@@ -94,6 +99,7 @@ export async function ensureUnifiedRuntimeSchema() {
     runtimeSchemaReady = (async () => {
       await ensureOperationsTables();
       await ensureAccountDeletionTables();
+      await ensureTrainingArchive({ run: (sql, ...values) => prisma.$executeRawUnsafe(sql, ...values) });
       await ensureApiKeyTables();
       await ensureSecurityTables();
       await ensureComplianceTables();

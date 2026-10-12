@@ -13,6 +13,7 @@ export const TRAINING_ARCHIVE_SCHEMA = `CREATE TABLE IF NOT EXISTS AccountTraini
 export const TRAINING_ARCHIVE_EXPIRY_INDEX = 'CREATE INDEX IF NOT EXISTS AccountTrainingArchive_expiry ON AccountTrainingArchive (expiresAt)';
 
 export type TrainingSnapshot = {
+  acknowledgments?: Array<{ documentId: string; acknowledgedAt: string | null }>;
   courses: Array<{ courseId: string; status: string; progress: number; score: number | null; completedAt: string | null }>;
   credentials: Array<{ courseId: string | null; status: string; issuedAt: string | null; expiresAt: string | null }>;
   credits: Array<{ sourceType: string; sourceId: string; credits: number; awardedAt: string }>;
@@ -36,6 +37,7 @@ function number(value: number, min: number, max: number) {
 export function serializeTrainingSnapshot(input: TrainingSnapshot) {
   const records = {
     version: 1,
+    acknowledgments: (input.acknowledgments || []).map(row => ({ documentId: identifier(row.documentId), acknowledgedAt: date(row.acknowledgedAt) })),
     courses: input.courses.map(row => ({
       courseId: identifier(row.courseId),
       status: ['NOT_STARTED','IN_PROGRESS','COMPLETE'].includes(row.status) ? row.status : 'OTHER',

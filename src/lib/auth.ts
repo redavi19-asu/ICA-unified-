@@ -89,7 +89,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       principalId: payload.userId,
       issuedAtMs: payload.issuedAtMs,
     });
-    if (!valid) return null;
+    if (!valid || !(await prisma.user.findUnique({ where: { id: payload.userId }, select: { id: true } }))) return null;
 
     return {
       userId: payload.userId,

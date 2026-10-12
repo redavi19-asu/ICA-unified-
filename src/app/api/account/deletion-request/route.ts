@@ -4,6 +4,7 @@ import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import { readMobileSession } from '../../../../lib/mobile-auth';
 import { ensureAccountDeletionTables } from '../../../../lib/account-deletion';
+import { recordDeletionReceipt, deletionReceiptToken, deletionReceiptHash } from '../../../../lib/account-deletion-receipt';
 
 async function deletionMembership(request: Request) {
   if (request.headers.has('authorization')) {
@@ -26,17 +27,25 @@ export async function GET(request: Request) {
     resolvedAt: string | null;
     message: string | null;
     expectedCompletionAt: string | null;
+    allMembershipsConfirmedAt: number | null;
+    tokenHash: string | null;
   }>>(
-    `SELECT r.id, r.scope, CASE WHEN r.status = 'PENDING' THEN COALESCE(review.status,r.status) ELSE r.status END AS status, r.requestedAt, r.resolvedAt, review.message, review.expectedCompletionAt
+    `SELECT r.id, r.scope, CASE WHEN r.status = 'PENDING' THEN COALESCE(review.status,r.status) ELSE r.status END AS status, r.requestedAt, r.resolvedAt, review.message, review.expectedCompletionAt, receipt.allMembershipsConfirmedAt, receipt.tokenHash
      FROM AccountDeletionRequest r
      LEFT JOIN AccountDeletionReview review ON review.requestId = r.id
+     LEFT JOIN AccountDeletionReceipt receipt ON receipt.requestId=r.id
      WHERE r.organizationId = ? AND r.userId = ?
      ORDER BY r.requestedAt DESC
      LIMIT 20`,
     membership.organizationId,
     membership.userId,
   );
-  return NextResponse.json({ requests });
+  const membershipCount = await prisma.membership.count({ where: { userId: membership.userId } });
+  return NextResponse.json({ membershipCount, requests: requests.map(({ tokenHash, allMembershipsConfirmedAt, ...row }) => {
+    const token = deletionReceiptToken(row.id, membership.userId);
+    return { ...row, confirmationRequired: row.scope === 'ACCOUNT' && !allMembershipsConfirmedAt,
+      receiptUrl: tokenHash === deletionReceiptHash(token) ? `${new URL(request.url).origin}/account-deletion/status#receipt=${token}` : null };
+  }) });
 }
 
 export async function POST(request: Request) {
@@ -64,7 +73,8 @@ export async function POST(request: Request) {
     scope,
   );
   if (existing[0]) {
-    return NextResponse.json({ ok: true, requestId: existing[0].id, message: 'A deletion request is already pending.' });
+    const receiptUrl = await recordDeletionReceipt(existing[0].id, membership.userId, scope === 'ACCOUNT' && body.allMemberships === true, new URL(request.url).origin);
+    return NextResponse.json({ ok: true, requestId: existing[0].id, receiptUrl, message: 'A deletion request is already pending.' });
   }
 
   const id = randomUUID();
@@ -87,7 +97,8 @@ export async function POST(request: Request) {
       "SELECT id FROM AccountDeletionRequest WHERE organizationId = ? AND userId = ? AND scope = ? AND status IN ('PENDING','UNDER_REVIEW','NEEDS_INFORMATION') ORDER BY requestedAt LIMIT 1",
       membership.organizationId, membership.userId, scope,
     );
-    return NextResponse.json({ ok: true, requestId: pending[0]?.id, message: 'A deletion request is already in review.' });
+    const receiptUrl = pending[0] ? await recordDeletionReceipt(pending[0].id, membership.userId, scope === 'ACCOUNT' && body.allMemberships === true, new URL(request.url).origin) : null;
+    return NextResponse.json({ ok: true, requestId: pending[0]?.id, receiptUrl, message: 'A deletion request is already in review.' });
   }
 
   try {
@@ -103,9 +114,11 @@ export async function POST(request: Request) {
     });
   } catch {}
 
+  const receiptUrl = await recordDeletionReceipt(id, membership.userId, scope === 'ACCOUNT' && body.allMemberships === true, new URL(request.url).origin);
   return NextResponse.json({
     ok: true,
     requestId: id,
+    receiptUrl,
     message: scope === 'ORGANIZATION'
       ? 'Workspace deletion request submitted for ICA review.'
       : 'Account deletion request submitted for ICA review.',

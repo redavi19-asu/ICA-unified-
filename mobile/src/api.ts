@@ -27,7 +27,7 @@ export const getAccountDeletionRequests = (token: string) => request('/api/accou
 export const requestAccountDeletion = (token: string, confirmation: string) =>
   request('/api/account/deletion-request', token, {
     method: 'POST',
-    body: JSON.stringify({ scope: 'ACCOUNT', confirmation }),
+    body: JSON.stringify({ scope: 'ACCOUNT', confirmation, allMemberships: true }),
   });
 export const getMe = (token: string) => request('/api/mobile/me', token);
 export const getWallet = (token: string) => request('/api/mobile/wallet', token);

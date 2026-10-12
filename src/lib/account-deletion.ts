@@ -1,10 +1,23 @@
 import { prisma } from './prisma';
+import { RECEIPT_SCHEMA } from './account-deletion-receipt';
+import { APPLE_REVOCATION_SCHEMA } from './apple-token-revocation';
 
 export async function ensureAccountDeletionTables() {
   await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS AccountDeletionRequest (
     id TEXT PRIMARY KEY NOT NULL, organizationId TEXT NOT NULL, userId TEXT NOT NULL,
     scope TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PENDING',
     requestedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, resolvedAt TEXT, resolutionNote TEXT
+  )`);
+  await prisma.$executeRawUnsafe(RECEIPT_SCHEMA);
+  await prisma.$executeRawUnsafe(APPLE_REVOCATION_SCHEMA);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS SocialIdentity (
+    provider TEXT NOT NULL,providerSubject TEXT NOT NULL,userId TEXT NOT NULL,email TEXT NOT NULL,
+    createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(provider,providerSubject)
+  )`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS AccountDeletionExecution (
+    requestId TEXT PRIMARY KEY NOT NULL, claimToken TEXT NOT NULL, reviewedBy TEXT NOT NULL,
+    trainingExpiresAt INTEGER NOT NULL, archiveIdsJson TEXT NOT NULL, completedAt INTEGER
   )`);
   await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS AccountDeletionRequest_org_status ON AccountDeletionRequest (organizationId, status, requestedAt)');
   await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS AccountDeletionReview (
@@ -58,5 +71,10 @@ export async function previewAccountDeletion(requestId: string) {
     (SELECT COUNT(*) FROM Acknowledgment WHERE userId = ?) AS acknowledgments`, request.userId, request.userId, request.userId);
   return { request, memberships, records: records[0],
     ownershipTransferRequired: memberships.filter(member => member.lastOwner === 1).map(member => member.organizationName),
-    workspaceDeletion: request.scope === 'ORGANIZATION' };
+    workspaceDeletion: request.scope === 'ORGANIZATION',
+    globalConfirmationRequired: !(await prisma.$queryRawUnsafe<Array<{ confirmed: number }>>(
+      'SELECT allMembershipsConfirmedAt AS confirmed FROM AccountDeletionReceipt WHERE requestId=?', requestId))[0]?.confirmed,
+    retentionDays: 90,
+    appleReconnectRequired: Boolean((await prisma.$queryRawUnsafe<Array<{ n: number }>>(
+      "SELECT COUNT(*) AS n FROM SocialIdentity i LEFT JOIN AppleRevocationToken t ON t.providerSubject=i.providerSubject WHERE i.userId=? AND i.provider='apple' AND t.providerSubject IS NULL", request.userId))[0]?.n) };
 }
