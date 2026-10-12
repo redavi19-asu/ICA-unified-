@@ -23,6 +23,7 @@ export function login(email: string, password: string, organizationSlug: string)
 }
 
 export const logout = (token: string) => request('/api/mobile/auth/logout', token, { method: 'POST' });
+export const getAccountDeletionRequests = (token: string) => request('/api/account/deletion-request', token);
 export const requestAccountDeletion = (token: string, confirmation: string) =>
   request('/api/account/deletion-request', token, {
     method: 'POST',

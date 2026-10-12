@@ -8,6 +8,8 @@ type RequestRow = {
   scope: 'ACCOUNT' | 'ORGANIZATION';
   status: string;
   requestedAt: string;
+  message: string | null;
+  expectedCompletionAt: string | null;
 };
 
 export default function AccountPrivacyClient({
@@ -56,8 +58,8 @@ export default function AccountPrivacyClient({
     }
   }
 
-  const accountPending = requests.some((item) => item.scope === 'ACCOUNT' && item.status === 'PENDING');
-  const organizationPending = requests.some((item) => item.scope === 'ORGANIZATION' && item.status === 'PENDING');
+  const accountPending = requests.some((item) => item.scope === 'ACCOUNT' && ['PENDING','UNDER_REVIEW','NEEDS_INFORMATION'].includes(item.status));
+  const organizationPending = requests.some((item) => item.scope === 'ORGANIZATION' && ['PENDING','UNDER_REVIEW','NEEDS_INFORMATION'].includes(item.status));
 
   return (
     <main className="account-privacy-shell">
@@ -95,6 +97,12 @@ export default function AccountPrivacyClient({
             </article>
           )}
         </div>
+
+        {requests.map(item => <section className="account-delete-status" key={item.id}>
+          <strong>{item.scope === 'ACCOUNT' ? 'Account' : 'Workspace'}: {item.status.replaceAll('_', ' ')}</strong>
+          {item.message && <p>{item.message}</p>}
+          {item.expectedCompletionAt && <p>Expected completion: {new Date(item.expectedCompletionAt).toLocaleDateString()}</p>}
+        </section>)}
 
         {message && <div className="account-delete-status" role="status">{message}</div>}
       </section>

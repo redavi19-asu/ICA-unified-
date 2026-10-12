@@ -42,6 +42,8 @@ export default async function PlatformPage() {
         </div>
       </section>
 
+      {canControl && <p style={{ marginTop: 28 }}><Link href="/platform/deletion-requests" style={{ ...actionStyle, textDecoration: 'none' }}>REVIEW ACCOUNT DELETION REQUESTS</Link></p>}
+
       <section style={{marginTop:42}}>
         <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>CUSTOMER ORGANIZATIONS</p>
         <div style={{borderTop:'1px solid #2d3035'}}>
