@@ -33,6 +33,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     data: memberships.map((item) => ({
       id: item.id,
+      userId: item.userId,
       name: item.user.name,
       email: item.user.email,
       jobTitle: item.jobTitle,

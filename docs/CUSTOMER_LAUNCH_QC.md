@@ -32,3 +32,9 @@ API access currently follows the existing Unified subscription; this change does
 [Current customer/admin directions](UNIFIED_DIRECTIONS.md) document the web workflow. PR 19 deployed reviewed personal-account completion, session/key removal, encrypted Apple grant capture/revocation, private completion receipts and 90-day de-identified training retention with scheduled purge. All 36 application tests passed, including concurrent completion, transaction rollback and expiry. Local workerd/D1 fixtures confirmed removal and purge while preserving the owner; live health and access guards were verified. No real account was removed.
 
 Completion requires explicit account-wide consent, saved review and identity/external-data checks. Sole owners, protected platform accounts and legacy Apple grants remain blocked pending separate action. Workspace closure and billing cancellation are separate; do not treat a workspace request as implemented automatic deletion. Native changes require a signed release and device testing.
+
+## Expanded API coverage
+
+The versioned API now includes course/lesson authoring, assignments/progress, credentials, CE transcripts, event creation/registrations/eligible attendance and membership application submissions/status. New permissions are opt-in in Integrations; existing member keys keep their scopes. New mutations use 24-hour idempotency receipts and atomic D1 batches that include webhook fan-out. Lists are bounded and paginated. Integrations cannot fabricate completion, paid status or application approval. The developer guide documents examples and boundaries.
+
+The expanded journey exercises actual learner quiz completion and notifications, CE/certificate lookup, concurrent capacity waitlisting, payment-gated attendance, application decisions, old-key restrictions, tenant isolation, pagination, replay conflicts and rollback. These fixtures do not send real emails or payments or create production users.

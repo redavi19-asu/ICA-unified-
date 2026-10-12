@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_SCOPES } from '../../../lib/api-contract';
 import styles from './integrations.module.css';
 
 type ApiKey = {
@@ -11,6 +12,8 @@ type ApiKey = {
   active: boolean;
   createdAt: string;
   lastUsedAt: string | null;
+  scopes: string[];
+  expiresAt: string;
 };
 
 type Webhook = {
@@ -78,17 +81,18 @@ export default function IntegrationsClient({
 
   async function createKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const response = await fetch('/api/integrations/keys', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: String(form.get('name') || '') }),
+      body: JSON.stringify({ name: String(form.get('name') || ''), scopes: form.getAll('scope'), expiresInDays: Number(form.get('days')) }),
     });
     const data = await response.json();
     if (!response.ok) return setMessage(data.error || 'Unable to create API key.');
     setNewKey(data.key.value);
     setMessage('API key created. Copy it now — ICA will not show the full value again.');
-    event.currentTarget.reset();
+    formElement.reset();
     await refresh();
   }
 
@@ -218,16 +222,18 @@ export default function IntegrationsClient({
           <div className={styles.cardHead}><span>01</span><b>API ACCESS</b></div>
           <h2>Connect websites and external systems.</h2>
           <p>ICA API keys are tenant-scoped and stored as one-way hashes. Use them as Bearer tokens with the versioned API.</p>
-          <div className={styles.endpoint}><code>GET /api/v1/members</code><code>POST /api/v1/members</code></div>
-          <form className={styles.inlineForm} onSubmit={createKey}>
+          <p>Connect members, courses, assignments, progress, credentials, CE records, events and applications. Existing keys keep their original permissions.</p>
+          <form className={styles.stackForm} onSubmit={createKey}>
             <input name="name" placeholder="Key name — Website production" minLength={2} required />
+            <label>Expires in days <input name="days" type="number" min="1" max="365" defaultValue="90" required /></label>
+            <fieldset><legend>Permissions — choose only what this connection needs</legend>{API_SCOPES.map(scope => <label key={scope} style={{ display: 'inline-block', margin: 8 }}><input type="checkbox" name="scope" value={scope} defaultChecked={scope === 'members:read'} /> {scope}</label>)}</fieldset>
             <button>CREATE API KEY</button>
           </form>
           {newKey && <SecretBox label="COPY THIS API KEY NOW" value={newKey} onClear={() => setNewKey('')} />}
           <div className={styles.list}>
             {keys.length === 0 ? <span>No API keys yet.</span> : keys.map((key) => (
               <div key={key.id}>
-                <div><strong>{key.name}</strong><code>{key.displayKey}</code></div>
+                <div><strong>{key.name}</strong><code>{key.displayKey}</code><small>{key.scopes.join(', ')} · Expires {new Date(key.expiresAt).toLocaleDateString()}</small></div>
                 <span>{key.lastUsedAt ? `Last used ${new Date(key.lastUsedAt).toLocaleString()}` : 'Never used'}</span>
                 <button onClick={() => revokeKey(key.id)}>REVOKE</button>
               </div>
@@ -239,7 +245,7 @@ export default function IntegrationsClient({
         <article id="webhooks" className={styles.wide}>
           <div className={styles.cardHead}><span>02</span><b>WEBHOOKS</b></div>
           <h2>Push ICA events to another system.</h2>
-          <p>Each delivery is HMAC-SHA256 signed. Subscribe to “*” or comma-separated events such as member.invited, member.activated, integration.test.</p>
+          <p>Each delivery is HMAC-SHA256 signed. Subscribe to “*” or comma-separated events such as course.completed, credential.issued, event.attendance.recorded, membership.application.decided, or integration.test.</p>
           <form className={styles.stackForm} onSubmit={createWebhook}>
             <input name="url" type="url" placeholder="https://company.com/api/ica-webhook" required />
             <input name="events" placeholder="member.invited, member.activated" defaultValue="*" />

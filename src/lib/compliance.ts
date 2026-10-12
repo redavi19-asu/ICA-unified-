@@ -1,3 +1,4 @@
+import { emitOrganizationEvent } from './organization-ops';
 import { prisma } from './prisma';
 
 export type CreditLedgerEntry = {
@@ -535,7 +536,7 @@ export async function recordEventAttendance(input: {
   await ensureComplianceTables();
   const id = crypto.randomUUID();
 
-  await prisma.$executeRawUnsafe(
+  const inserted = await prisma.$executeRawUnsafe(
     `INSERT INTO EventAttendance
      (id, organizationId, workflowId, userId, checkedInAt)
      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -557,6 +558,8 @@ export async function recordEventAttendance(input: {
       description: input.eventName,
     });
   }
+
+  if (inserted) await emitOrganizationEvent(input.organizationId, 'event.attendance.recorded', { workflowId: input.workflowId, userId: input.userId });
 
   return prisma.$queryRawUnsafe<Array<{ checkedInAt: string }>>(
     `SELECT checkedInAt

@@ -1,0 +1,71 @@
+export const API_SCOPES = [
+  "members:read",
+  "members:write",
+  "courses:read",
+  "courses:write",
+  "enrollments:read",
+  "enrollments:write",
+  "credentials:read",
+  "credits:read",
+  "events:read",
+  "events:write",
+  "registrations:read",
+  "registrations:write",
+  "attendance:write",
+  "applications:read",
+  "applications:write",
+] as const;
+export const API_ENDPOINTS = [
+  ["GET /api/v1/courses", "courses:read", "List courses"],
+  ["POST /api/v1/courses", "courses:write", "Create a course"],
+  [
+    "GET /api/v1/courses/{id}/lessons",
+    "courses:read",
+    "Read lessons without quiz answers",
+  ],
+  [
+    "POST /api/v1/courses/{id}/lessons",
+    "courses:write",
+    "Add a lesson or quiz",
+  ],
+  [
+    "GET /api/v1/enrollments",
+    "enrollments:read",
+    "Assignments, progress and completion",
+  ],
+  [
+    "POST /api/v1/enrollments",
+    "enrollments:write",
+    "Assign one active member to a course",
+  ],
+  ["GET /api/v1/credentials", "credentials:read", "Issued credentials"],
+  ["GET /api/v1/credits", "credits:read", "CE transcript entries"],
+  ["GET /api/v1/events", "events:read", "Event workflows"],
+  ["POST /api/v1/events", "events:write", "Create an event"],
+  [
+    "GET /api/v1/events/{id}/registrations",
+    "registrations:read",
+    "Registration and payment status",
+  ],
+  [
+    "POST /api/v1/events/{id}/registrations",
+    "registrations:write",
+    "Register or waitlist an attendee",
+  ],
+  [
+    "POST /api/v1/events/{id}/attendance",
+    "attendance:write",
+    "Record eligible member attendance",
+  ],
+  ["GET /api/v1/applications", "applications:read", "Membership programs"],
+  [
+    "GET /api/v1/applications/{id}/submissions",
+    "applications:read",
+    "Application decisions and payment status",
+  ],
+  [
+    "POST /api/v1/applications/{id}/submissions",
+    "applications:write",
+    "Submit an application for a membership program",
+  ],
+] as const;

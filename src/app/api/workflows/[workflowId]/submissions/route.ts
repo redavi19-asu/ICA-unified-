@@ -161,6 +161,10 @@ export async function PATCH(
     console.error('ICA_WORKFLOW_STATUS_WEBHOOK_ERROR', error);
   }
 
+  if (workflow.kind === 'MEMBERSHIP' && submission.status !== parsed.data.status) {
+    await emitOrganizationEvent(membership.organizationId, 'membership.application.decided', { workflowId, submissionId: submission.id, status: parsed.data.status });
+  }
+
   await prisma.activity.create({
     data: {
       organizationId: membership.organizationId,
