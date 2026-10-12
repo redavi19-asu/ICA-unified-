@@ -1,11 +1,11 @@
-# ICA Unified release readiness — October 8, 2026
+# ICA Unified release readiness — updated October 12, 2026
 
 ## Verified preparation
 - App configuration points at `assets/icon.png`: 1024 × 1024, RGB, fully opaque.
 - Bundle ID: `com.icomputeranything.icaunified`; iPhone and iPad enabled.
 - Repository records App Store Connect app ID `6820198321`. Current listing/icon was not observed: the cloud browser reached a login page without an authenticated session.
 - An earlier unsigned iOS archive compiled successfully. This does not establish a signed upload, TestFlight availability or App Store publication.
-- The native Account + Privacy screen now submits account-deletion requests using the verified native bearer session. Invalid bearer credentials receive 401. Requests remain pending review, so this is not a complete deletion fulfillment system or a claim of Apple policy compliance.
+- The native Account + Privacy screen now submits account-deletion requests using the verified native bearer session. Invalid bearer credentials receive 401. The deployed web backend now supports reviewed account completion, session/key removal, Apple authorization revocation, a private receipt and 90-day de-identified training retention with scheduled purge. Native source explicitly confirms account-wide removal and shows review/status links. This source has not been published as a new signed native release; backend tests alone do not establish Apple policy compliance.
 
 ## Signing and upload blockers
 Latest signed upload run stopped before compilation, reporting these missing repository secrets:
@@ -21,7 +21,7 @@ Configure credentials in repository secrets, never in source or chat. Unified ne
 ## Before App Review
 - Complete signed upload and verify the resulting build and icon inside App Store Connect.
 - Test iPhone/iPad organization login, role restrictions, QR scanning, attendee check-in, member lookup, wallet, errors and sign-out.
-- Test account-deletion request and fulfill deletion; check access for suspended/expired accounts and required data retention.
+- On disposable test accounts, test native account-wide deletion confirmation, review status and private receipt, then the documented platform completion flow. Verify unpaid/cancelled organization privacy access, suspended membership denial, sole-owner holds, Apple reconnection/revocation and archive expiry. Do not delete a real customer for release testing.
 - Review privacy declarations against the final archive and all production processors; complete App Privacy, age rating, content rights and reviewer access in Connect.
 - Capture actual native screenshots: Event Mode home, staff event selection/check-in, member QR, wallet and Account + Privacy. Use test data without personal details.
 - Verify the existing native email/password sign-in behavior; web Google/Apple sign-in does not establish a native session.

@@ -1,8 +1,8 @@
-# Customer launch QC — 2026-10-11
+# Customer launch QC — updated 2026-10-12
 
 ## Implemented
 
-- Public `/developers` guide linked from the home page and Integrations. Documents private keys, member invitations, company isolation, subscription enforcement, webhook signature verification, and the current single-attempt delivery limit.
+- Public `/developers` guide linked from the home page and Integrations. Documents private keys, member invitations, company isolation, subscription enforcement, webhook signature verification, and saved delivery with bounded retry/recovery.
 - Registration, invitation acceptance, and social onboarding use the real D1 binding's atomic batch instead of Prisma transactions that the D1 adapter cannot honor. Invitation acceptance claims a token once, checks current pending/expiry state inside the batch, and guards a concurrent newly-created identity against a different password.
 - Invitation acceptance writes membership and activity together. Acceptance claims reference the invitation with cascading deletion.
 - Corrupted API scope policies and missing/invalid/zero expiries fail closed.
@@ -23,6 +23,12 @@ Both production compilation and changed-source lint/type checks passed. Browser 
 
 InvitationAcceptance is created idempotently by the acceptance route before the atomic batch. Deploying this change does not enable payments or issue customer keys automatically. Owners/admins create per-organization keys in Integrations; do not distribute the company's Stripe secret key.
 
-Live configuration inspection on 2026-10-11 confirmed the Unified Worker has STRIPE_WEBHOOK_SECRET but no STRIPE_SECRET_KEY. Its disabled Stripe endpoint and production restricted API key must be completed and tested together before live checkout is enabled. Webhooks currently have one attempt; missed member events require API reconciliation.
+Live configuration inspection on 2026-10-11 confirmed the Unified Worker has STRIPE_WEBHOOK_SECRET but no STRIPE_SECRET_KEY. Its disabled Stripe endpoint and production restricted API key must be completed and tested together before live checkout is enabled. Webhook recovery is deployed: transient failures retry up to eight times within 24 hours, checked every five minutes. Integrations shows pending/failed counts. Permanently failed or expired events require API reconciliation; failed payloads expire after seven days.
 
 API access currently follows the existing Unified subscription; this change does not invent an additional API fee or usage billing.
+
+## Account deletion and current directions
+
+[Current customer/admin directions](UNIFIED_DIRECTIONS.md) document the web workflow. PR 19 deployed reviewed personal-account completion, session/key removal, encrypted Apple grant capture/revocation, private completion receipts and 90-day de-identified training retention with scheduled purge. All 36 application tests passed, including concurrent completion, transaction rollback and expiry. Local workerd/D1 fixtures confirmed removal and purge while preserving the owner; live health and access guards were verified. No real account was removed.
+
+Completion requires explicit account-wide consent, saved review and identity/external-data checks. Sole owners, protected platform accounts and legacy Apple grants remain blocked pending separate action. Workspace closure and billing cancellation are separate; do not treat a workspace request as implemented automatic deletion. Native changes require a signed release and device testing.
