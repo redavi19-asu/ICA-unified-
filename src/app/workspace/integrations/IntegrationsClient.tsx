@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { API_SCOPES } from '../../../lib/api-contract';
 import styles from './integrations.module.css';
 
+type ApiPlan = {mode:string;entitled:boolean;subscriptionStatus:string;periodStart:number;periodEnd:number;used:number;allowance:number|null;pricing:{ready:boolean;amount:number|null;allowance:number|null}};
+
 type ApiKey = {
   id: string;
   name: string;
@@ -55,6 +57,9 @@ export default function IntegrationsClient({
   organizationSlug: string;
 }) {
   const router = useRouter();
+  const [apiPlan,setApiPlan] = useState<ApiPlan|null>(null);
+  const [apiBillingBusy,setApiBillingBusy] = useState(false);
+  const [apiCancelConfirmed,setApiCancelConfirmed] = useState(false);
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [domain, setDomain] = useState<DomainData | null>(null);
@@ -64,13 +69,15 @@ export default function IntegrationsClient({
   const [message, setMessage] = useState('Integration controls are organization-scoped. Secrets are shown only when created.');
 
   const refresh = useCallback(async () => {
-    const [keyRes, hookRes, domainRes, emailRes] = await Promise.all([
+    const [keyRes, hookRes, domainRes, emailRes,planRes] = await Promise.all([
       fetch('/api/integrations/keys', { cache: 'no-store' }),
       fetch('/api/integrations/webhooks', { cache: 'no-store' }),
       fetch('/api/integrations/domain', { cache: 'no-store' }),
       fetch('/api/integrations/email', { cache: 'no-store' }),
+      fetch('/api/integrations/api-plan', { cache: 'no-store' }),
     ]);
 
+    if (planRes.ok) setApiPlan(await planRes.json());
     if (keyRes.ok) setKeys((await keyRes.json()).keys || []);
     if (hookRes.ok) setWebhooks((await hookRes.json()).webhooks || []);
     if (domainRes.ok) setDomain(await domainRes.json());
@@ -78,6 +85,13 @@ export default function IntegrationsClient({
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  async function manageApiPlan(cancel=false) {
+    setApiBillingBusy(true);
+    try{const response=await fetch('/api/integrations/api-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cancel?{action:'CANCEL_API_RENEWAL',confirmation:'CANCEL API'}:{action:'CHECKOUT'})});const data=await response.json();if(!response.ok)throw new Error(data.error||'API billing is unavailable.');if(data.checkoutUrl)window.location.assign(data.checkoutUrl);else setMessage(`API renewal cancelled. Access ends ${new Date(data.endsAt).toLocaleDateString()}. Your software subscription is unchanged.`);await refresh();}
+    catch(error){setMessage(error instanceof Error?error.message:'API billing is unavailable.');}
+    finally{setApiBillingBusy(false);}
+  }
 
   async function createKey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -221,13 +235,22 @@ export default function IntegrationsClient({
         <article id="api-access" className={styles.wide}>
           <div className={styles.cardHead}><span>01</span><b>API ACCESS</b></div>
           <h2>Connect websites and external systems.</h2>
+          {apiPlan && <section aria-label="API plan and monthly usage">
+            <h3>API plan and usage</h3><a href="/api-billing">Open separate API billing →</a>
+            <p>{apiPlan.mode==='PREPARATION'?'Separate API billing is being prepared. No separate API fee is active yet.':`API plan: ${apiPlan.subscriptionStatus.replaceAll('_',' ')}. A paid API plan is required in addition to software access.`}</p>
+            <p>{apiPlan.used.toLocaleString()} requests across all company keys this period{apiPlan.allowance!==null?` / ${apiPlan.allowance.toLocaleString()} included`:''}. Period ends {new Date(apiPlan.periodEnd).toLocaleDateString()}.</p>
+            <p>Authenticated requests that pass permissions, subscription and rate checks count toward usage, including retries and invalid payloads. Server failures are released. No automatic overage charges are enabled.</p>
+            {apiPlan.pricing.ready && <p>${((apiPlan.pricing.amount||0)/100).toFixed(2)}/month for {apiPlan.pricing.allowance?.toLocaleString()} requests, billed separately from your software subscription.</p>}
+            <button className={styles.secondary} disabled={apiBillingBusy||!apiPlan.pricing.ready||apiPlan.entitled} onClick={()=>void manageApiPlan()}>Start separate API subscription</button>
+            {apiPlan.entitled && <div><label><input type="checkbox" checked={apiCancelConfirmed} onChange={event=>setApiCancelConfirmed(event.target.checked)} /> Cancel only API renewal; software billing continues.</label><button className={styles.secondary} disabled={apiBillingBusy||!apiCancelConfirmed} onClick={()=>void manageApiPlan(true)}>Cancel API renewal</button></div>}
+          </section>}
           <p>ICA API keys are tenant-scoped and stored as one-way hashes. Use them as Bearer tokens with the versioned API.</p>
           <p>Connect members, courses, assignments, progress, credentials, CE records, events and applications. Existing keys keep their original permissions.</p>
           <form className={styles.stackForm} onSubmit={createKey}>
             <input name="name" placeholder="Key name — Website production" minLength={2} required />
             <label>Expires in days <input name="days" type="number" min="1" max="365" defaultValue="90" required /></label>
             <fieldset><legend>Permissions — choose only what this connection needs</legend>{API_SCOPES.map(scope => <label key={scope} style={{ display: 'inline-block', margin: 8 }}><input type="checkbox" name="scope" value={scope} defaultChecked={scope === 'members:read'} /> {scope}</label>)}</fieldset>
-            <button>CREATE API KEY</button>
+            <button disabled={apiPlan?.mode==='PAID_API_REQUIRED'&&!apiPlan.entitled}>CREATE API KEY</button>
           </form>
           {newKey && <SecretBox label="COPY THIS API KEY NOW" value={newKey} onClear={() => setNewKey('')} />}
           <div className={styles.list}>

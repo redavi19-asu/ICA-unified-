@@ -86,6 +86,8 @@ test("expanded API integrates learning, events and applications with scoped isol
   const progressRoute = await import("../src/app/api/learning/progress/route");
   const decisions =
     await import("../src/app/api/workflows/[workflowId]/submissions/route");
+  const priorPaidFlag=process.env.API_PAID_ACCESS_REQUIRED;
+  const hookRoutes=await import('../src/app/api/integrations/webhooks/route');
   const originalFetch = globalThis.fetch;
   const sentEvents: string[] = [];
   globalThis.fetch = async (_url, init) => {
@@ -646,12 +648,21 @@ test("expanded API integrates learning, events and applications with scoped isol
       data: { status: "SUSPENDED", plan: "professional" },
     });
     assert.equal((await call("courses")).status, 402);
+    await prisma.organization.update({where:{id:org.id},data:{status:'ACTIVE',plan:'internal'}});
+    process.env.API_PAID_ACCESS_REQUIRED='true';
+    assert.equal((await call('courses')).status,402);
+    assert.equal((await keyRoutes.POST(new Request('https://example.test/api/integrations/keys',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'Unpaid connector',scopes:['courses:read']})}))).status,402);
+    assert.equal((await hookRoutes.POST(new Request('https://example.test/api/integrations/webhooks',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:'https://receiver.example/paid'})}))).status,402);
+    await prisma.$executeRawUnsafe("INSERT INTO ApiAccessSubscription(organizationId,subscriptionId,status,periodStart,periodEnd,requestAllowance,priceId,monthlyAmountCents) VALUES (?,'sub_scoped_fixture','active',?,?,2,'price_scoped_fixture',12345)",org.id,Date.now()-1000,Date.now()+100000);
+    assert.equal((await call('courses')).status,200);assert.equal((await call('enrollments')).status,200);assert.equal((await call('credentials')).status,429);
+    await prisma.$executeRawUnsafe("UPDATE ApiAccessSubscription SET periodEnd=0 WHERE organizationId=?",org.id);assert.equal((await call('courses')).status,402);
     await prisma.$executeRawUnsafe(
       "UPDATE ApiCredential SET active=0 WHERE id=?",
       key.id,
     );
     assert.equal((await call("courses")).status, 401);
   } finally {
+    if(priorPaidFlag===undefined)delete process.env.API_PAID_ACCESS_REQUIRED;else process.env.API_PAID_ACCESS_REQUIRED=priorPaidFlag;
     globalThis.fetch = originalFetch;
     await prisma.$disconnect();
     delete context[contextKey];

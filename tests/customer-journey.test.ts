@@ -50,6 +50,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
         const results = statements.map((statement) => ({
           success: true,
           results: sqlite.prepare(statement.sql).all(...statement.values),
+          meta: { changes: Number(sqlite.prepare('SELECT changes() n').get()!.n) },
         }));
         sqlite.exec("COMMIT");
         return results;

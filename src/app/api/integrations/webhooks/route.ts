@@ -1,3 +1,5 @@
+import {apiRevenueDatabase} from '../../../../lib/api-revenue-database';
+import {apiRevenueRequired,apiRevenueStatus} from '../../../../lib/api-revenue';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
@@ -36,6 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Owner or admin access is required.' }, { status: 403 });
   }
 
+  if(apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED)&&!(await apiRevenueStatus(apiRevenueDatabase(),membership.organizationId,true)).entitled)return NextResponse.json({error:'An active separate API plan is required for webhooks.',code:'API_SUBSCRIPTION_REQUIRED'},{status:402});
   const body = await request.json();
   if (body?.action === 'TEST') {
     const deliveries = await emitOrganizationEvent(membership.organizationId, 'integration.test', {

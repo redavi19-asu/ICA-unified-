@@ -1,3 +1,5 @@
+import {apiRevenueDatabase} from '../../../../lib/api-revenue-database';
+import {apiRevenueRequired,withApiUsage} from '../../../../lib/api-revenue';
 import { createHash, randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -23,6 +25,7 @@ export async function GET(request: Request) {
   const auth = authResult;
   if (!auth.entitled) return subscriptionRequired();
 
+  return withApiUsage(apiRevenueDatabase(),auth.organizationId,apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED),async()=>{
   const memberships = await prisma.membership.findMany({
     where: { organizationId: auth.organizationId },
     include: { user: { select: { name: true, email: true } } },
@@ -42,6 +45,7 @@ export async function GET(request: Request) {
       joinedAt: item.joinedAt,
     })),
   });
+  });
 }
 
 export async function POST(request: Request) {
@@ -50,6 +54,7 @@ export async function POST(request: Request) {
   const auth = authResult;
   if (!auth.entitled) return subscriptionRequired();
 
+  return withApiUsage(apiRevenueDatabase(),auth.organizationId,apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED),async()=>{
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'Check name, email, job title, and role.' }, { status: 400 });
@@ -122,6 +127,7 @@ export async function POST(request: Request) {
       expiresAt,
     },
   }, { status: 201 });
+  });
 }
 
 async function apiOrganization(request: Request, requiredScope: 'members:read' | 'members:write') {

@@ -1,3 +1,5 @@
+import {apiRevenueDatabase} from './api-revenue-database';
+import {apiRevenueRequired,withApiUsage} from './api-revenue';
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -243,6 +245,7 @@ export async function expandedApi(request: Request, path: string[]) {
         },
         { status: 402 },
       );
+    return await withApiUsage(apiRevenueDatabase(),org.id,apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED),async()=>{
     await ensureUnifiedRuntimeSchema();
     const organizationId = org.id,
       [resource, resourceId, action] = path;
@@ -792,6 +795,7 @@ export async function expandedApi(request: Request, path: string[]) {
       );
     }
     throw new ApiProblem(404, "Endpoint not found.");
+    });
   } catch (error) {
     if (error instanceof ApiProblem)
       return NextResponse.json(

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { createApiKey, listApiKeys, revokeApiKey } from '../../../../lib/api-keys';
 
+import {apiRevenueDatabase} from '../../../../lib/api-revenue-database';
+import {apiRevenueRequired,apiRevenueStatus} from '../../../../lib/api-revenue';
 import { API_SCOPES } from '../../../../lib/api-contract';
 
 const createSchema = z.object({
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Owner or admin access is required.' }, { status: 403 });
   }
 
+  if(apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED)&&!(await apiRevenueStatus(apiRevenueDatabase(),membership.organizationId,true)).entitled)return NextResponse.json({error:'A separate active API subscription is required before creating keys.',code:'API_SUBSCRIPTION_REQUIRED'},{status:402});
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'Choose a key name, at least one valid permission and an expiry of 1–365 days.' }, { status: 400 });

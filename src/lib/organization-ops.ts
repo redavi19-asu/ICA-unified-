@@ -1,3 +1,5 @@
+import {apiRevenueDatabase} from './api-revenue-database';
+import {apiRevenueRequired,apiRevenueStatus} from './api-revenue';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { enqueueWebhookEvent, deliverWebhook, WEBHOOK_OUTBOX_SCHEMA, WEBHOOK_OUTBOX_INDEX, type WebhookDatabase } from './webhook-delivery';
@@ -446,6 +448,7 @@ export async function emitOrganizationEvent(
   payload: Record<string, unknown>,
 ) {
   await ensureOperationsTables();
+  if(apiRevenueRequired(process.env.API_PAID_ACCESS_REQUIRED)&&!(await apiRevenueStatus(apiRevenueDatabase(),organizationId,true)).entitled)return [];
   const endpoints = await prisma.$queryRawUnsafe<Array<{
     id: string;
     url: string;
