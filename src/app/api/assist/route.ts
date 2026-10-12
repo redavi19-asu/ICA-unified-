@@ -27,9 +27,12 @@ Current navigation and behavior:
 - Documents: controlled document text/file content, secure member review, version tracking, and acknowledgments.
 - Reports: organization reporting.
 - Tools: Owner/Admin safe member CSV migration with field mapping, preview, duplicate handling, activation records, and confirmation before database write.
+- Account & Privacy: /workspace/account. Account deletion covers all Unified workspace memberships after explicit confirmation and ICA review. Type DELETE, request account deletion and save the private status/completion link. Review updates appear here; the link works after removal. Personal account access and owned API credentials are removed at completion. Limited de-identified training/compliance facts expire 90 days after completion and are automatically purged. Existing requests may need account-wide confirmation again. Sole owners must arrange ownership transfer or separate workspace closure review. Workspace closure and billing cancellation are separate; never promise immediate or automatic workspace deletion. Legacy Apple-linked users may need web Sign in with Apple again before authorization revocation.
+- Webhook recovery: saved deliveries retry network errors, timeouts, HTTP 408/425/429 and 5xx, up to eight attempts within 24 hours. A scheduled worker checks every five minutes. Integrations shows pending/failed counts. Other non-2xx responses stop delivery. Receivers verify raw-body HMAC and deduplicate X-ICA-Event-ID. Failed payloads expire after seven days; successful payloads are cleared immediately. Reconcile failed/expired events through the member API; do not invent a manual retry button.
+- Mobile: event companion uses email/password organization sign-in. Web Google/Apple/Microsoft sign-in does not create a native session. Updated native Account + Privacy source includes review status and private receipt links, but these source changes require a new signed release and device testing before promising them in an installed app. Cancelled/unpaid organization access permits authenticated privacy requests; suspended memberships remain blocked.
 - Integrations: Owner/Admin center for tenant-scoped API keys, signed HTTPS webhooks, transactional email delivery/outbox retry, custom-domain DNS ownership verification and host resolution, member CSV export, and organization JSON backup. The versioned member API supports GET/POST at /api/v1/members.
 - Billing: Owner/Admin subscription flow for ICA Unified Professional at $299/month. Company SaaS billing stays separate from member money. Stripe Connect Express onboarding lets each organization receive paid membership/event workflow transactions through its own connected account.
-- ICA Master / Platform Control: Master-owner and delegated platform-admin controls for company health, diagnostics, analytics and support.
+- ICA Master / Platform Control: separate /platform/login for active MASTER/PLATFORM_ADMIN accounts. /platform/deletion-requests is the private review queue; SUPPORT and customer admins cannot complete deletions. Inspect scope/ownership, save UNDER_REVIEW, verify identity and external/shared/free-text data, document exceptions, then type the exact request ID and confirm completion. Consent, ownership, privileged-account and Apple revocation guards can block completion. Workspace closure is handled separately.
 
 Help style:
 1. Give the shortest useful answer first.
@@ -42,6 +45,22 @@ Help style:
 
 function fallbackAnswer(question: string) {
   const q = question.toLowerCase();
+
+  if (/workspace|organization/.test(q) && /delet|clos/.test(q)) {
+    return 'Workspace closure is a separate ICA review. Owners can request it in Account & Privacy at /workspace/account, but this does not automatically remove the workspace or cancel billing. ICA must review ownership, shared records and outside-provider data. Personal-account completion cannot be used to bypass that review.';
+  }
+
+  if (/privacy|retention|(?:delet|remov|clos).*(?:account|workspace|profile)|(?:account|workspace|profile).*delet/.test(q)) {
+    return 'Open Account & Privacy at /workspace/account. Read the all-workspace removal notice, type DELETE, choose REQUEST ACCOUNT DELETION and save your private status/completion link. ICA reviews the request before removal; updates appear on that page. Older requests may need confirmation again. Completion removes your account access and owned API keys; limited de-identified training/compliance facts are kept for 90 days, then automatically purged. Sole owners need separate ownership/closure review, and legacy Apple-linked accounts may need web Sign in with Apple again. Workspace closure and billing cancellation are separate.';
+  }
+
+  if (q.includes('webhook') && /retry|fail|recover|deliver|timeout/.test(q)) {
+    return 'Open Integrations to check pending and failed webhook delivery counts. Network errors, timeouts, HTTP 408/425/429 and 5xx are retried up to eight times within 24 hours; the worker checks every five minutes. Other non-2xx responses stop delivery. Fix your HTTPS receiver, verify the raw-body HMAC and ignore event IDs already processed. Reconcile permanently failed or expired events through /api/v1/members. Failed payloads expire after seven days. There is no manual retry button.';
+  }
+
+  if (q.includes('mobile') || q.includes('iphone') || q.includes('ipad') || q.includes('android')) {
+    return 'The Unified mobile app is an event companion for QR check-in, member lookup and the credential/CE wallet. Sign in with your organization email and password; web social sign-in does not create a native session. Native Account + Privacy updates need a new signed release and real-device testing. Use /workspace/account in the web app for the current deletion request and private status link.';
+  }
 
   if (q.includes('event') || q.includes('webinar') || q.includes('registration')) {
     return 'Go to Workflows → Event / Webinar. Enter the event details, CE credit value and category, attendance certificate rule, and confirmation settings. After saving the event, admins can go to Compliance → QR Event Attendance to generate its check-in QR.';
@@ -92,6 +111,7 @@ function fallbackAnswer(question: string) {
 
 async function personalRecordAnswer(question: string, organizationId: string, userId: string) {
   const q = question.toLowerCase();
+  if (/privacy|retention|(?:delet|remov|clos).*(?:account|workspace|profile)|(?:account|workspace|profile).*delet/.test(q)) return null;
   const asksCredits = q.includes('how many credit') || q.includes('credits do i') || q.includes('my credit') || q.includes('my ceu') || q.includes('my compliance') || q.includes('renewal');
   const asksCredential = (q.includes('my credential') || q.includes('my certificate') || q.includes('expire')) && !q.includes('create');
 

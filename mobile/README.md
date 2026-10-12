@@ -42,10 +42,12 @@ External release operations still include:
 ### Remaining release gates
 
 1. Verify native organization sign-in and real-device event QR/member check-in, wallet, and error recovery. Native login currently uses email/password; Google/Apple/Microsoft web sign-in does not yet create a native session.
-2. Test the native Account + Privacy screen and its authenticated account-deletion request. The route accepts verified native bearer sessions and scopes requests to the current membership. Requests remain pending review; verify the actual deletion fulfillment process and access for expired/suspended accounts before claiming Apple policy compliance.
+2. Test the native Account + Privacy screen and its authenticated account-deletion request. The request uses a verified native bearer session; current source explicitly confirms removal across all workspace memberships and shows review status/private receipt links. The web backend now supports reviewed completion and 90-day de-identified training retention with scheduled purge. Authenticated privacy requests remain available in unpaid/cancelled organizations; suspended memberships remain blocked. Existing installed versions may require account-wide reconfirmation through `/workspace/account`. These native source changes still need a signed release and device testing; do not claim App Store compliance from backend checks alone.
 3. Verify roles and access for organization accounts and platform-owner routing; the mobile event companion currently targets organization memberships.
 4. Review the six privacy data categories against production providers and SDK manifests, then complete Apple's age rating, content-rights, privacy, and review metadata.
 5. Capture real iPhone/iPad screenshots and an appropriately scoped reviewer account.
 6. Upload a signed native build and perform TestFlight checks before App Review.
 
 Privacy metadata describes names, email addresses, user IDs, user content, product interaction, and diagnostic data used for app functionality and linked to accounts. The QR camera processes scans locally; audio recording is disabled. Provider/SDK aggregation must still be checked in the compiled archive.
+
+Current customer and administrator directions: [Unified directions](../docs/UNIFIED_DIRECTIONS.md). Account removal, workspace closure and billing cancellation are separate; follow the documented review guards.
