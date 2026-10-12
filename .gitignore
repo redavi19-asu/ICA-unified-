@@ -38,3 +38,6 @@ desktop/src-tauri/icons/
 mobile/ios/
 mobile/android/
 mobile/.expo/
+
+# Regenerated from Wrangler bindings/runtime for the Worker type check
+worker-configuration.d.ts

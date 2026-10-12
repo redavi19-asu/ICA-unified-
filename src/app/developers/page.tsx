@@ -97,7 +97,7 @@ export default function Developers() {
         Send test event to check delivery before relying on it.
       </p>
       <p>
-        Requests contain X-ICA-Event and X-ICA-Signature. Verify the HMAC-SHA256
+        Requests contain X-ICA-Event, X-ICA-Event-ID, and X-ICA-Signature. Verify the HMAC-SHA256
         of the exact raw request body with your webhook secret and compare it in
         constant time against the hex value after sha256=. Decode JSON only
         after verification. Store event IDs to ignore duplicates.
@@ -116,9 +116,16 @@ export default function Developers() {
       </pre>
       <p>
         Return a 2xx response promptly. Delivery has an eight-second timeout and
-        redirects are rejected. Current delivery is a single attempt with the
-        latest result shown in Integrations; automatic retries are not yet
-        provided. Reconcile member records with the API after a missed event.
+        redirects are rejected. Events are saved before sending. Network errors,
+        timeouts, HTTP 408/425/429 and 5xx responses are retried with increasing
+        delays, up to eight attempts within 24 hours. A background worker checks
+        due deliveries every five minutes. Other non-2xx responses stop delivery.
+        Retries retain the same event ID and raw payload; delivery is at least
+        once, so receivers must ignore IDs already processed. Removed or disabled
+        endpoints are not retried. Integrations shows pending and failed delivery
+        counts. Failed payloads are removed after seven days; successfully delivered
+        payloads are cleared immediately. Reconcile records through the member API
+        if delivery expires or permanently fails.
         These webhook secrets are separate from Stripe webhook credentials.
       </p>
       <h2>Commercial access</h2>

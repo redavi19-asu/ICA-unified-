@@ -22,6 +22,8 @@ type Webhook = {
   lastDeliveryAt: string | null;
   lastStatus: number | null;
   lastError: string | null;
+  pendingDeliveries: number;
+  failedDeliveries: number;
 };
 
 type DomainData = {
@@ -130,7 +132,9 @@ export default function IntegrationsClient({
       body: JSON.stringify({ action: 'TEST' }),
     });
     const data = await response.json().catch(() => ({}));
-    setMessage(response.ok ? 'Webhook test sent. Delivery status has been refreshed.' : (data.error || 'Webhook test could not be sent.'));
+    setMessage(response.ok
+      ? `${data.sent || 0} delivered, ${data.queued || 0} queued for retry, ${data.failed || 0} failed.`
+      : (data.error || 'Webhook test could not be sent.'));
     await refresh();
   }
 
@@ -247,7 +251,7 @@ export default function IntegrationsClient({
             {webhooks.length === 0 ? <span>No webhooks yet.</span> : webhooks.map((hook) => (
               <div key={hook.id}>
                 <div><strong>{hook.url}</strong><code>{hook.eventTypes.join(', ')}</code></div>
-                <span>{hook.lastDeliveryAt ? `Last: ${hook.lastStatus ?? 'ERR'} · ${new Date(hook.lastDeliveryAt).toLocaleString()}` : 'No delivery yet'}</span>
+                <span>{hook.lastDeliveryAt ? `Last: ${hook.lastStatus ?? 'ERR'} · ${new Date(hook.lastDeliveryAt).toLocaleString()}` : 'No delivery yet'} · {hook.pendingDeliveries || 0} awaiting delivery · {hook.failedDeliveries || 0} failed</span>
                 <button onClick={() => deleteWebhook(hook.id)}>REMOVE</button>
               </div>
             ))}

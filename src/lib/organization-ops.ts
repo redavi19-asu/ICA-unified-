@@ -1,5 +1,6 @@
-import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
+import { enqueueWebhookEvent, deliverWebhook, WEBHOOK_OUTBOX_SCHEMA, WEBHOOK_OUTBOX_INDEX, type WebhookDatabase } from './webhook-delivery';
 import { emailDeliveryConfigured, sendTransactionalEmail } from './email-delivery';
 
 export const PROFESSIONAL_PRICE_CENTS = 29900;
@@ -88,6 +89,8 @@ export async function ensureOperationsTables() {
         )
       `);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS WebhookDelivery_org_created ON WebhookDelivery (organizationId, createdAt)`);
+      await prisma.$executeRawUnsafe(WEBHOOK_OUTBOX_SCHEMA);
+      await prisma.$executeRawUnsafe(WEBHOOK_OUTBOX_INDEX);
 
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS CustomDomain (
@@ -415,10 +418,14 @@ export async function listWebhooks(organizationId: string) {
     lastDeliveryAt: string | null;
     lastStatus: number | null;
     lastError: string | null;
+    pendingDeliveries: number;
+    failedDeliveries: number;
   }>>(
-    `SELECT id, url, secret, eventTypesJson, active, createdAt, lastDeliveryAt, lastStatus, lastError
-     FROM WebhookEndpoint
-     WHERE organizationId = ?
+    `SELECT e.id, e.url, e.secret, e.eventTypesJson, e.active, e.createdAt, e.lastDeliveryAt, e.lastStatus, e.lastError,
+       (SELECT COUNT(*) FROM WebhookOutbox o WHERE o.endpointId = e.id AND o.organizationId = e.organizationId AND o.status IN ('PENDING', 'PROCESSING')) AS pendingDeliveries,
+       (SELECT COUNT(*) FROM WebhookOutbox o WHERE o.endpointId = e.id AND o.organizationId = e.organizationId AND o.status = 'FAILED') AS failedDeliveries
+     FROM WebhookEndpoint e
+     WHERE e.organizationId = ?
      ORDER BY createdAt DESC`,
     organizationId,
   );
@@ -451,64 +458,26 @@ export async function emitOrganizationEvent(
     organizationId,
   );
 
-  const body = JSON.stringify({
-    id: randomUUID(),
-    event: eventType,
-    createdAt: new Date().toISOString(),
-    data: payload,
-  });
-
-  const deliveries = await Promise.allSettled(endpoints.map(async (endpoint) => {
+  const eventId = randomUUID();
+  const body = JSON.stringify({ id: eventId, event: eventType, createdAt: new Date().toISOString(), data: payload });
+  const db: WebhookDatabase = {
+    all: (sql, ...values) => prisma.$queryRawUnsafe(sql, ...values),
+    run: (sql, ...values) => prisma.$executeRawUnsafe(sql, ...values),
+  };
+  // Persist all selected deliveries before attempting any network request.
+  // If an initial send is interrupted, the scheduled worker recovers the row.
+  const endpointIds: string[] = [];
+  for (const endpoint of endpoints) {
     let eventTypes: string[] = ['*'];
     try { eventTypes = JSON.parse(endpoint.eventTypesJson || '["*"]'); } catch {}
-    if (!eventTypes.includes('*') && !eventTypes.includes(eventType)) return null;
-
-    const signature = createHmac('sha256', endpoint.secret).update(body).digest('hex');
-    let status: number | null = null;
-    let error: string | null = null;
-    let success = false;
-
-    try {
-      const response = await fetch(endpoint.url, {
-        method: 'POST',
-        redirect: 'error', // Never forward signed organization data to a redirected host.
-        headers: {
-          'Content-Type': 'application/json',
-          'X-ICA-Event': eventType,
-          'X-ICA-Signature': `sha256=${signature}`,
-        },
-        body,
-        signal: AbortSignal.timeout(8000),
-      });
-      status = response.status;
-      success = response.ok;
-      if (!response.ok) error = `HTTP ${response.status}`;
-    } catch (caught) {
-      error = caught instanceof Error ? caught.message : 'Webhook delivery failed';
-    }
-
-    await prisma.$executeRawUnsafe(
-      `UPDATE WebhookEndpoint
-       SET lastDeliveryAt = CURRENT_TIMESTAMP, lastStatus = ?, lastError = ?
-       WHERE id = ?`,
-      status,
-      error,
-      endpoint.id,
-    );
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO WebhookDelivery
-       (id, organizationId, endpointId, eventType, responseStatus, success, error, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      randomUUID(),
-      organizationId,
-      endpoint.id,
-      eventType,
-      status,
-      success ? 1 : 0,
-      error,
-    );
-    return { endpointId: endpoint.id, success, status, error };
-  }));
+    if (!eventTypes.includes('*') && !eventTypes.includes(eventType)) continue;
+    endpointIds.push(endpoint.id);
+  }
+  const ids = await enqueueWebhookEvent(db, { organizationId, endpointIds, eventId, eventType, body });
+  const deliveries: PromiseSettledResult<Awaited<ReturnType<typeof deliverWebhook>>>[] = [];
+  for (let i = 0; i < ids.length; i += 4) {
+    deliveries.push(...await Promise.allSettled(ids.slice(i, i + 4).map(id => deliverWebhook(db, id))));
+  }
 
   return deliveries;
 }

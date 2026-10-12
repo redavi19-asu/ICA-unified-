@@ -38,12 +38,17 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   if (body?.action === 'TEST') {
-    await emitOrganizationEvent(membership.organizationId, 'integration.test', {
+    const deliveries = await emitOrganizationEvent(membership.organizationId, 'integration.test', {
       organizationId: membership.organizationId,
       organizationName: membership.organization.name,
       message: 'ICA Unified webhook test delivery',
     });
-    return NextResponse.json({ ok: true });
+    const results = deliveries.flatMap(result => result.status === 'fulfilled' && result.value ? [result.value] : []);
+    const sent = results.filter(result => result.success).length;
+    const queued = results.filter(result => result.queued).length;
+    const failed = results.filter(result => !result.success && !result.queued).length
+      + deliveries.filter(result => result.status === 'rejected').length;
+    return NextResponse.json({ ok: true, sent, queued, failed });
   }
 
   const parsed = createSchema.safeParse(body);

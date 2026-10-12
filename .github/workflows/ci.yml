@@ -32,6 +32,8 @@ jobs:
         run: npx prisma validate
       - name: Lint
         run: npm run lint
+      - name: Validate scheduled Worker bindings and types
+        run: npm run typecheck:worker
       - name: Test
         run: npm test
       - name: Audit production dependencies
