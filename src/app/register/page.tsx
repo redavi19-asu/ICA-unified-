@@ -80,7 +80,6 @@ export default function RegisterPage() {
               organizationSlug: form.get('organizationSlug'),
               email: form.get('email'),
               password: form.get('password'),
-              termsAccepted: legalAccepted,
               turnstileToken,
             }
           : {
@@ -88,6 +87,7 @@ export default function RegisterPage() {
               name: form.get('name'),
               email: form.get('email'),
               password: form.get('password'),
+              termsAccepted: legalAccepted,
               turnstileToken,
             }
       ),
