@@ -1,3 +1,4 @@
+import { REVENUE_TABLES } from './api-revenue';
 import { API_MUTATION_SCHEMA } from './api-mutation-schema';
 import { ensureApiKeyTables } from './api-keys';
 import { ensureAccountDeletionTables } from './account-deletion';
@@ -44,11 +45,15 @@ export const REQUIRED_APPLICATION_TABLES = [
   'RevokedSession',
   'ApiCredentialPolicy',
   'ApiMutation',
+  'ApiAccessSubscription',
+  'ApiUsagePeriod',
+  'ApiUsageReservation',
 ] as const;
 
 let runtimeSchemaReady: Promise<void> | null = null;
 
 async function ensureStandaloneRuntimeTables() {
+  for(const sql of REVENUE_TABLES)await prisma.$executeRawUnsafe(sql);
   await prisma.$executeRawUnsafe(API_MUTATION_SCHEMA);
   await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS ApiMutation_expiry ON ApiMutation(expiresAt)');
   await prisma.$executeRawUnsafe(`

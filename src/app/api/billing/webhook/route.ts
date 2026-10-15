@@ -1,3 +1,4 @@
+import {handleApiRevenueEvent} from '../../../../lib/api-revenue-stripe';
 import { NextResponse } from 'next/server';
 import { handleStripeSnapshotEvent, verifyStripeWebhookSignature } from '../../../../lib/stripe-billing';
 import { handleWorkflowPaymentWebhook } from '../../../../lib/member-payments';
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
       data?: { object?: unknown };
     };
 
+    if(await handleApiRevenueEvent(event))return NextResponse.json({received:true});
     const workflowPaymentHandled = await handleWorkflowPaymentWebhook(event);
     if (!workflowPaymentHandled) {
       await handleStripeSnapshotEvent(event);

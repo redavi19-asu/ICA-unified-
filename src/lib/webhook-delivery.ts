@@ -120,7 +120,7 @@ export async function deliverWebhook(db: WebhookDatabase, id: string, options: {
 }
 
 export async function drainWebhookOutbox(db: WebhookDatabase, options: {
-  now?: () => number; send?: typeof fetch; limit?: number;
+  now?: () => number; send?: typeof fetch; limit?: number; canDeliver?: (organizationId:string)=>Promise<boolean>;
 } = {}) {
   const now = (options.now || Date.now)();
   await db.run(WEBHOOK_OUTBOX_SCHEMA);
@@ -137,14 +137,15 @@ export async function drainWebhookOutbox(db: WebhookDatabase, options: {
   // Retain failed payloads for seven days; completed payloads are cleared at once.
   await db.run(`DELETE FROM WebhookOutbox WHERE status IN ('SENT', 'FAILED', 'CANCELLED')
     AND finishedAt < ?`, now - 7 * DELIVERY_TTL_MS);
-  const rows = await db.all<{ id: string }>(`SELECT id FROM WebhookOutbox
+  const rows = await db.all<{ id: string;organizationId:string }>(`SELECT id,organizationId FROM WebhookOutbox
     WHERE nextAttemptAt <= ? AND (status = 'PENDING' OR (status = 'PROCESSING' AND leaseUntil <= ?))
     ORDER BY nextAttemptAt, createdAt LIMIT ?`, now, now, Math.max(1, Math.min(options.limit || 40, 100)));
+  const eligible=[];for(const row of rows){if(!options.canDeliver||await options.canDeliver(row.organizationId))eligible.push(row);}
   const results: PromiseSettledResult<DeliveryResult | null>[] = [];
   // Four outbound connections at a time; leases prevent overlapping cron runs
   // or request/cron races from claiming the same delivery concurrently.
-  for (let i = 0; i < rows.length; i += 4) {
-    results.push(...await Promise.allSettled(rows.slice(i, i + 4).map(row => deliverWebhook(db, row.id, options))));
+  for (let i = 0; i < eligible.length; i += 4) {
+    results.push(...await Promise.allSettled(eligible.slice(i, i + 4).map(row => deliverWebhook(db, row.id, options))));
   }
   const errors = results.filter(result => result.status === 'rejected').length;
   if (errors) throw new Error(`${errors} webhook delivery operations failed; retained claims will be recovered`);

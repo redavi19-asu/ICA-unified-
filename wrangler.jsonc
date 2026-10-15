@@ -9,6 +9,10 @@
 	],
 	"triggers": { "crons": ["*/5 * * * *"] },
 	"vars": {
+        "API_PAID_ACCESS_REQUIRED": "false",
+        "STRIPE_API_PRICE_ID": "price_1UPjQVGzgYAIrLjGLf12JYzm",
+        "API_MONTHLY_AMOUNT_CENTS": "9900",
+        "API_MONTHLY_REQUEST_ALLOWANCE": "100000",
 		"SOCIAL_GOOGLE_CLIENT_ID": "493512781101-54s3bmlkvdl28oe4umjssknrv53cia5c.apps.googleusercontent.com",
 		"SOCIAL_AUTH_ORIGIN": "https://unified.icomputeranything.com",
 		"STRIPE_PROFESSIONAL_PRICE_ID": "price_1UPQfeGzgYAIrLjGLfBlD5Y0",

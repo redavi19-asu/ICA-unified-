@@ -83,7 +83,7 @@ function fallbackAnswer(question: string) {
   }
 
   if (q.includes('api') || q.includes('webhook') || q.includes('integration')) {
-    return 'Owners and admins can go to Integrations. Create a tenant-scoped API key with the required permissions for members, learning, credentials, CE, events or applications. Use Bearer authentication; new POST endpoints require an Idempotency-Key. Read /developers for requests and limits, or add an HTTPS webhook. ICA signs webhook bodies with HMAC-SHA256 and shows each signing secret only when it is created.';
+    return 'Owners and admins can go to Integrations. Create a tenant-scoped API key with the required permissions for members, learning, credentials, CE, events or applications. Use Bearer authentication; new POST endpoints require an Idempotency-Key. Separate paid API subscriptions and company-wide usage allowances are being prepared; owners/admins can view usage in Integrations. No separate API fee or automatic overage charge is active until API billing is launched. Read /developers for requests and limits, or add an HTTPS webhook. ICA signs webhook bodies with HMAC-SHA256 and shows each signing secret only when it is created.';
   }
 
   if (q.includes('domain') || q.includes('dns')) {

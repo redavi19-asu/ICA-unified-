@@ -55,3 +55,11 @@ Only active MASTER/PLATFORM_ADMIN accounts can review or complete personal-accou
 ## Release boundaries
 
 The reviewed deletion flow and webhook recovery are deployed on the web. No real customer account was deleted during release verification. Native source is updated but not published by these web deployments. Signed iOS upload, real-device testing, provider consent testing and App Store review remain separate gates. Live payment activation/testing is a separate task and must not be inferred from these directions.
+
+## Separate API revenue preparation
+
+Separate API billing is prepared but not active until sandbox end-to-end validation passes and paid API access is enabled. The owner delegated launch pricing: $99/month for 100,000 requests per company per billing period. The matching live Stripe price is configured. The software subscription does not substitute for an API plan once that launch happens. Organization owners/admins manage the API plan in Integrations; employees/developers do not need duplicate company subscriptions for each key.
+
+Usage is counted across all company keys in the API subscription's billing period. Authenticated requests that pass scope/subscription/rate checks count, including idempotency retries and client errors; server failures are released. Requests rejected for missing API access or exhausted allowance do not consume allowance. Webhook deliveries are included in API plan access and are not counted as inbound API requests. No automatic overage fees exist: allowance exhaustion returns 429 until renewal or support arranges a plan change. The minute-rate limit remains separate.
+
+Paid API access, key/webhook creation and outbound webhook delivery require an active, unexpired API plan when enforcement is enabled. Cancelling API renewal does not cancel software access. API plan status comes from verified Stripe webhook events and the provider's current subscription/customer/price state, not a success-page redirect. Existing subscription allowances/prices are preserved rather than silently rewritten from a new offer.

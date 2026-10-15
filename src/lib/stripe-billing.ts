@@ -135,6 +135,7 @@ export async function applyStripeSubscription(
   subscription: StripeSubscription,
   customerId?: string | null,
 ) {
+  if(subscription.metadata?.product==='ica-unified-api')throw new Error('CHECKOUT_PRODUCT_MISMATCH');
   await ensureBillingProfile(organizationId);
 
   const resolvedCustomer = customerId || objectId(subscription.customer);
@@ -172,6 +173,7 @@ export async function confirmCheckoutForOrganization(organizationId: string, ses
     `/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=subscription`,
   );
 
+  if(session.metadata?.product==='ica-unified-api')throw new Error('CHECKOUT_PRODUCT_MISMATCH');
   const referencedOrganization = session.client_reference_id || session.metadata?.organizationId;
   if (referencedOrganization !== organizationId) {
     throw new Error('Checkout session does not belong to this organization.');

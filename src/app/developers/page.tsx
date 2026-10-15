@@ -313,7 +313,7 @@ export default function Developers() {
       </p>
       <h2>Commercial access</h2>
       <p>
-        The API follows your organization’s Unified subscription access. An API
+        Software subscription eligibility still applies. The separate API launch plan is $99/month for 100,000 requests per organization per billing period. Billing is not active yet; no automatic overage charges apply. When paid API access launches, the organization will need that additional subscription, managed in Integrations. An API
         key does not grant access to another company or to ICA’s Stripe account.
         Additional endpoints and custom integrations require a separate scope
         agreement.

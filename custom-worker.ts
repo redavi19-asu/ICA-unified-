@@ -4,6 +4,7 @@ import handler from './.open-next/worker.js';
 // @ts-expect-error: generated OpenNext durable-object exports.
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from './.open-next/worker.js';
 import { drainWebhookOutbox, type WebhookDatabase } from './src/lib/webhook-delivery';
+import {purgeApiUsageReservations,apiRevenueRequired,apiRevenueStatus,type RevenueDatabase} from './src/lib/api-revenue';
 import { API_MUTATION_SCHEMA } from './src/lib/api-mutation-schema';
 import { purgeExpiredTrainingArchives } from './src/lib/training-retention';
 
@@ -20,7 +21,9 @@ export default {
         return result.meta.changes;
       },
     };
-    ctx.waitUntil(drainWebhookOutbox(db).then(result => {
+    const revenue:RevenueDatabase={...db,async batch(statements){return (await env.DB.batch<Record<string,unknown>>(statements.map(s=>env.DB.prepare(s.sql).bind(...s.values)))).map(r=>({changes:r.meta.changes,rows:r.results}));}};
+    ctx.waitUntil(purgeApiUsageReservations(revenue));
+    ctx.waitUntil(drainWebhookOutbox(db,{canDeliver:async organizationId=>!apiRevenueRequired(env.API_PAID_ACCESS_REQUIRED)||(await apiRevenueStatus(revenue,organizationId,true)).entitled}).then(result => {
       console.log(JSON.stringify({ event: 'webhook-retry', processed: result.processed }));
     }));
     ctx.waitUntil((async () => {
