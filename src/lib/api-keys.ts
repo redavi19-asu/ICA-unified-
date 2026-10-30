@@ -202,6 +202,7 @@ export async function authenticateApiRequest(
     organizationId: string;
     name: string;
     active: number;
+    createdAt: string;
     scopesJson: string;
     expiresAt: number;
     requestsPerMinute: number;
@@ -211,6 +212,7 @@ export async function authenticateApiRequest(
        c.organizationId,
        c.name,
        c.active,
+       c.createdAt,
        p.scopesJson,
        p.expiresAt,
        p.requestsPerMinute
@@ -247,7 +249,10 @@ export async function authenticateApiRequest(
     };
   }
 
-  const developerAllowance = await consumeDeveloperCalls(match.organizationId);
+  const rollout = Date.parse(process.env.ICA_DEVELOPER_BILLING_ENFORCE_FROM || '');
+  const createdAt = Date.parse(String(match.createdAt || '').replace(' ', 'T') + 'Z');
+  const grandfathered = !Number.isFinite(rollout) || (Number.isFinite(createdAt) && createdAt < rollout);
+  const developerAllowance = await consumeDeveloperCalls(match.organizationId, grandfathered);
   if (!developerAllowance.allowed) {
     return {
       ok: false,
