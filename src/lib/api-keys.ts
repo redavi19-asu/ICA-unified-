@@ -1,3 +1,4 @@
+import { consumeDeveloperCalls } from './developer-billing';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { consumeRateLimit } from './security';
@@ -174,7 +175,7 @@ export type ApiKeyAuthResult =
     }
   | {
       ok: false;
-      status: 401 | 403 | 429;
+      status: 401 | 402 | 403 | 429;
       error: string;
       retryAfterSeconds?: number;
     };
@@ -243,6 +244,18 @@ export async function authenticateApiRequest(
       status: 429,
       error: 'This ICA API key exceeded its request limit.',
       retryAfterSeconds: limit.retryAfterSeconds,
+    };
+  }
+
+  const developerAllowance = await consumeDeveloperCalls(match.organizationId);
+  if (!developerAllowance.allowed) {
+    return {
+      ok: false,
+      status: developerAllowance.status || 429,
+      error: developerAllowance.status === 402
+        ? 'The developer API subscription is inactive.'
+        : 'Developer API monthly allowance reached. No overage charge was made.',
+      ...(developerAllowance.status === 429 ? { retryAfterSeconds: 3600 } : {}),
     };
   }
 
