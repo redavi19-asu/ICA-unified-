@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DEVELOPER_PLANS } from '../../../lib/developer-billing';
+import type { DEVELOPER_PLANS } from '../../../lib/developer-billing';
 
 type Status = {
   enabled: boolean;
