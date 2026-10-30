@@ -153,7 +153,10 @@ export async function createDeveloperCheckout(organizationId: string, email: str
   params.set('subscription_data[metadata][developer_plan]', plan);
   params.set('success_url', companyOrigin() + '/workspace/developer-billing?checkout=success');
   params.set('cancel_url', companyOrigin() + '/workspace/developer-billing?checkout=cancelled');
-  return requestStripe<{ url: string }>('checkout/sessions', { method: 'POST', body: params });
+  return requestStripe<{ url: string }>('checkout/sessions', {
+    method: 'POST', body: params,
+    idempotency: 'ica-dev-checkout-' + organizationId + '-' + plan + '-' + (sessions.data[0]?.url || 'initial').slice(-48),
+  });
 }
 
 export async function createDeveloperPortal(organizationId: string) {
@@ -178,6 +181,8 @@ async function applySubscription(subscription: StripeSubscription) {
   const row = await rowFor(org);
   const customer = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id;
   if (!row || row.stripeCustomerId !== customer) return true;
+  if (row.stripeSubscriptionId && row.stripeSubscriptionId !== subscription.id &&
+      ['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'].includes(row.status)) return true;
   const item = subscription.items.data[0];
   const plan: DeveloperPlan | null = subscription.items.data.length === 1 && item?.quantity === 1 ?
     item.price.id === priceId('starter') ? 'starter' :
