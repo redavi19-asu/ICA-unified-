@@ -300,6 +300,20 @@ export default async function Home() {
           <a href="/register?mode=login">Customer Login</a>
         </nav>
         <a className={styles.navCta} href="/register">Start Free Trial</a>
+        <details className={styles.mobileMenu}>
+          <summary aria-label="Toggle navigation menu">Menu <span aria-hidden="true">☰</span></summary>
+          <nav aria-label="Mobile navigation">
+            <a href="#platform">Platform</a>
+            <a href="#capabilities">Capabilities</a>
+            <a href="#integrations">Integrations</a>
+            <a href="#mobile">Mobile</a>
+            <a href="#plans">Plans</a>
+            <a href="/downloads">Apps</a>
+            <a href="/developers">Developers</a>
+            <a href="/register?mode=login">Customer Login</a>
+            <a href="/register">Start Free Trial</a>
+          </nav>
+        </details>
       </header>
 
       <section className={styles.hero}>
