@@ -13,7 +13,7 @@ This implementation is intentionally **disabled by default**. It is an optional 
 
 - Developer subscriptions have **separate Stripe customers** from operating subscriptions, separate database records, and separate usage counters.
 - API authorization still requires an active existing company/organization subscription and the proper API-key scope. This add-on does not replace regular SaaS billing or independently provision a customer workspace.
-- Existing customers without a developer subscription are grandfathered onto existing API terms; quota metering is active only for organizations with a recorded developer subscription while the feature switch is on.
+- Keys created **before the configured launch timestamp** retain their original API access without paid quotas. Keys created **on or after** that date require a paid developer subscription and share the organization billing-period quota.
 - Subscription status is derived from authenticated Stripe webhook events (using the existing webhook endpoint) and the current Stripe subscription snapshot. Subscription price, quantity, currency, monthly interval, Stripe customer, and organization link must all match.
 - Usage counts are atomic by organization and Stripe billing period, and a successful API request cannot exceed the fixed quota. Calls denied by the existing permission or per-minute rate limit are not charged.
 - Only owners/admins can start a developer Checkout or manage a developer Stripe billing portal; keys and Stripe secrets are never displayed on the public pricing page.
@@ -26,11 +26,11 @@ This implementation is intentionally **disabled by default**. It is an optional 
 4. Verify current `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` correspond to the correct same live account and webhook endpoint; ensure the endpoint receives checkout.session.completed and customer.subscription.created/updated/deleted.
 5. Validate customer identity, checkout cancellation, completed checkout, signed webhook replay/out-of-order events, failed payment, cancellation at period end, renewal/period rollover, exhausted quota, cross-tenant denial and Stripe portal return paths with test customers.
 6. Verify the configured developer portal can manage these developer-only subscriptions and cannot change base operating subscriptions.
-7. Set `ICA_DEVELOPER_BILLING_ENABLED=true` **only after** the other checks succeed. Rebuild/redeploy if needed and verify live origin, user sessions and HTTP response codes.
+7. Record a UTC launch timestamp as `ICA_DEVELOPER_BILLING_ENFORCE_FROM=YYYY-MM-DDTHH:mm:ssZ`, then set `ICA_DEVELOPER_BILLING_ENABLED=true` only after all tests pass. Newly created developer keys (on/after the timestamp) must have a paid developer subscription; older keys remain grandfathered.
 8. Review quota reporting, retention/pruning of old usage periods and the approved API pricing terms before announcing public availability.
 
 ## Operational cautions
 
 - The proposal intentionally does **not** implement overage invoicing, a public API-only developer signup, automatic prorated plan changes, an SDK, or refunds.
-- Existing users remain unaffected by the disabled configuration. Do not silently back-charge existing businesses.
+- Existing users retain pre-launch key access. Do not silently back-charge existing businesses; clearly announce new-key requirements before enabling the timestamp.
 - Any live Stripe prices/permissions or actual customer charges require verified production credentials, which are not supplied in this feature branch.
