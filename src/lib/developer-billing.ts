@@ -29,7 +29,8 @@ const secret = () => (process.env.STRIPE_SECRET_KEY || '').trim();
 const priceId = (plan: DeveloperPlan) =>
   (plan === 'starter' ? process.env.STRIPE_DEVELOPER_STARTER_PRICE_ID : process.env.STRIPE_DEVELOPER_PRO_PRICE_ID) || '';
 export function developerBillingReady() {
-  return process.env.ICA_DEVELOPER_BILLING_ENABLED === 'true' && Boolean(
+  return process.env.ICA_DEVELOPER_BILLING_ENABLED === 'true' &&
+    Number.isFinite(Date.parse(process.env.ICA_DEVELOPER_BILLING_ENFORCE_FROM || '')) && Boolean(
     secret() && process.env.STRIPE_WEBHOOK_SECRET && priceId('starter') && priceId('pro')
   );
 }
@@ -210,12 +211,12 @@ export async function handleDeveloperStripeEvent(event: { type?: string; data?: 
   return false;
 }
 
-export async function consumeDeveloperCalls(organizationId: string):
+export async function consumeDeveloperCalls(organizationId: string, grandfathered: boolean):
   Promise<{ allowed: boolean; status?: 402 | 429 }> {
-  if (!developerBillingReady()) return { allowed: true };
+  if (!developerBillingReady() || grandfathered) return { allowed: true };
   await ensureDeveloperBillingTables();
   const row = await rowFor(organizationId);
-  if (!row?.stripeSubscriptionId) return { allowed: true }; // Legacy customers stay on their existing terms
+  if (!row?.stripeSubscriptionId) return { allowed: false, status: 402 }; // New keys require a paid developer plan
   if (!active.has(row.status) || row.periodEnd <= Math.floor(Date.now() / 1000) ||
       !row.plan || !(row.plan in DEVELOPER_PLANS)) return { allowed: false, status: 402 };
   const max = DEVELOPER_PLANS[row.plan as DeveloperPlan].monthlyCalls;
