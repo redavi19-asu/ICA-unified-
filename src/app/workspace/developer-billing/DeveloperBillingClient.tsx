@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { DEVELOPER_PLANS } from '../../../lib/developer-billing';
 
 type Status = {
@@ -9,11 +9,11 @@ type Status = {
   subscription: { plan: string | null; status: string; active: boolean; periodEnd: number } | null;
   usage: { used: number; included: number | null };
 };
-const card: React.CSSProperties = {
+const card: CSSProperties = {
   padding: 26, borderRadius: 22, border: '1px solid #27445d',
   background: 'linear-gradient(150deg,#10283a,#0a1b2b)', minWidth: 0,
 };
-const cta: React.CSSProperties = {
+const cta: CSSProperties = {
   minHeight: 48, width: '100%', border: 0, borderRadius: 9, cursor: 'pointer',
   fontWeight: 800, background: '#258de0', color: '#fff', fontSize: 14, padding: '12px 18px',
 };
