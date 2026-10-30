@@ -311,6 +311,14 @@ export default function Developers() {
         separate. Application-decision events report the decision but do not
         grant payment or membership access.
       </p>
+      <h2>Developer API plans (preview)</h2>
+      <p>
+        Proposed separate developer add-ons: Starter ($29/month, 25,000 requests per
+        billing period) and Pro ($99/month, 150,000 requests per billing period).
+        Purchase is disabled until production Stripe verification is complete.
+        Owners/admins can view status in Workspace → Developer API plans, usage and billing.
+        Existing organizational API access is unchanged; no per-call overage is charged.
+      </p>
       <h2>Commercial access</h2>
       <p>
         The API follows your organization’s Unified subscription access. An API
