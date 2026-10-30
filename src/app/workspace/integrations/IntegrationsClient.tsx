@@ -242,6 +242,7 @@ export default function IntegrationsClient({
         </article>
 
         <a href="/developers">Read the developer guide →</a>
+        <a href="/workspace/developer-billing">Developer API plans, usage and billing →</a>
         <article id="webhooks" className={styles.wide}>
           <div className={styles.cardHead}><span>02</span><b>WEBHOOKS</b></div>
           <h2>Push ICA events to another system.</h2>
