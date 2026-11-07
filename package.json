@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
-    "@opennextjs/cloudflare": "^1.20.6",
+    "@opennextjs/cloudflare": "^1.20.16",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
     "@types/react": "19.2.18",
@@ -40,7 +40,7 @@
     "prisma": "^6.19.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "wrangler": "^4.129.0"
+    "wrangler": "^4.148.0"
   },
   "overrides": {
     "@types/react": "19.2.18",
