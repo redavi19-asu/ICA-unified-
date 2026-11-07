@@ -9,11 +9,15 @@ export default function CookieNotice() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setVisible(window.localStorage.getItem(STORAGE_KEY) !== '1');
+    try { setVisible(window.localStorage.getItem(STORAGE_KEY) !== '1'); }
+    catch { setVisible(true); }
+    const open = () => setVisible(true);
+    window.addEventListener('ica:cookie-notice', open);
+    return () => window.removeEventListener('ica:cookie-notice', open);
   }, []);
 
   function dismiss() {
-    window.localStorage.setItem(STORAGE_KEY, '1');
+    try { window.localStorage.setItem(STORAGE_KEY, '1'); } catch {}
     setVisible(false);
   }
 
