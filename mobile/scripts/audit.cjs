@@ -3,9 +3,7 @@
 // Published-package audits cannot distinguish Metro build tooling from code that
 // ships in the mobile runtime. We keep high/critical findings blocking by
 // default and allow only narrowly verified exceptions:
-//   1) node-forge GHSA-86w9-cpqp-85rv after the installed source passes our
-//      cryptographic regression tests.
-//   2) braces GHSA-vfj7-8cjw-p6xm only while npm has no patched release AND the
+//   braces GHSA-vfj7-8cjw-p6xm only while npm has no patched release AND the
 //      lockfile proves braces is reachable exclusively through Metro file-map
 //      build tooling. Any new runtime path or dependency shape fails closed.
 
@@ -13,7 +11,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const NODE_FORGE_ADVISORY = 'https://github.com/advisories/GHSA-86w9-cpqp-85rv';
 const BRACES_ADVISORY = 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm';
 
 function verifyBracesIsMetroToolingOnly() {
@@ -97,11 +94,6 @@ for (const item of Object.values(report.vulnerabilities || {})) {
 
 let failed = false;
 for (const [url, advisory] of findings) {
-  if (url === NODE_FORGE_ADVISORY) {
-    console.log('MITIGATED locally and regression-tested, awaiting upstream release: ' + url);
-    continue;
-  }
-
   if (url === BRACES_ADVISORY) {
     try {
       const proof = verifyBracesIsMetroToolingOnly();
