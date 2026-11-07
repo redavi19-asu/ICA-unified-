@@ -1,25 +1,30 @@
 import Link from "next/link";
+import styles from "./developers.module.css";
 import { API_ENDPOINTS, API_SCOPES } from "../../lib/api-contract";
 
 export const metadata = { title: "Developer guide | ICA Unified" };
 export default function Developers() {
   return (
-    <main
-      style={{
-        maxWidth: 960,
-        margin: "auto",
-        padding: "48px 24px",
-        lineHeight: 1.7,
-      }}
-    >
-      <Link href="/">ICA Unified</Link>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <Link href="/" className={styles.brand}>ICA <span>UNIFIED</span></Link>
+        <nav aria-label="Developer navigation">
+          <Link href="/#platform">Platform</Link>
+          <Link href="/#integrations">Integrations</Link>
+          <Link href="/#plans">Plans</Link>
+          <Link href="/developers" aria-current="page">Developers</Link>
+          <Link href="/login">Login</Link>
+        </nav>
+      </header>
+      <main className={styles.article}>
+      <p className={styles.eyebrow}>ICA UNIFIED / DEVELOPER GUIDE</p>
       <h1>Connect your organization</h1>
       <p>
         Connect membership systems and registration forms to your Unified
         workspace. Each key belongs to one organization. Owners and admins
         manage keys and webhooks in Integrations.
       </p>
-      <Link href="/workspace/integrations">Manage API keys and webhooks →</Link>
+      <Link className={styles.primary} href="/workspace/integrations">Manage API keys and webhooks →</Link>
       <h2>Start with a private API key</h2>
       <ol>
         <li>Sign in as an organization owner or admin.</li>
@@ -54,7 +59,7 @@ export default function Developers() {
       <p>{API_SCOPES.join(", ")}</p>
       <h2>Learning, credentials, events and applications</h2>
       <div style={{ overflowX: "auto" }}>
-        <table>
+        <div className={styles.tableWrap}><table>
           <thead>
             <tr>
               <th>Request</th>
@@ -73,7 +78,7 @@ export default function Developers() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
       <p>
         List endpoints return <code>data</code> and <code>nextCursor</code>. Use{" "}
@@ -215,7 +220,7 @@ export default function Developers() {
         submissions.
       </p>
       <h2>Member API</h2>
-      <table>
+      <div className={styles.tableWrap}><table>
         <thead>
           <tr>
             <th>Request</th>
@@ -238,7 +243,7 @@ export default function Developers() {
             </td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
       <pre style={{ overflowX: "auto" }}>
         {JSON.stringify(
           {
@@ -318,6 +323,7 @@ export default function Developers() {
         Additional endpoints and custom integrations require a separate scope
         agreement.
       </p>
-    </main>
+      </main>
+    </div>
   );
 }
