@@ -9,7 +9,7 @@ import { awardCourseCredits } from '../../../../lib/compliance';
 const schema = z.object({
   courseId: z.string().min(1),
   lessonId: z.string().min(1),
-  answers: z.record(z.string()).optional(),
+  answers: z.record(z.string(), z.string()).optional(),
 });
 
 export async function POST(request: Request) {
