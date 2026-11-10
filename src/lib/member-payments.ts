@@ -257,6 +257,13 @@ export async function createWorkflowPaymentCheckout(input: {
     throw new Error('SUBMISSION_NOT_ELIGIBLE_FOR_PAYMENT');
   }
 
+  const { preferredBusinessCheckoutProvider } = await import('./business-payment-preferences');
+  const provider = await preferredBusinessCheckoutProvider(workflow.organizationId);
+  if (provider === 'SQUARE') {
+    const { createSquareWorkflowCheckout } = await import('./square-workflow-checkout');
+    return createSquareWorkflowCheckout({ workflow, submissionId: submission.id, origin: input.origin });
+  }
+
   const account = await refreshOrganizationPaymentAccount(workflow.organizationId);
   if (!account?.connectedAccountId || !Number(account.chargesEnabled)) {
     throw new Error('ORGANIZATION_PAYMENT_NOT_READY');
@@ -323,10 +330,7 @@ async function finalizePaidWorkflow(input: {
   const { workflow, submission } = input;
   if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
 
-  if (
-    submission.paymentStatus === 'PAID' &&
-    !['PAYMENT_PENDING', 'RECEIVED'].includes(submission.status)
-  ) {
+  if (submission.paymentStatus === 'PAID') {
     return { paid: true, status: submission.status, activationUrl: null };
   }
 
@@ -338,8 +342,31 @@ async function finalizePaidWorkflow(input: {
   } else {
     const approvalRequired = Boolean(workflow.config.approvalRequired);
     nextStatus = approvalRequired ? 'PENDING_REVIEW' : 'APPROVED';
+  }
 
-    if (!approvalRequired) {
+  await ensureWorkflowExecutionTables();
+  // The conditional update claims the paid transition exactly once. Parallel
+  // webhooks and browser returns must not generate duplicate activation links.
+  const changed = await prisma.$executeRawUnsafe(
+    `UPDATE WorkflowSubmission
+     SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
+     WHERE id = ? AND organizationId = ? AND workflowId = ?
+       AND paymentStatus <> 'PAID'`,
+    nextStatus,
+    submission.id,
+    workflow.organizationId,
+    workflow.id,
+  );
+  if (changed !== 1) {
+    const current = await getWorkflowSubmission(workflow.organizationId, workflow.id, submission.id);
+    if (current?.paymentStatus === 'PAID') {
+      return { paid: true, status: current.status, activationUrl: null };
+    }
+    throw new Error('WORKFLOW_PAYMENT_TRANSITION_FAILED');
+  }
+
+  if (workflow.kind === 'MEMBERSHIP' && !Boolean(workflow.config.approvalRequired)) {
+    try {
       const activation = await createMembershipActivation({
         organizationId: workflow.organizationId,
         organizationName: workflow.organizationName,
@@ -348,19 +375,11 @@ async function finalizePaidWorkflow(input: {
         origin: input.origin,
       });
       activationUrl = activation.inviteUrl;
+    } catch (error) {
+      // Payment is already verified and persisted; never charge again to retry onboarding.
+      console.error('ICA_PAID_MEMBERSHIP_ACTIVATION_REQUIRES_RETRY', error);
     }
   }
-
-  await ensureWorkflowExecutionTables();
-  await prisma.$executeRawUnsafe(
-    `UPDATE WorkflowSubmission
-     SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
-     WHERE id = ? AND organizationId = ? AND workflowId = ?`,
-    nextStatus,
-    submission.id,
-    workflow.organizationId,
-    workflow.id,
-  );
 
   try {
     await queueEmail({
@@ -394,6 +413,29 @@ async function finalizePaidWorkflow(input: {
   }
 
   return { paid: true, status: nextStatus, activationUrl };
+}
+
+/**
+ * Invoked only after a processor's server-side payment proof is independently verified.
+ * This function is not a public route and may not trust a browser success redirect.
+ */
+export async function finalizeVerifiedBusinessWorkflowPayment(input: {
+  organizationId: string;
+  workflowId: string;
+  submissionId: string;
+  receiptId: string;
+  origin: string;
+}) {
+  const workflow = await getPaymentWorkflow(input.workflowId, input.organizationId);
+  if (!workflow) throw new Error('WORKFLOW_NOT_AVAILABLE');
+  const submission = await getWorkflowSubmission(input.organizationId, input.workflowId, input.submissionId);
+  if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
+  return finalizePaidWorkflow({
+    workflow,
+    submission,
+    checkoutSessionId: input.receiptId,
+    origin: input.origin,
+  });
 }
 
 export async function confirmWorkflowPayment(input: {
