@@ -98,3 +98,31 @@ A business owner should **never** be asked to paste payment API keys, configure 
 - Errors shown to end users avoid secrets, provider stack traces and internal account IDs. The operator should retain sanitized diagnostic logs for unresolved cases.
 
 The full customer/business simulation acceptance checklist lives in [PAYMENT_SIMULATION_QC.md](PAYMENT_SIMULATION_QC.md). Live merchant sandbox tests and partner approvals are still outstanding. These safeguards reduce routine support; they do not establish that support can be eliminated entirely.
+
+
+## Business full refunds — safety-controlled workflow
+
+- Organization owners/admins use `/workspace/payments/transactions` to review their paid membership and event transactions, with an explicit checkbox confirmation before full refunds. A separate action checks pending refund status.
+- Refunds use the **original connected merchant payment**, never ICA's subscription Stripe account or the business's currently selected default processor. Merchant IDs, refund amount and payment references are loaded from verified server-side records; browsers cannot supply or override them.
+- Stripe business one-time Checkout sessions persist their verified Payment Intent and connected account before granting paid access. Square persists the actual payment ID, and PayPal persists the completed capture ID.
+- Full refunds use Square Refunds v2, PayPal Capture Refund v2 and Stripe connected-account Refunds APIs. Requests are idempotent per original submission, so retries don't create duplicate refunds. Partial refunds are **not yet supported** through Unified.
+- The refund remains PENDING until the processor confirms completed status. Signed Stripe, Square and PayPal refund webhooks recheck the original refund server-to-server, and the business owner can check pending status manually.
+- When a full refund is provider-confirmed, Unified marks the original submission `REFUNDED` and cancels its paid access. Delayed checkout webhooks cannot restore access or create another checkout on that refunded record.
+- Business refund processing is **off by default**: `BUSINESS_REFUNDS_ENABLED=true`. Production additionally requires `BUSINESS_REFUNDS_PRODUCTION_APPROVED=true`. Do not enable these before an isolated end-to-end sandbox refund passes for each merchant provider.
+- Because older Stripe receipts may predate the new payment record, those cannot automatically be refunded from Unified without independently verifying the original transaction. A merchant can use its own Stripe dashboard for such historical refunds.
+
+## Authorize.net no-API-key merchant authorization (draft)
+
+- Authorize.net supports OAuth for approved Reseller or Technology Partner applications, allowing a business owner/admin to approve Unified using the Authorize.net-hosted login screen.
+- Tenant-scoped, one-use OAuth state and merchant JWT identity are verified through a server-to-server merchant API request. Access/refresh tokens are encrypted and refresh automatically.
+- Authorize.net OAuth onboarding is guarded by `AUTHNET_PARTNER_OAUTH_APPROVED=true` plus managed partner client ID, secret, HTTPS callback URL, environment and encryption key. Public payment checkout remains **disabled** until secure Accept Hosted checkout, merchant-specific payment confirmation and signature-verified webhooks are built and tested.
+- The Authorize.net merchant Signature Key is merchant-specific and needed for authenticated webhooks; do not ask customers to share raw keys through support chats or enable unverified webhooks.
+- Braintree merchant-connect remains a closed beta according to its developer documentation. Adyen needs an approved Adyen for Platforms integration and hosted account-holder onboarding. Neither is a working payment option in Unified yet.
+
+## Outstanding release requirements
+
+- Real sandbox merchant accounts and transaction IDs for each processor; partner account approvals, production credentials and webhook subscriptions.
+- Recurring membership billing lifecycle beyond initial Stripe checkout: renewal receipts, failed renewal recovery, cancellation, downgrade/expiration, and server-authorized entitlements. Square and PayPal recurring billing need provider-specific subscription implementation.
+- Automatic payment reconciliation after provider outages, disputes/chargebacks, partial refunds, test accessibility and native-app redirect UX.
+- Ensure one business cannot read another's merchant status, issue a refund on another's payment, or create a second charge/refund on retries.
+- Run full Mac Mini staging simulation and save sanitized evidence. CI success is not a live transaction test.
