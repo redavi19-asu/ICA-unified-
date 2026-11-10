@@ -179,8 +179,8 @@ export async function createOrganizationPaymentOnboarding(input: {
 
   const links = new URLSearchParams();
   links.set('account', accountId);
-  links.set('refresh_url', `${input.origin}/workspace/billing?connect=refresh`);
-  links.set('return_url', `${input.origin}/workspace/billing?connect=return`);
+  links.set('refresh_url', `${input.origin}/workspace/payments?connect=refresh`);
+  links.set('return_url', `${input.origin}/workspace/payments?connect=return`);
   links.set('type', 'account_onboarding');
 
   const link = await stripeRequest<{ url: string }>('/v1/account_links', {
