@@ -94,9 +94,17 @@ export default async function PaymentHubPage({
         </p>
       )}
 
-      {(params.square === 'error' || params.square === 'cancelled' || params.square === 'needs-location' || params.square === 'connected' || params.square === 'location-selected' || params.square === 'location-error') && (
-        <p className={params.square === 'error' || params.square === 'location-error' ? styles.error : styles.notice} role="status">
-          {params.square === 'connected' || params.square === 'location-selected'
+      {(params.square === 'error' || params.square === 'cancelled' || params.square === 'needs-location' || params.square === 'connected' || params.square === 'location-selected' || params.square === 'location-error' || params.square === 'check-ok' || params.square === 'check-reconnect' || params.square === 'check-location' || params.square === 'check-unavailable') && (
+        <p className={params.square === 'error' || params.square === 'location-error' || params.square === 'check-reconnect' ? styles.error : styles.notice} role="status">
+          {params.square === 'check-ok'
+            ? 'Square successfully verified your merchant account and payment location. Your saved connection is healthy.'
+            : params.square === 'check-location'
+              ? 'Square is connected, but the selected location cannot accept payments. Choose an eligible location below.'
+              : params.square === 'check-reconnect'
+                ? 'Square needs attention. Choose Reconnect Square account below to restore access.'
+                : params.square === 'check-unavailable'
+                  ? 'Square is not configured on Unified yet. No action is needed on your business account.'
+                  : params.square === 'connected' || params.square === 'location-selected'
             ? 'Square business account authorized. Customer payments remain unavailable until Square checkout and verification finish testing.'
             : params.square === 'needs-location'
               ? 'Square authorized your account, but no eligible USD card-processing location was found. Check your Square account.'
@@ -211,6 +219,11 @@ export default async function PaymentHubPage({
                       </form>
                     ) : (
                       <p className={styles.unavailable}>Square connection requires ICA platform setup before business owners can connect.</p>
+                    )}
+                    {squareConfigured && squareConnection?.merchantId && (
+                      <form action="/api/payments/square/check" method="post">
+                        <button className={styles.secondaryButton} type="submit">Check and repair connection</button>
+                      </form>
                     )}
                     {squareLocations.length > 0 && (
                       <form action="/api/payments/square/location" method="post">
