@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { confirmWorkflowPayment } from '../../../../lib/member-payments';
 import { confirmSquareWorkflowCheckout } from '../../../../lib/square-workflow-checkout';
 import styles from '../public-workflow.module.css';
+import PaymentProcessingRefresh from './PaymentProcessingRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,7 @@ export default async function WorkflowPaymentCompletePage({
         <div className={state === 'SUCCESS' ? styles.success : styles.error}>
           <p>{message}</p>
           {status && <p><strong>Status:</strong> {status.replaceAll('_', ' ')}</p>}
+          {state === 'PROCESSING' && <PaymentProcessingRefresh />}
         </div>
         {activationUrl && <a href={activationUrl} style={{display:'inline-block',marginTop:18,fontWeight:900}}>ACTIVATE ICA ACCOUNT →</a>}
         {!activationUrl && <Link href={`/flow/${workflowId}`} style={{display:'inline-block',marginTop:18,fontWeight:900}}>RETURN TO WORKFLOW →</Link>}
