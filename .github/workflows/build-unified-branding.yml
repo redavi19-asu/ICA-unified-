@@ -1,0 +1,47 @@
+name: Render approved ICA Unified brand icons
+
+on:
+  push:
+    branches:
+      - feature/approved-unified-icon-20261110
+    paths:
+      - "branding/source/**"
+      - "scripts/render-approved-unified-icon.py"
+      - ".github/workflows/build-unified-branding.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact approved source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image encoder
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0
+      - name: Render verified public, desktop and mobile icon variants
+        run: python scripts/render-approved-unified-icon.py
+      - name: Commit only generated branding assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/ica-unified-icon.webp public/ica-unified-icon.svg public/ica-unified-icon.png
+          git add mobile/assets/icon.png desktop/app-icon.png desktop/app-icon.svg
+          if git diff --cached --quiet; then
+            echo "Approved icon assets are already current."
+            exit 0
+          fi
+          git commit -m "Apply approved ICA Unified two-desk artwork to all platform icons"
+          # Branding UI files may be updated while this conversion job runs.
+          # Replay only this generated icon commit on top of the latest branch.
+          git fetch origin "$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
