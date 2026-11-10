@@ -130,7 +130,7 @@ export default async function PaymentHubPage({
           <div>
             <span className={styles.eyebrow}>AUTOMATIC PAYMENT SETUP CHECK</span>
             <h2 id="payment-readiness-title">{selectedReadiness.headline}</h2>
-            <p>These checks show what's ready and what you can fix yourself. They don't create charges or access your customers' card details.</p>
+            <p>These checks show what&apos;s ready and what you can fix yourself. They don&apos;t create charges or access your customers&apos; card details.</p>
           </div>
           <span className={selectedReadiness.readyForOneTime ? styles.ready : styles.pending}>
             {selectedReadiness.readyForOneTime ? 'Configuration ready' : 'Setup needs attention'}
