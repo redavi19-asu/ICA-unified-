@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
-import { getSquareMerchantStatus, squareCheckoutEnabled, squareConfig } from './square-connect';
-import { getOrganizationPaymentAccount, stripeConnectConfigured } from './member-payments';
+import { getSquareMerchantStatus, listSquareMerchantLocations, squareCheckoutEnabled, squareConfig } from './square-connect';
+import { getOrganizationPaymentAccount, refreshOrganizationPaymentAccount, stripeConnectConfigured } from './member-payments';
 
 /**
  * ICA subscription billing must NEVER read or modify this preference.
@@ -48,6 +48,17 @@ export async function setPreferredBusinessCheckoutProvider(
   organizationId: string,
   provider: ActiveBusinessCheckoutProvider,
 ) {
+  // Inspect the actual merchant connection before switching the business.
+  // Stale cached "connected" flags should never strand buyers in checkout.
+  if (provider === 'STRIPE') {
+    await refreshOrganizationPaymentAccount(organizationId);
+  } else {
+    const merchant = await getSquareMerchantStatus(organizationId);
+    const locations = merchant ? await listSquareMerchantLocations(organizationId) : [];
+    if (!merchant?.locationId || !locations.some((item) => item.id === merchant.locationId)) {
+      throw new Error('BUSINESS_CHECKOUT_MERCHANT_LOCATION_UNAVAILABLE');
+    }
+  }
   if (!await businessCheckoutReady(organizationId, provider)) {
     throw new Error('BUSINESS_CHECKOUT_PROVIDER_NOT_READY');
   }
