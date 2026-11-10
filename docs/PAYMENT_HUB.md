@@ -70,3 +70,18 @@ PayPal needs a valid partner/merchant onboarding arrangement, per-merchant autho
 ## Release acceptance
 
 Run isolated test-mode workflows for each provider: merchant authorization, wrong merchant/tenant, wrong amount, one-time charge, recurring subscription renewal/cancel (where supported), webhook replay, refunds/disputes, failed payments, expired tokens, reconnection and payout status. Only enable payment-taking providers after their individual matrix passes. Never perform production test charges without explicit approval.
+
+
+## Low-support product acceptance (required for launch)
+
+A business owner should **never** be asked to paste payment API keys, configure webhooks, run commands, edit database rows or contact ICA support to complete normal payment onboarding.
+
+- The Payment Hub displays a plain-language readiness checklist for the selected provider: platform availability, business authorization, merchant configuration, hosted checkout and recurring support.
+- Provider selection revalidates the merchant's own account and Square payment location before saving changes, instead of trusting stale status flags.
+- Business owners can check and repair Square account connections without exposing credentials. Expiring OAuth credentials refresh on the server when possible; revoked accounts show a reconnect action.
+- Buyers whose provider is still processing are shown automatic, bounded payment status checks. They should not resubmit or pay again just because the browser came back before webhook settlement.
+- Stripe business payment completion requires an actual paid Checkout Session with exact organization, workflow, submission, currency and amount. A completed but unpaid recurring session does not grant paid membership.
+- Square checkout is disabled by default; a valid webhook signing key + HTTPS notification URL are mandatory. A production checkout additionally requires an explicit ICA production-approval flag. Production runtime must not collect with sandbox Square credentials.
+- Errors shown to end users avoid secrets, provider stack traces and internal account IDs. The operator should retain sanitized diagnostic logs for unresolved cases.
+
+The full customer/business simulation acceptance checklist lives in [PAYMENT_SIMULATION_QC.md](PAYMENT_SIMULATION_QC.md). Live merchant sandbox tests and partner approvals are still outstanding. These safeguards reduce routine support; they do not establish that support can be eliminated entirely.
