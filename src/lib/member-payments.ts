@@ -293,7 +293,7 @@ export async function createWorkflowPaymentCheckout(input: {
   );
   if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
   if (submission.amountCents <= 0) throw new Error('PAYMENT_NOT_REQUIRED');
-  if (submission.paymentStatus === 'PAID') throw new Error('PAYMENT_ALREADY_COMPLETE');
+  if (submission.paymentStatus !== 'PENDING') throw new Error('PAYMENT_NOT_ELIGIBLE_FOR_NEW_CHECKOUT');
 
   const paymentEligibleStatus =
     workflow.kind === 'EVENT'
@@ -384,6 +384,10 @@ async function finalizePaidWorkflow(input: {
   if (submission.paymentStatus === 'PAID') {
     return { paid: true, status: submission.status, activationUrl: null };
   }
+  // A paid-then-refunded registration cannot be reactivated by delayed webhooks.
+  if (submission.paymentStatus === 'REFUNDED') {
+    return { paid: false, status: submission.status, activationUrl: null };
+  }
 
   let nextStatus = submission.status;
   let activationUrl: string | null = null;
@@ -402,7 +406,7 @@ async function finalizePaidWorkflow(input: {
     `UPDATE WorkflowSubmission
      SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
      WHERE id = ? AND organizationId = ? AND workflowId = ?
-       AND paymentStatus <> 'PAID'`,
+       AND paymentStatus = 'PENDING'`,
     nextStatus,
     submission.id,
     workflow.organizationId,
