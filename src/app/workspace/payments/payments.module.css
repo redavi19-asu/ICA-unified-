@@ -26,3 +26,6 @@
 :global(.workspace-theme-dark) .header p,:global(.workspace-theme-dark) .notice p,:global(.workspace-theme-dark) .subheading,:global(.workspace-theme-dark) .card>p{color:#b3c3ce}
 :global(.workspace-theme-dark) .cardHeader h3{color:#edf7ff}
 @media(max-width:730px){.grid{grid-template-columns:1fr}.card{padding:20px}.footerActions{flex-direction:column;gap:12px}.header h1{font-size:39px}}
+
+.actions label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px;color:inherit}
+.actions select{width:100%;min-height:45px;padding:10px;border:1px solid #bacfdc;border-radius:9px;background:#fff;color:#173247;font-size:14px}
