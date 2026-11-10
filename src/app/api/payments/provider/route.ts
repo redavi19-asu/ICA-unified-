@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
   const form = await request.formData().catch(() => null);
   const choice = String(form?.get('provider') || '');
-  if (choice !== 'STRIPE' && choice !== 'SQUARE') {
+  if (choice !== 'STRIPE' && choice !== 'SQUARE' && choice !== 'PAYPAL') {
     return NextResponse.json({ error: 'Unsupported payment provider.' }, { status: 400 });
   }
   try {
