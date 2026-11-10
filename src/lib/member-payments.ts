@@ -24,7 +24,52 @@ type CheckoutSession = {
   metadata?: Record<string, string>;
   amount_total?: number | null;
   currency?: string | null;
+  payment_intent?: string | { id?: string } | null;
 };
+
+let stripeReceiptTableReady: Promise<void> | null = null;
+async function ensureStripeReceiptTable() {
+  if (!stripeReceiptTableReady) {
+    stripeReceiptTableReady = prisma.$executeRawUnsafe(
+      "CREATE TABLE IF NOT EXISTS StripeBusinessCheckoutReceipt (" +
+      "submissionId TEXT PRIMARY KEY NOT NULL, organizationId TEXT NOT NULL, workflowId TEXT NOT NULL, " +
+      "sessionId TEXT NOT NULL UNIQUE, connectedAccountId TEXT NOT NULL, paymentIntentId TEXT NOT NULL, " +
+      "amountCents INTEGER NOT NULL, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+    ).then(() => undefined).catch((error) => { stripeReceiptTableReady = null; throw error; });
+  }
+  return stripeReceiptTableReady;
+}
+
+async function recordStripeBusinessReceipt(
+  session: CheckoutSession,
+  connectedAccountId: string,
+  input: { organizationId: string; workflowId: string; submissionId: string; amountCents: number },
+) {
+  // Recurring invoices have their own charge lifecycle. This table records
+  // refundable one-time captures only, never a subscription's Checkout receipt.
+  if (session.mode !== 'payment') return;
+  const intent = typeof session.payment_intent === 'string'
+    ? session.payment_intent : session.payment_intent?.id;
+  if (!session.id || !intent) throw new Error('STRIPE_PAYMENT_INTENT_NOT_RECORDED');
+  await ensureStripeReceiptTable();
+  await prisma.$executeRawUnsafe(
+    'INSERT INTO StripeBusinessCheckoutReceipt ' +
+    '(submissionId, organizationId, workflowId, sessionId, connectedAccountId, paymentIntentId, amountCents) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(submissionId) DO NOTHING',
+    input.submissionId, input.organizationId, input.workflowId, session.id,
+    connectedAccountId, intent, input.amountCents,
+  );
+  const rows = await prisma.$queryRawUnsafe<Array<{ sessionId: string; connectedAccountId: string; paymentIntentId: string; amountCents: number }>>(
+    'SELECT sessionId, connectedAccountId, paymentIntentId, amountCents FROM StripeBusinessCheckoutReceipt ' +
+    'WHERE organizationId = ? AND workflowId = ? AND submissionId = ? LIMIT 1',
+    input.organizationId, input.workflowId, input.submissionId
+  );
+  const saved = rows[0];
+  if (!saved || saved.sessionId !== session.id || saved.connectedAccountId !== connectedAccountId ||
+      saved.paymentIntentId !== intent || saved.amountCents !== input.amountCents) {
+    throw new Error('STRIPE_RECEIPT_RECORD_MISMATCH');
+  }
+}
 
 export type OrganizationPaymentAccountRecord = {
   organizationId: string;
@@ -482,6 +527,12 @@ export async function confirmWorkflowPayment(input: {
   if (!paid) {
     return { paid: false, status: submission.status, activationUrl: null };
   }
+  await recordStripeBusinessReceipt(session, account.connectedAccountId, {
+    organizationId: workflow.organizationId,
+    workflowId: workflow.id,
+    submissionId: submission.id,
+    amountCents: submission.amountCents,
+  });
 
   return finalizePaidWorkflow({
     workflow,
@@ -536,6 +587,20 @@ export async function handleWorkflowPaymentWebhook(event: {
   });
 
   if (!paid) return true;
+  // Webhook payloads can omit expanded intent fields. Fetch the canonical
+  // Checkout Session when necessary to record a refundable one-time receipt.
+  const canonicalSession = session.mode === 'payment' && !session.payment_intent
+    ? await stripeRequest<CheckoutSession>(
+        '/v1/checkout/sessions/' + encodeURIComponent(session.id),
+        undefined, account.connectedAccountId,
+      )
+    : session;
+  if (!stripeBusinessCheckoutPaid(canonicalSession, {
+    organizationId, workflowId, submissionId, amountCents: submission.amountCents,
+  })) throw new Error('STRIPE_RECEIPT_VERIFICATION_FAILED');
+  await recordStripeBusinessReceipt(canonicalSession, account.connectedAccountId, {
+    organizationId, workflowId, submissionId, amountCents: submission.amountCents,
+  });
 
   await finalizePaidWorkflow({
     workflow,
