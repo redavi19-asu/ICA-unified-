@@ -265,6 +265,10 @@ export async function createWorkflowPaymentCheckout(input: {
     const { createSquareWorkflowCheckout } = await import('./square-workflow-checkout');
     return createSquareWorkflowCheckout({ workflow, submissionId: submission.id, origin: input.origin });
   }
+  if (provider === 'PAYPAL') {
+    const { createPayPalWorkflowCheckout } = await import('./paypal-workflow-checkout');
+    return createPayPalWorkflowCheckout({ workflow, submissionId: submission.id, origin: input.origin });
+  }
 
   const account = await refreshOrganizationPaymentAccount(workflow.organizationId);
   if (!account?.connectedAccountId || !Number(account.chargesEnabled)) {
