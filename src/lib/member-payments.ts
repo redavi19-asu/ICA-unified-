@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { stripeBusinessCheckoutPaid } from './business-checkout-verification';
 import {
   createMembershipActivation,
   ensureWorkflowExecutionTables,
@@ -22,6 +23,7 @@ type CheckoutSession = {
   mode?: string;
   metadata?: Record<string, string>;
   amount_total?: number | null;
+  currency?: string | null;
 };
 
 export type OrganizationPaymentAccountRecord = {
@@ -463,25 +465,15 @@ export async function confirmWorkflowPayment(input: {
     account.connectedAccountId,
   );
 
-  if (
-    session.metadata?.icaFlowSubmissionId !== submission.id ||
-    session.metadata?.workflowId !== workflow.id ||
-    session.metadata?.organizationId !== workflow.organizationId
-  ) {
-    throw new Error('CHECKOUT_SESSION_MISMATCH');
-  }
-
-  if (
-    typeof session.amount_total === 'number' &&
-    session.amount_total !== submission.amountCents
-  ) {
-    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
-  }
-
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
+  // A checkout success URL alone never grants membership/event access.
+  // The provider's completed AND paid status, amount, currency and tenant
+  // metadata must all match, including recurring memberships.
+  const paid = stripeBusinessCheckoutPaid(session, {
+    organizationId: workflow.organizationId,
+    workflowId: workflow.id,
+    submissionId: submission.id,
+    amountCents: submission.amountCents,
+  });
 
   if (!paid) {
     return { paid: false, status: submission.status, activationUrl: null };
@@ -526,21 +518,18 @@ export async function handleWorkflowPaymentWebhook(event: {
 
   const account = await getOrganizationPaymentAccount(organizationId);
   if (!account?.connectedAccountId) throw new Error('ORGANIZATION_PAYMENT_NOT_READY');
-  if (event.account && event.account !== account.connectedAccountId) {
+  // Business payments must originate on the exact connected account.
+  // A platform-level Stripe event is not a business-payment receipt.
+  if (!event.account || event.account !== account.connectedAccountId) {
     throw new Error('CONNECTED_ACCOUNT_MISMATCH');
   }
 
-  if (
-    typeof session.amount_total === 'number' &&
-    session.amount_total !== submission.amountCents
-  ) {
-    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
-  }
-
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
+  const paid = stripeBusinessCheckoutPaid(session, {
+    organizationId,
+    workflowId,
+    submissionId,
+    amountCents: submission.amountCents,
+  });
 
   if (!paid) return true;
 
