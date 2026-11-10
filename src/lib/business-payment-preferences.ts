@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { getPayPalMerchantStatus, paypalPartnerConfig } from './paypal-connect';
+import { getPayPalMerchantStatus, refreshPayPalMerchantStatus, paypalPartnerConfig } from './paypal-connect';
 import { paypalCheckoutEnabled } from './paypal-workflow-checkout';
 import { getSquareMerchantStatus, listSquareMerchantLocations, squareCheckoutEnabled, squareConfig } from './square-connect';
 import { getOrganizationPaymentAccount, refreshOrganizationPaymentAccount, stripeConnectConfigured } from './member-payments';
@@ -66,7 +66,7 @@ export async function setPreferredBusinessCheckoutProvider(
       throw new Error('BUSINESS_CHECKOUT_MERCHANT_LOCATION_UNAVAILABLE');
     }
   } else {
-    const merchant = await getPayPalMerchantStatus(organizationId);
+    const merchant = await refreshPayPalMerchantStatus(organizationId);
     if (merchant.connectionStatus !== 'CONNECTED') {
       throw new Error('BUSINESS_CHECKOUT_PAYPAL_NOT_APPROVED');
     }
