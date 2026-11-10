@@ -333,6 +333,7 @@ export default async function PaymentHubPage({
       </section>
 
       <div className={styles.footerActions}>
+        <Link href="/workspace/payments/transactions">Payment history and refunds</Link>
         <Link href="/workspace/workflows">Set up membership dues or an event</Link>
         <Link href="/workspace/billing">Manage your Unified subscription</Link>
       </div>
