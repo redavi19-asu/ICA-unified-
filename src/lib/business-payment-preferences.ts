@@ -1,4 +1,6 @@
 import { prisma } from './prisma';
+import { getPayPalMerchantStatus, paypalPartnerConfig } from './paypal-connect';
+import { paypalCheckoutEnabled } from './paypal-workflow-checkout';
 import { getSquareMerchantStatus, listSquareMerchantLocations, squareCheckoutEnabled, squareConfig } from './square-connect';
 import { getOrganizationPaymentAccount, refreshOrganizationPaymentAccount, stripeConnectConfigured } from './member-payments';
 
@@ -6,7 +8,7 @@ import { getOrganizationPaymentAccount, refreshOrganizationPaymentAccount, strip
  * ICA subscription billing must NEVER read or modify this preference.
  * Only dues/event collections use the organization's selected checkout provider.
  */
-export type ActiveBusinessCheckoutProvider = 'STRIPE' | 'SQUARE';
+export type ActiveBusinessCheckoutProvider = 'STRIPE' | 'SQUARE' | 'PAYPAL';
 let tableReady: Promise<void> | null = null;
 
 async function ensureTable() {
@@ -26,7 +28,7 @@ export async function preferredBusinessCheckoutProvider(organizationId: string):
     'SELECT provider FROM BusinessPaymentPreference WHERE organizationId = ? LIMIT 1',
     organizationId
   );
-  return rows[0]?.provider === 'SQUARE' ? 'SQUARE' : 'STRIPE';
+  return rows[0]?.provider === 'PAYPAL' ? 'PAYPAL' : rows[0]?.provider === 'SQUARE' ? 'SQUARE' : 'STRIPE';
 }
 
 export async function businessCheckoutReady(organizationId: string, provider: ActiveBusinessCheckoutProvider): Promise<boolean> {
@@ -34,6 +36,11 @@ export async function businessCheckoutReady(organizationId: string, provider: Ac
     if (!stripeConnectConfigured()) return false;
     const account = await getOrganizationPaymentAccount(organizationId);
     return Boolean(account?.connectedAccountId && account.chargesEnabled && account.payoutsEnabled);
+  }
+  if (provider === 'PAYPAL') {
+    if (!paypalCheckoutEnabled()) return false;
+    const merchant = await getPayPalMerchantStatus(organizationId);
+    return merchant.connectionStatus === 'CONNECTED' && merchant.environment === paypalPartnerConfig().environment;
   }
   if (!squareCheckoutEnabled()) return false;
   const connection = await getSquareMerchantStatus(organizationId);
@@ -52,11 +59,16 @@ export async function setPreferredBusinessCheckoutProvider(
   // Stale cached "connected" flags should never strand buyers in checkout.
   if (provider === 'STRIPE') {
     await refreshOrganizationPaymentAccount(organizationId);
-  } else {
+  } else if (provider === 'SQUARE') {
     const merchant = await getSquareMerchantStatus(organizationId);
     const locations = merchant ? await listSquareMerchantLocations(organizationId) : [];
     if (!merchant?.locationId || !locations.some((item) => item.id === merchant.locationId)) {
       throw new Error('BUSINESS_CHECKOUT_MERCHANT_LOCATION_UNAVAILABLE');
+    }
+  } else {
+    const merchant = await getPayPalMerchantStatus(organizationId);
+    if (merchant.connectionStatus !== 'CONNECTED') {
+      throw new Error('BUSINESS_CHECKOUT_PAYPAL_NOT_APPROVED');
     }
   }
   if (!await businessCheckoutReady(organizationId, provider)) {
