@@ -615,3 +615,43 @@ export async function handleWorkflowPaymentWebhook(event: {
 
   return true;
 }
+
+export async function findStripeRefundSource(organizationId: string, workflowId: string, submissionId: string) {
+  await ensureStripeReceiptTable();
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    connectedAccountId: string; paymentIntentId: string; amountCents: number;
+  }>>(
+    'SELECT connectedAccountId, paymentIntentId, amountCents FROM StripeBusinessCheckoutReceipt ' +
+    'WHERE organizationId = ? AND workflowId = ? AND submissionId = ? LIMIT 1',
+    organizationId, workflowId, submissionId,
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return { provider: 'STRIPE' as const, merchantId: row.connectedAccountId,
+    paymentId: row.paymentIntentId, amountCents: row.amountCents };
+}
+
+export async function issueStripeBusinessRefund(input: {
+  connectedAccountId: string; paymentIntentId: string; idempotencyKey: string;
+}) {
+  const body = new URLSearchParams({ payment_intent: input.paymentIntentId });
+  const refund = await stripeRequest<{
+    id?: string; payment_intent?: string; status?: string; amount?: number; currency?: string;
+  }>('/v1/refunds', {
+    method: 'POST', body,
+    headers: { 'Idempotency-Key': input.idempotencyKey },
+  }, input.connectedAccountId);
+  if (!refund.id || refund.payment_intent !== input.paymentIntentId ||
+      refund.currency !== 'usd') throw new Error('STRIPE_REFUND_RESPONSE_INVALID');
+  return refund;
+}
+
+export async function readStripeBusinessRefund(input: {
+  connectedAccountId: string; refundId: string;
+}) {
+  return stripeRequest<{ id?: string; payment_intent?: string; status?: string;
+    amount?: number; currency?: string }>(
+    '/v1/refunds/' + encodeURIComponent(input.refundId),
+    undefined, input.connectedAccountId
+  );
+}
