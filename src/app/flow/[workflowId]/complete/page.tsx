@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { confirmWorkflowPayment } from '../../../../lib/member-payments';
 import { confirmSquareWorkflowCheckout } from '../../../../lib/square-workflow-checkout';
+import { confirmPayPalWorkflowCheckout } from '../../../../lib/paypal-workflow-checkout';
 import styles from '../public-workflow.module.css';
 import PaymentProcessingRefresh from './PaymentProcessingRefresh';
 
@@ -11,7 +12,7 @@ export default async function WorkflowPaymentCompletePage({
   searchParams,
 }: {
   params: Promise<{ workflowId: string }>;
-  searchParams: Promise<{ session_id?: string; submission?: string; square?: string }>;
+  searchParams: Promise<{ session_id?: string; submission?: string; square?: string; paypal?: string; token?: string }>;
 }) {
   const { workflowId } = await params;
   const query = await searchParams;
@@ -24,13 +25,18 @@ export default async function WorkflowPaymentCompletePage({
   let message = 'ICA could not verify this payment return.';
 
   const square = query.square === '1';
-  if (submissionId && (square || sessionId)) {
+  const paypal = query.paypal === '1';
+  if (submissionId && (square || paypal || sessionId)) {
     try {
       const origin = String(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || '').trim() || 'https://unified.icomputeranything.com';
       // Return URLs are not proof of payment. Each provider call verifies server-to-server.
       const result = square
         ? await confirmSquareWorkflowCheckout({ workflowId, submissionId, origin })
-        : await confirmWorkflowPayment({ workflowId, submissionId, sessionId, origin });
+        : paypal
+          ? await confirmPayPalWorkflowCheckout({
+              workflowId, submissionId, returnedOrderId: String(query.token || ''), origin,
+            })
+          : await confirmWorkflowPayment({ workflowId, submissionId, sessionId, origin });
 
       if (result.paid) {
         state = 'SUCCESS';
