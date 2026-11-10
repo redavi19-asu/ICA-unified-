@@ -282,7 +282,7 @@ export default async function Home() {
             alt="ICA Unified icon"
             width={48}
             height={48}
-            style={{ width: 48, height: 48, borderRadius: 14, background: '#fff', padding: 3, objectFit: 'contain', boxShadow: '0 8px 22px rgba(16,32,47,.12)' }}
+            style={{ width: 48, height: 48, borderRadius: 14, background: 'transparent', padding: 0, objectFit: 'contain', boxShadow: '0 8px 22px rgba(16,32,47,.12)' }}
           />
           <span className={styles.icaMark} aria-label="ICA">
             <em className={styles.icaI}>I</em><em className={styles.icaC}>C</em><em className={styles.icaA}>A</em>
@@ -324,7 +324,7 @@ export default async function Home() {
             aria-hidden="true"
             width={132}
             height={132}
-            style={{ width: 132, height: 132, maxWidth: '34vw', borderRadius: 28, background: '#fff', padding: 7, objectFit: 'contain', boxShadow: '0 22px 60px rgba(19,66,93,.14)', marginBottom: 22 }}
+            style={{ width: 132, height: 132, maxWidth: '34vw', borderRadius: 28, background: 'transparent', padding: 0, objectFit: 'contain', boxShadow: '0 22px 60px rgba(19,66,93,.14)', marginBottom: 22 }}
           />
           <p className={styles.eyebrow}>I COMPUTER ANYTHING / BUSINESS SYSTEMS</p>
           <h1 className="ica-hero-brand-font">One company.<br />One database.<br />One login.<br />One member record.</h1>
