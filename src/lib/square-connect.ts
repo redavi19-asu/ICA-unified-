@@ -320,3 +320,41 @@ export async function getSquareMerchantStatus(organizationId: string): Promise<S
     mode: row.mode === 'production' ? 'production' : 'sandbox',
   };
 }
+
+/**
+ * Makes merchant-scoped Square requests with server-only, refreshed OAuth credentials.
+ * Tokens are never sent to browsers and cannot be supplied by a caller.
+ */
+export async function squareMerchantApi<T>(
+  organizationId: string,
+  path: string,
+  init: { method?: 'GET' | 'POST'; body?: Record<string, unknown> } = {},
+): Promise<T> {
+  if (!/^\/v2\/(?:online-checkout\/payment-links|orders|payments)(?:[/?][A-Za-z0-9_/?&=%.-]+)?$/.test(path)) {
+    throw new Error('Unsupported Square API route.');
+  }
+  const connection = await getSquareMerchantStatus(organizationId);
+  const cfg = requireSquareConfig();
+  if (!connection || connection.mode !== cfg.mode || connection.status !== 'CONNECTED' || !connection.locationId) {
+    throw new Error('SQUARE_ORGANIZATION_NOT_READY');
+  }
+  const { token } = await readSquareCredentials(organizationId);
+  const response = await fetch(baseUrl(cfg.mode) + path, {
+    method: init.method || 'GET',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Square-Version': SQUARE_VERSION,
+      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(init.body ? { body: JSON.stringify(init.body) } : {}),
+    cache: 'no-store',
+  });
+  const data = await response.json() as T & { errors?: Array<{ code?: string; detail?: string }> };
+  if (!response.ok) throw new Error('SQUARE_PROVIDER_REQUEST_FAILED');
+  return data;
+}
+
+export function squareCheckoutEnabled() {
+  // Explicit opt-in only, never enabled by a successful OAuth connection alone.
+  return process.env.SQUARE_CUSTOMER_CHECKOUT_ENABLED === 'true' && squareOauthConfigured();
+}
