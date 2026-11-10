@@ -330,7 +330,7 @@ export async function squareMerchantApi<T>(
   path: string,
   init: { method?: 'GET' | 'POST'; body?: Record<string, unknown> } = {},
 ): Promise<T> {
-  if (!/^\/v2\/(?:online-checkout\/payment-links|orders|payments)(?:[/?][A-Za-z0-9_/?&=%.-]+)?$/.test(path)) {
+  if (!/^\/v2\/(?:online-checkout\/payment-links|orders|payments|refunds)(?:[/?][A-Za-z0-9_/?&=%.-]+)?$/.test(path)) {
     throw new Error('Unsupported Square API route.');
   }
   const connection = await getSquareMerchantStatus(organizationId);
