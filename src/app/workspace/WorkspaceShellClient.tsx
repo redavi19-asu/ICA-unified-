@@ -80,7 +80,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
           {
             title: 'People + Tools',
             body: role === 'OWNER' || role === 'ADMIN'
-              ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Payment Hub connects your business's own payment processor. Unified Billing manages the software subscription. Tools handles data migration and organization setup.'
+              ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Payment Hub connects payment processors for the business. Unified Billing manages the software subscription. Tools handles data migration and organization setup.'
               : 'People gives managers a read-only organization view. Owner/admin-only setup controls stay hidden.',
           },
         ];
