@@ -95,7 +95,7 @@ export default async function PaymentHubPage({
                 <div className={styles.cardHeader}>
                   <h3>{provider.name}</h3>
                   <span className={active ? styles.ready : styles.pending}>
-                    {active ? 'Ready to collect' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
+                    {active ? 'Ready to collect' : provider.id === 'SQUARE' ? squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode ? 'Authorized · checkout pending' : 'Connection beta' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
                   </span>
                 </div>
                 <p>{provider.summary}</p>
