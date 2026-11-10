@@ -321,3 +321,34 @@ async function readProviderRefundStatus(row: RefundRow): Promise<{
   return { refundId: refund.id, amountCents: refund.amount,
     state: refund.status === 'succeeded' ? 'COMPLETED' : refund.status === 'pending' ? 'PENDING' : 'FAILED' };
 }
+
+/**
+ * Provider-signed webhooks are hints, not evidence of refund settlement.
+ * Resolve the original merchant transaction and requery the provider API.
+ */
+export async function reconcileBusinessRefundFromProviderEvent(input: {
+  provider: BusinessRefundProvider;
+  refundId: string;
+  merchantId?: string;
+}): Promise<boolean> {
+  if (!input.refundId || input.refundId.length > 200) return false;
+  await ensureRefundTable();
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    organizationId: string; workflowId: string; submissionId: string; merchantId: string;
+  }>>(
+    'SELECT organizationId, workflowId, submissionId, merchantId FROM BusinessPaymentRefund ' +
+    'WHERE provider = ? AND refundId = ? LIMIT 1',
+    input.provider, input.refundId,
+  );
+  const record = rows[0];
+  if (!record) return false;
+  if (input.provider !== 'PAYPAL' && (!input.merchantId || input.merchantId !== record.merchantId)) {
+    throw new Error('BUSINESS_REFUND_WEBHOOK_MERCHANT_MISMATCH');
+  }
+  await reconcileBusinessRefund({
+    organizationId: record.organizationId,
+    workflowId: record.workflowId,
+    submissionId: record.submissionId,
+  });
+  return true;
+}
