@@ -7,12 +7,13 @@ import {
   stripeConnectConfigured,
 } from '../../../lib/member-payments';
 import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '../../../lib/business-payment-providers';
+import { getSquareMerchantStatus, squareOauthConfigured, squareConfig } from '../../../lib/square-connect';
 import styles from './payments.module.css';
 
 export default async function PaymentHubPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connect?: string }>;
+  searchParams: Promise<{ connect?: string; square?: string }>;
 }) {
   const { membership } = await requireSession();
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
@@ -29,6 +30,10 @@ export default async function PaymentHubPage({
       console.error('ICA_PAYMENT_HUB_STRIPE_REFRESH_ERROR', error);
     }
   }
+
+  const squareConfigured = squareOauthConfigured();
+  const squareConnection = await getSquareMerchantStatus(membership.organizationId);
+  const squareMode = squareConfig().mode;
 
   const stripeConfigured = stripeConnectConfigured();
   const stripeReady = stripeConfigured &&
@@ -53,6 +58,18 @@ export default async function PaymentHubPage({
           {params.connect === 'unavailable'
             ? 'Stripe Connect is not configured for Unified yet. Business payments are not available.'
             : 'We could not finish checking the Stripe connection. Try again or contact ICA support.'}
+        </p>
+      )}
+
+      {(params.square === 'error' || params.square === 'cancelled' || params.square === 'needs-location' || params.square === 'connected') && (
+        <p className={params.square === 'error' ? styles.error : styles.notice} role="status">
+          {params.square === 'connected'
+            ? 'Square business account connected. Customer payments remain unavailable until Square checkout and verification finish testing.'
+            : params.square === 'needs-location'
+              ? 'Square authorized your account, but no eligible USD card-processing location was found. Check your Square account.'
+              : params.square === 'cancelled'
+                ? 'Square connection was cancelled. No changes were made to your business payments.'
+                : 'Square authorization could not be completed. Try again or contact ICA support.'}
         </p>
       )}
 
@@ -96,6 +113,24 @@ export default async function PaymentHubPage({
                     ) : (
                       <p className={styles.unavailable}>Stripe setup is temporarily unavailable. Contact ICA support.</p>
                     )}
+                  </div>
+                ) : provider.id === 'SQUARE' ? (
+                  <div className={styles.actions}>
+                    {squareConnection && (
+                      <p className={styles.connection}>
+                        Square merchant connection: <strong>{squareConnection.status === 'CONNECTED' ? 'AUTHORIZED' : 'LOCATION REQUIRED'}</strong>
+                        {' · '}{squareConnection.mode === 'sandbox' ? 'Sandbox' : 'Production'}
+                        {squareConnection.locationName ? ' · ' + squareConnection.locationName : ''}
+                      </p>
+                    )}
+                    {squareConfigured ? (
+                      <form action="/api/payments/square/connect" method="post">
+                        <button type="submit">{squareConnection && squareConnection.mode === squareMode ? 'Reconnect Square account' : 'Connect Square business account'}</button>
+                      </form>
+                    ) : (
+                      <p className={styles.unavailable}>Square connection requires ICA platform setup before business owners can connect.</p>
+                    )}
+                    <p className={styles.unavailable}>Account authorization is in development. Square customer checkouts are not enabled yet.</p>
                   </div>
                 ) : (
                   <p className={styles.unavailable}>
