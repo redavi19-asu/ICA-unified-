@@ -219,6 +219,40 @@ export async function confirmPayPalMerchantOnboarding(input: {
   return { connected };
 }
 
+
+/**
+ * Rechecks PayPal's current consent/capability state without involving ICA support.
+ * A revoked account is marked ACTION_REQUIRED rather than allowing a stale checkout.
+ */
+export async function refreshPayPalMerchantStatus(organizationId: string): Promise<PayPalStatus> {
+  const cfg = assertPartnerReady();
+  const current = await getPayPalMerchantStatus(organizationId);
+  if (!current.merchantId || current.environment !== cfg.environment) {
+    return current;
+  }
+  const providerStatus = await paypalPartnerApi<{
+    merchant_id?: string;
+    payments_receivable?: boolean;
+    primary_email_confirmed?: boolean;
+    oauth_integrations?: Array<{ integration_type?: string }>;
+  }>(
+    '/v1/customer/partners/' + encodeURIComponent(cfg.partnerMerchantId) +
+    '/merchant-integrations/' + encodeURIComponent(current.merchantId),
+    { merchantId: cfg.partnerMerchantId }
+  );
+  if (providerStatus.merchant_id && providerStatus.merchant_id !== current.merchantId) {
+    throw new Error('PAYPAL_MERCHANT_MISMATCH');
+  }
+  const next: PayPalStatus['connectionStatus'] =
+    paypalMerchantReadyFromProvider(providerStatus) ? 'CONNECTED' : 'ACTION_REQUIRED';
+  await prisma.$executeRawUnsafe(
+    'UPDATE PayPalMerchantConnection SET connectionStatus = ?, updatedAt = CURRENT_TIMESTAMP ' +
+    'WHERE organizationId = ? AND merchantId = ? AND environment = ?',
+    next, organizationId, current.merchantId, cfg.environment
+  );
+  return { merchantId: current.merchantId, connectionStatus: next, environment: cfg.environment };
+}
+
 export async function getPayPalMerchantStatus(organizationId: string): Promise<PayPalStatus> {
   const cfg = paypalPartnerConfig();
   if (!cfg.configured) return { merchantId: null, connectionStatus: 'NOT_CONNECTED', environment: cfg.environment };
