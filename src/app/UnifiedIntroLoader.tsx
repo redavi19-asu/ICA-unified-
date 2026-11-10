@@ -27,7 +27,7 @@ export default function UnifiedIntroLoader() {
 
         <div aria-label="ICA Unified" style={{display:'flex',justifyContent:'center'}}>
           <img
-            src="/ica-unified-icon.svg"
+            src="/ica-unified-icon.png"
             alt=""
             aria-hidden="true"
             style={{width:'clamp(100px,18vw,150px)',height:'clamp(100px,18vw,150px)',display:'block',objectFit:'contain',borderRadius:30,background:'transparent',padding:0,boxShadow:'0 18px 55px rgba(28,58,78,.14)'}}
