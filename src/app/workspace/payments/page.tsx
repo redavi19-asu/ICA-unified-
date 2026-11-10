@@ -7,7 +7,7 @@ import {
   stripeConnectConfigured,
 } from '../../../lib/member-payments';
 import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '../../../lib/business-payment-providers';
-import { getSquareMerchantStatus, squareOauthConfigured, squareConfig } from '../../../lib/square-connect';
+import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig } from '../../../lib/square-connect';
 import styles from './payments.module.css';
 
 export default async function PaymentHubPage({
@@ -34,6 +34,14 @@ export default async function PaymentHubPage({
   const squareConfigured = squareOauthConfigured();
   const squareConnection = await getSquareMerchantStatus(membership.organizationId);
   const squareMode = squareConfig().mode;
+  let squareLocations: Array<{ id: string; name: string }> = [];
+  if (squareConfigured && squareConnection?.status === 'NEEDS_LOCATION' && squareConnection.mode === squareMode) {
+    try {
+      squareLocations = await listSquareMerchantLocations(membership.organizationId);
+    } catch (error) {
+      console.error('ICA_PAYMENT_HUB_SQUARE_LOCATIONS_ERROR', error instanceof Error ? error.message : 'Unable to retrieve locations');
+    }
+  }
 
   const stripeConfigured = stripeConnectConfigured();
   const stripeReady = stripeConfigured &&
@@ -61,14 +69,16 @@ export default async function PaymentHubPage({
         </p>
       )}
 
-      {(params.square === 'error' || params.square === 'cancelled' || params.square === 'needs-location' || params.square === 'connected') && (
-        <p className={params.square === 'error' ? styles.error : styles.notice} role="status">
-          {params.square === 'connected'
-            ? 'Square business account connected. Customer payments remain unavailable until Square checkout and verification finish testing.'
+      {(params.square === 'error' || params.square === 'cancelled' || params.square === 'needs-location' || params.square === 'connected' || params.square === 'location-selected' || params.square === 'location-error') && (
+        <p className={params.square === 'error' || params.square === 'location-error' ? styles.error : styles.notice} role="status">
+          {params.square === 'connected' || params.square === 'location-selected'
+            ? 'Square business account authorized. Customer payments remain unavailable until Square checkout and verification finish testing.'
             : params.square === 'needs-location'
               ? 'Square authorized your account, but no eligible USD card-processing location was found. Check your Square account.'
               : params.square === 'cancelled'
                 ? 'Square connection was cancelled. No changes were made to your business payments.'
+                : params.square === 'location-error'
+                  ? 'We could not verify that Square location. Please select an eligible location.'
                 : 'Square authorization could not be completed. Try again or contact ICA support.'}
         </p>
       )}
@@ -130,7 +140,19 @@ export default async function PaymentHubPage({
                     ) : (
                       <p className={styles.unavailable}>Square connection requires ICA platform setup before business owners can connect.</p>
                     )}
-                    <p className={styles.unavailable}>Account authorization is in development. Square customer checkouts are not enabled yet.</p>
+                    {squareLocations.length > 0 && (
+                      <form action="/api/payments/square/location" method="post">
+                        <label htmlFor="square-location">Choose where your business takes payments</label>
+                        <select id="square-location" name="locationId" required>
+                          <option value="">Choose your Square location</option>
+                          {squareLocations.map((location) => (
+                            <option key={location.id} value={location.id}>{location.name}</option>
+                          ))}
+                        </select>
+                        <button type="submit">Save payment location</button>
+                      </form>
+                    )}
+                    <p className={styles.unavailable}>Account authorization is available where ICA Square credentials are configured. Square customer checkouts are not enabled yet.</p>
                   </div>
                 ) : (
                   <p className={styles.unavailable}>
