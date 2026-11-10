@@ -59,7 +59,7 @@ export async function POST(
     const cadence = String(workflow.config.billingCadence || 'ONE_TIME').toUpperCase();
     if (workflow.kind === 'MEMBERSHIP' && ['MONTHLY', 'YEARLY'].includes(cadence) &&
         Number(workflow.config.price || 0) > 0 &&
-        await preferredBusinessCheckoutProvider(workflow.organizationId) === 'SQUARE') {
+        await preferredBusinessCheckoutProvider(workflow.organizationId) !== 'STRIPE') {
       return NextResponse.json(
         { error: 'This business has not enabled recurring payment processing for this membership yet. Contact the organization before applying.' },
         { status: 409 },
