@@ -30,7 +30,7 @@ export default function UnifiedIntroLoader() {
             src="/ica-unified-icon.svg"
             alt=""
             aria-hidden="true"
-            style={{width:'clamp(100px,18vw,150px)',height:'clamp(100px,18vw,150px)',display:'block',objectFit:'contain',borderRadius:30,background:'#fff',padding:6,boxShadow:'0 18px 55px rgba(28,58,78,.14)'}}
+            style={{width:'clamp(100px,18vw,150px)',height:'clamp(100px,18vw,150px)',display:'block',objectFit:'contain',borderRadius:30,background:'transparent',padding:0,boxShadow:'0 18px 55px rgba(28,58,78,.14)'}}
           />
         </div>
 
