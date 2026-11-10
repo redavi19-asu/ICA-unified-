@@ -278,7 +278,7 @@ export default async function Home() {
       <header className={styles.nav}>
         <Link className={styles.brand} href="/">
           <img
-            src="/ica-unified-icon.svg"
+            src="/ica-unified-icon.png"
             alt="ICA Unified icon"
             width={48}
             height={48}
@@ -319,7 +319,7 @@ export default async function Home() {
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
           <img
-            src="/ica-unified-icon.svg"
+            src="/ica-unified-icon.png"
             alt=""
             aria-hidden="true"
             width={132}
