@@ -265,3 +265,11 @@ export async function reconcileSquareWebhookOrder(orderId: string, merchantId: s
   const result = await verifySquareCheckoutRecord(rows[0], origin);
   return { found: true, paid: result.paid };
 }
+
+export async function findSquareRefundSource(organizationId: string, workflowId: string, submissionId: string) {
+  await ensureCheckoutTable();
+  const rows = await checkoutRow(organizationId, workflowId, submissionId);
+  const row = rows[0];
+  if (!row || row.status !== 'PAID' || !row.paymentId) return null;
+  return { provider: 'SQUARE' as const, merchantId: row.merchantId, paymentId: row.paymentId, amountCents: row.amountCents };
+}
