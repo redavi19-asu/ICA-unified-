@@ -29,3 +29,21 @@
 
 .actions label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px;color:inherit}
 .actions select{width:100%;min-height:45px;padding:10px;border:1px solid #bacfdc;border-radius:9px;background:#fff;color:#173247;font-size:14px}
+
+.readinessPanel{padding:24px;border:1px solid #c9dce8;border-radius:16px;background:#fff;margin:24px 0 34px}
+.readinessHeader{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.readinessHeader h2{font-size:24px;margin:7px 0}
+.readinessHeader p,.readinessHelp{color:#526d7e;font-size:14px;line-height:1.55}
+.readinessList{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.readinessList li{display:flex;align-items:flex-start;gap:10px;border:1px solid #e0eaf0;border-radius:12px;padding:14px}
+.readinessList li strong{font-size:14px}
+.readinessList li p{margin:6px 0 0;color:#5d7382;font-size:13px;line-height:1.45}
+.doneIcon,.waitIcon{display:inline-flex;flex:0 0 25px;justify-content:center;align-items:center;border-radius:50%;width:25px;height:25px;font-weight:900}
+.doneIcon{background:#dbf5e3;color:#17653f}
+.waitIcon{background:#fff0d7;color:#986317}
+.readinessHelp{margin:20px 0 0}
+:global(.workspace-theme-dark) .readinessPanel{background:#102231;border-color:#2c536a}
+:global(.workspace-theme-dark) .readinessList li{border-color:#2c536a}
+:global(.workspace-theme-dark) .readinessHeader p,:global(.workspace-theme-dark) .readinessHelp,
+:global(.workspace-theme-dark) .readinessList li p{color:#afc3d0}
+@media(max-width:730px){.readinessList{grid-template-columns:1fr}.readinessPanel{padding:17px}}
