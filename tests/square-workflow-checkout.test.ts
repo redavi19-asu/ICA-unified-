@@ -42,7 +42,8 @@ test('Square checkout stays pending until a matching settled provider payment is
   globals[contextKey] = { env: { DB: { prepare: (sql: string) => wrap(sql) } } };
 
   const keys = ['SQUARE_APPLICATION_ID','SQUARE_APPLICATION_SECRET','SQUARE_OAUTH_REDIRECT_URI',
-    'SQUARE_ENVIRONMENT','PAYMENT_CREDENTIALS_KEY','SQUARE_CUSTOMER_CHECKOUT_ENABLED'] as const;
+    'SQUARE_ENVIRONMENT','PAYMENT_CREDENTIALS_KEY','SQUARE_CUSTOMER_CHECKOUT_ENABLED',
+    'SQUARE_WEBHOOK_SIGNATURE_KEY','SQUARE_WEBHOOK_NOTIFICATION_URL'] as const;
   const oldValues = keys.map((key) => process.env[key]);
   const credentialKey = randomBytes(32).toString('base64');
   Object.assign(process.env, {
@@ -52,6 +53,8 @@ test('Square checkout stays pending until a matching settled provider payment is
     SQUARE_ENVIRONMENT: 'sandbox',
     PAYMENT_CREDENTIALS_KEY: credentialKey,
     SQUARE_CUSTOMER_CHECKOUT_ENABLED: 'true',
+    SQUARE_WEBHOOK_SIGNATURE_KEY: 'local-webhook-signature-only',
+    SQUARE_WEBHOOK_NOTIFICATION_URL: 'https://unified.example.com/api/payments/square/webhook',
   });
   sqlite.prepare('INSERT INTO SquareMerchantConnection (organizationId,merchantId,locationId,locationName,status,mode,tokenExpiresAt,accessCiphertext,refreshCiphertext) VALUES (?,?,?,?,?,?,?,?,?)')
     .run('org-one','merchant-one','location-one','Shop One','CONNECTED','sandbox','2099-01-01T00:00:00Z',
