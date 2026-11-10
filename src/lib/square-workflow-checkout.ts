@@ -117,7 +117,7 @@ export async function createSquareWorkflowCheckout(input: {
   await ensureCheckoutTable();
 
   const submission = await getWorkflowSubmission(input.workflow.organizationId, input.workflow.id, input.submissionId);
-  if (!submission || submission.amountCents < 1 || submission.paymentStatus === 'PAID') {
+  if (!submission || submission.amountCents < 1 || submission.paymentStatus !== 'PENDING') {
     throw new Error('INVALID_SQUARE_WORKFLOW_SUBMISSION');
   }
 
