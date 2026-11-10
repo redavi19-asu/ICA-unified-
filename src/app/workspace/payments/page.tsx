@@ -10,6 +10,7 @@ import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '..
 import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig, squareCheckoutEnabled } from '../../../lib/square-connect';
 import { paymentHubReadiness } from '../../../lib/payment-hub-readiness';
 import { getPayPalMerchantStatus, paypalPartnerConfig } from '../../../lib/paypal-connect';
+import { paypalCheckoutEnabled } from '../../../lib/paypal-workflow-checkout';
 import { preferredBusinessCheckoutProvider, businessCheckoutReady } from '../../../lib/business-payment-preferences';
 import styles from './payments.module.css';
 
@@ -50,13 +51,23 @@ export default async function PaymentHubPage({
 
   const preferredProvider = await preferredBusinessCheckoutProvider(membership.organizationId);
   const squareCollectionReady = await businessCheckoutReady(membership.organizationId, 'SQUARE');
+  const paypalCollectionReady = await businessCheckoutReady(membership.organizationId, 'PAYPAL');
 
   const stripeConfigured = stripeConnectConfigured();
   const stripeReady = stripeConfigured &&
     Boolean(connection?.connectedAccountId && Number(connection.chargesEnabled) && Number(connection.payoutsEnabled));
 
   const squareIsSelected = preferredProvider === 'SQUARE';
-  const selectedReadiness = paymentHubReadiness(squareIsSelected ? {
+  const selectedReadiness = paymentHubReadiness(preferredProvider === 'PAYPAL' ? {
+    selected: 'PAYPAL',
+    platformReady: paypalConfig.configured,
+    accountConnected: paypalStatus.connectionStatus !== 'NOT_CONNECTED',
+    merchantReady: paypalStatus.connectionStatus === 'CONNECTED',
+    locationReady: true,
+    checkoutEnabled: paypalCheckoutEnabled(),
+    recurringEnabled: false,
+    productionMode: paypalConfig.environment === 'production',
+  } : squareIsSelected ? {
     selected: 'SQUARE',
     platformReady: squareConfigured,
     accountConnected: Boolean(squareConnection && squareConnection.mode === squareMode),
@@ -133,7 +144,7 @@ export default async function PaymentHubPage({
       )}
       
       <section className={styles.notice} aria-label="Selected business payment processor">
-        <strong>Customer checkout processor: {preferredProvider === 'STRIPE' ? 'Stripe' : 'Square'}</strong>
+        <strong>Customer checkout processor: {preferredProvider === 'STRIPE' ? 'Stripe' : preferredProvider === 'SQUARE' ? 'Square' : 'PayPal'}</strong>
         <p>This setting determines how your business collects membership dues and event fees. It does not change your ICA Unified subscription.</p>
         {params.selected === '1' && <p role="status">Business checkout provider updated.</p>}
         {params.selected === 'unavailable' && <p className={styles.error} role="alert">That processor cannot be selected until its merchant account and checkout are ready.</p>}
@@ -284,8 +295,19 @@ export default async function PaymentHubPage({
                         ICA is completing the PayPal partner integration. You do not need to change your PayPal account.
                       </p>
                     )}
+                    {paypalCollectionReady && preferredProvider !== 'PAYPAL' && (
+                      <form action="/api/payments/provider" method="post">
+                        <input type="hidden" name="provider" value="PAYPAL" />
+                        <button type="submit">Use PayPal for customer checkouts</button>
+                      </form>
+                    )}
+                    {paypalCollectionReady && preferredProvider === 'PAYPAL' && (
+                      <p className={styles.connection}>Selected for customer checkouts</p>
+                    )}
                     <p className={styles.unavailable}>
-                      Business authorization is being prepared. PayPal customer checkouts cannot be selected yet.
+                      {paypalCollectionReady
+                        ? 'PayPal one-time checkout is explicitly enabled for this environment. Complete merchant sandbox QC before release.'
+                        : 'PayPal partner authorization and checkout remain unavailable until ICA completes provider approval and testing.'}
                     </p>
                   </div>
                 ) : (
