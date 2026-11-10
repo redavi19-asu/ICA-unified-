@@ -73,10 +73,10 @@ export async function paypalAccessToken() {
 
 export async function paypalPartnerApi<T>(
   path: string,
-  init: { method?: 'GET' | 'POST'; body?: object; merchantId?: string; requestId?: string } = {},
+  init: { method?: 'GET' | 'POST'; body?: object; merchantId?: string; requestId?: string; preferRepresentation?: boolean } = {},
 ): Promise<T> {
   const cfg = assertPartnerReady();
-  if (!/^\/(?:v2\/customer\/partner-referrals|v1\/customer\/partners\/|v2\/checkout\/orders(?:\/|$)|v2\/payments\/captures\/)/.test(path)) {
+  if (!/^\/(?:v2\/customer\/partner-referrals|v1\/customer\/partners\/|v2\/checkout\/orders(?:\/|$)|v2\/payments\/(?:captures|refunds)\/)/.test(path)) {
     throw new Error('UNSUPPORTED_PAYPAL_API_PATH');
   }
   const accessToken = await paypalAccessToken();
@@ -88,6 +88,7 @@ export async function paypalPartnerApi<T>(
       'PayPal-Partner-Attribution-Id': cfg.attributionId,
       ...(init.merchantId ? { 'PayPal-Auth-Assertion': paypalMerchantAssertion(cfg.clientId, init.merchantId) } : {}),
       ...(init.requestId ? { 'PayPal-Request-Id': init.requestId } : {}),
+      ...(init.preferRepresentation ? { Prefer: 'return=representation' } : {}),
     },
     ...(init.body ? { body: JSON.stringify(init.body) } : {}),
     cache: 'no-store',
