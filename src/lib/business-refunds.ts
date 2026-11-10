@@ -113,9 +113,11 @@ export async function requestFullBusinessRefund(input: {
 
   const existing = (await refundQuery(input.organizationId, input.workflowId, input.submissionId))[0];
   if (existing?.state === 'COMPLETED' || existing?.state === 'PENDING') {
-    return existing.state === 'PENDING'
-      ? reconcileBusinessRefund(input)
-      : asRefundResult(existing);
+    if (existing.state === 'COMPLETED') {
+      await markBusinessRefundCompleted(input);
+      return asRefundResult(existing);
+    }
+    return reconcileBusinessRefund(input);
   }
   if (submission.paymentStatus !== 'PAID') throw new Error('BUSINESS_PAYMENT_NOT_REFUNDABLE');
 
@@ -152,7 +154,7 @@ export async function requestFullBusinessRefund(input: {
 
   const idempotencyKey = stableRefundIdempotencyKey(input);
   try {
-    const providerResult = await startProviderRefund(source, idempotencyKey);
+    const providerResult = await startProviderRefund(source, input.organizationId, idempotencyKey);
     if (!providerResult.refundId) throw new Error('BUSINESS_REFUND_NO_PROVIDER_REFERENCE');
     if (providerResult.amountCents !== source.amountCents) throw new Error('BUSINESS_REFUND_RESPONSE_AMOUNT_MISMATCH');
     const state = providerResult.state;
@@ -173,15 +175,17 @@ export async function requestFullBusinessRefund(input: {
   }
 }
 
-async function startProviderRefund(source: Source, idempotencyKey: string):
+async function startProviderRefund(source: Source, organizationId: string, idempotencyKey: string):
   Promise<{ refundId: string; amountCents: number; state: RefundState }> {
   if (source.provider === 'SQUARE') {
-    const connected = await getSquareMerchantStatusForRefund(source.merchantId);
-    if (!connected) throw new Error('BUSINESS_SQUARE_MERCHANT_MISMATCH');
+    const connected = await getSquareMerchantStatus(organizationId);
+    if (!connected || connected.merchantId !== source.merchantId || connected.mode !== squareConfig().mode) {
+      throw new Error('BUSINESS_SQUARE_MERCHANT_MISMATCH');
+    }
     const result = await squareMerchantApi<{ refund?: {
       id?: string; payment_id?: string; status?: string;
       amount_money?: { amount?: number; currency?: string };
-    } }>(connected.organizationId, '/v2/refunds', {
+    } }>(organizationId, '/v2/refunds', {
       method: 'POST',
       body: {
         idempotency_key: idempotencyKey,
@@ -198,11 +202,12 @@ async function startProviderRefund(source: Source, idempotencyKey: string):
   }
   if (source.provider === 'PAYPAL') {
     const rows = await prisma.$queryRawUnsafe<Array<{ organizationId: string }>>(
-      'SELECT organizationId FROM PayPalBusinessCheckout WHERE merchantId = ? AND captureId = ? AND status = ? LIMIT 1',
-      source.merchantId, source.paymentId, 'PAID',
+      'SELECT organizationId FROM PayPalBusinessCheckout WHERE organizationId = ? ' +
+      'AND merchantId = ? AND captureId = ? AND status = ? LIMIT 1',
+      organizationId, source.merchantId, source.paymentId, 'PAID',
     );
     if (!rows[0]) throw new Error('BUSINESS_PAYPAL_MERCHANT_MISMATCH');
-    const connected = await getPayPalMerchantStatus(rows[0].organizationId);
+    const connected = await getPayPalMerchantStatus(organizationId);
     if (connected.connectionStatus !== 'CONNECTED' || connected.merchantId !== source.merchantId ||
         connected.environment !== paypalPartnerConfig().environment) {
       throw new Error('BUSINESS_PAYPAL_MERCHANT_NOT_CONNECTED');
@@ -230,17 +235,6 @@ async function startProviderRefund(source: Source, idempotencyKey: string):
     state: result.status === 'succeeded' ? 'COMPLETED' : result.status === 'pending' ? 'PENDING' : 'FAILED' };
 }
 
-async function getSquareMerchantStatusForRefund(merchantId: string) {
-  const rows = await prisma.$queryRawUnsafe<Array<{ organizationId: string }>>(
-    'SELECT organizationId FROM SquareBusinessCheckout ' +
-    'WHERE merchantId = ? AND status = ? LIMIT 1', merchantId, 'PAID',
-  );
-  if (!rows[0]) return null;
-  const connected = await getSquareMerchantStatus(rows[0].organizationId);
-  if (connected?.merchantId !== merchantId || connected.mode !== squareConfig().mode) return null;
-  return { organizationId: rows[0].organizationId };
-}
-
 async function markBusinessRefundCompleted(input: {
   organizationId: string; workflowId: string; submissionId: string;
 }) {
@@ -263,7 +257,11 @@ export async function reconcileBusinessRefund(input: {
   await ensureRefundTable();
   const row = (await refundQuery(input.organizationId, input.workflowId, input.submissionId))[0];
   if (!row) throw new Error('BUSINESS_REFUND_NOT_FOUND');
-  if (row.state === 'COMPLETED' || row.state === 'FAILED' || !row.refundId) return asRefundResult(row);
+  if (row.state === 'COMPLETED') {
+    await markBusinessRefundCompleted(input);
+    return asRefundResult(row);
+  }
+  if (row.state === 'FAILED' || !row.refundId) return asRefundResult(row);
 
   const result = await readProviderRefundStatus(row);
   if (result.refundId !== row.refundId || result.amountCents !== row.amountCents) {
