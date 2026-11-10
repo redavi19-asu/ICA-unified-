@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { handleStripeSnapshotEvent, verifyStripeWebhookSignature } from '../../../../lib/stripe-billing';
 import { handleWorkflowPaymentWebhook } from '../../../../lib/member-payments';
+import { reconcileBusinessRefundFromProviderEvent } from '../../../../lib/business-refunds';
 
 export async function POST(request: Request) {
   const signature = request.headers.get('stripe-signature') || '';
@@ -17,6 +18,15 @@ export async function POST(request: Request) {
       data?: { object?: unknown };
     };
 
+    if (event.type === 'refund.updated' || event.type === 'refund.created') {
+      const refund = event.data?.object as { id?: string } | undefined;
+      if (refund?.id) {
+        await reconcileBusinessRefundFromProviderEvent({
+          provider: 'STRIPE', refundId: String(refund.id), merchantId: String(event.account || ''),
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
     const workflowPaymentHandled = await handleWorkflowPaymentWebhook(event);
     if (!workflowPaymentHandled) {
       await handleStripeSnapshotEvent(event);
