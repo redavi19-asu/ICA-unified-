@@ -355,6 +355,18 @@ export async function squareMerchantApi<T>(
 }
 
 export function squareCheckoutEnabled() {
-  // Explicit opt-in only, never enabled by a successful OAuth connection alone.
-  return process.env.SQUARE_CUSTOMER_CHECKOUT_ENABLED === 'true' && squareOauthConfigured();
+  // Three independent gates prevent accidentally enabling customer charges
+  // while merchant auth, notifications or production approval are incomplete.
+  const cfg = squareConfig();
+  const webhookKey = (process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || '').trim();
+  const webhookUrl = (process.env.SQUARE_WEBHOOK_NOTIFICATION_URL || '').trim();
+  let validWebhookUrl = false;
+  try {
+    const url = new URL(webhookUrl);
+    validWebhookUrl = url.protocol === 'https:' && !url.username && !url.password && !url.hash;
+  } catch {}
+  return process.env.SQUARE_CUSTOMER_CHECKOUT_ENABLED === 'true' &&
+    cfg.ready && Boolean(webhookKey) && validWebhookUrl &&
+    (cfg.mode !== 'production' || process.env.SQUARE_PRODUCTION_CHECKOUT_APPROVED === 'true') &&
+    (cfg.mode !== 'sandbox' || process.env.NODE_ENV !== 'production');
 }
