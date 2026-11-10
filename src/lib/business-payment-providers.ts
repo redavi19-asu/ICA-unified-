@@ -16,7 +16,7 @@ export const BUSINESS_PAYMENT_PROVIDERS: readonly BusinessPaymentProvider[] = [
   { id: 'STRIPE', name: 'Stripe', summary: 'Membership dues, registrations, and event payments using Stripe Connect.', integrationStatus: 'IMPLEMENTED' },
   { id: 'SQUARE', name: 'Square', summary: 'Authorize your Square merchant account. Customer checkout is not available yet.', integrationStatus: 'ONBOARDING_BETA' },
   { id: 'PAYPAL', name: 'PayPal', summary: 'Business-owned PayPal partner authorization is in development. Checkout is not available yet.', integrationStatus: 'ONBOARDING_BETA' },
-  { id: 'AUTHORIZE_NET', name: 'Authorize.net', summary: 'For established merchant-account processing.', integrationStatus: 'PLANNED' },
+  { id: 'AUTHORIZE_NET', name: 'Authorize.net', summary: 'Authorize your existing merchant account through a secure provider sign-in. Checkout requires additional verification.', integrationStatus: 'ONBOARDING_BETA' },
   { id: 'BRAINTREE', name: 'Braintree', summary: 'A future option for business payment processing.', integrationStatus: 'PLANNED' },
   { id: 'ADYEN', name: 'Adyen', summary: 'A future option for larger business payment operations.', integrationStatus: 'PLANNED' },
 ] as const;
