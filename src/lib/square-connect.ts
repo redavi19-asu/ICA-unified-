@@ -150,6 +150,7 @@ function requireSquareConfig() {
 export async function beginSquareOnboarding(organizationId: string, userId: string) {
   const cfg = requireSquareConfig();
   await ensureSquareTables();
+  await prisma.$executeRawUnsafe('DELETE FROM SquareOAuthState WHERE expiresAtMs <= ?', Date.now());
   const state = randomBytes(32).toString('base64url');
   const stateHash = createHash('sha256').update(state).digest('hex');
   await prisma.$executeRawUnsafe(
@@ -183,13 +184,12 @@ async function activeSquareLocation(accessToken: string, mode: SquareMode, merch
   });
   if (!response.ok) throw new Error('Square authorization succeeded, but we could not verify its business locations.');
   const data = await response.json() as { locations?: SquareLocation[] };
-  const locations = (data.locations || []).filter((item) =>
+  return (data.locations || []).filter((item) =>
     item.status === 'ACTIVE' &&
     item.currency === 'USD' &&
     item.capabilities?.includes('CREDIT_CARD_PROCESSING') &&
     (!item.merchant_id || item.merchant_id === merchantId)
   );
-  return locations[0] || null;
 }
 
 export async function finishSquareOnboarding(input: {
@@ -221,7 +221,8 @@ export async function finishSquareOnboarding(input: {
   if (!token.merchant_id || !token.refresh_token) {
     throw new Error('Square did not provide a complete merchant authorization.');
   }
-  const location = await activeSquareLocation(token.access_token!, cfg.mode, token.merchant_id);
+  const locations = await activeSquareLocation(token.access_token!, cfg.mode, token.merchant_id);
+  const location = locations.length === 1 ? locations[0] : null;
   const status: 'CONNECTED' | 'NEEDS_LOCATION' = location ? 'CONNECTED' : 'NEEDS_LOCATION';
 
   await prisma.$executeRawUnsafe(
@@ -244,6 +245,62 @@ export async function finishSquareOnboarding(input: {
     locationName: location?.name || null,
     status, mode: cfg.mode,
   };
+}
+
+
+async function readSquareCredentials(organizationId: string) {
+  const cfg = requireSquareConfig();
+  await ensureSquareTables();
+  const rows = await prisma.$queryRawUnsafe<SquareConnectionRow[]>(
+    'SELECT * FROM SquareMerchantConnection WHERE organizationId = ? LIMIT 1', organizationId
+  );
+  const connection = rows[0];
+  if (!connection || connection.mode !== cfg.mode) throw new Error('Square merchant account is not connected in this environment.');
+  let token = decryptSquareCredential(connection.accessCiphertext, cfg.encryptionKey);
+  const expiresAt = connection.tokenExpiresAt ? Date.parse(connection.tokenExpiresAt) : NaN;
+  if (Number.isFinite(expiresAt) && expiresAt < Date.now() + 120000) {
+    const refreshed = await squareTokenRequest({
+      grant_type: 'refresh_token',
+      refresh_token: decryptSquareCredential(connection.refreshCiphertext, cfg.encryptionKey),
+    }, cfg);
+    if (refreshed.merchant_id && refreshed.merchant_id !== connection.merchantId) {
+      throw new Error('Square refreshed credentials do not match the connected merchant.');
+    }
+    const refreshedToken = encryptSquareCredential(refreshed.access_token!, cfg.encryptionKey);
+    const refreshedRefresh = refreshed.refresh_token
+      ? encryptSquareCredential(refreshed.refresh_token, cfg.encryptionKey)
+      : connection.refreshCiphertext;
+    await prisma.$executeRawUnsafe(
+      'UPDATE SquareMerchantConnection SET accessCiphertext = ?, refreshCiphertext = ?, ' +
+      'tokenExpiresAt = ?, updatedAt = CURRENT_TIMESTAMP WHERE organizationId = ? AND merchantId = ? AND mode = ?',
+      refreshedToken, refreshedRefresh, refreshed.expires_at || null,
+      organizationId, connection.merchantId, cfg.mode
+    );
+    token = refreshed.access_token!;
+  }
+  return { token, cfg, merchantId: connection.merchantId };
+}
+
+/** Never returns OAuth credentials to a client. */
+export async function listSquareMerchantLocations(organizationId: string) {
+  const { token, cfg, merchantId } = await readSquareCredentials(organizationId);
+  const locations = await activeSquareLocation(token, cfg.mode, merchantId);
+  return locations.map((location) => ({ id: location.id, name: location.name || 'Square location' }));
+}
+
+export async function selectSquareMerchantLocation(organizationId: string, locationId: string) {
+  if (!locationId || locationId.length > 100) throw new Error('Choose a valid Square location.');
+  const locations = await listSquareMerchantLocations(organizationId);
+  const chosen = locations.find((location) => location.id === locationId);
+  if (!chosen) throw new Error('Square location not found in the connected merchant account.');
+  const cfg = requireSquareConfig();
+  const changed = await prisma.$executeRawUnsafe(
+    'UPDATE SquareMerchantConnection SET locationId = ?, locationName = ?, status = ?, updatedAt = CURRENT_TIMESTAMP ' +
+    'WHERE organizationId = ? AND mode = ?',
+    chosen.id, chosen.name, 'CONNECTED', organizationId, cfg.mode
+  );
+  if (changed !== 1) throw new Error('Square connection changed. Reconnect your account.');
+  return chosen;
 }
 
 export async function getSquareMerchantStatus(organizationId: string): Promise<SquareMerchantStatus | null> {
