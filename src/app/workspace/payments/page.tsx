@@ -7,7 +7,8 @@ import {
   stripeConnectConfigured,
 } from '../../../lib/member-payments';
 import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '../../../lib/business-payment-providers';
-import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig } from '../../../lib/square-connect';
+import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig, squareCheckoutEnabled } from '../../../lib/square-connect';
+import { paymentHubReadiness } from '../../../lib/payment-hub-readiness';
 import { preferredBusinessCheckoutProvider, businessCheckoutReady } from '../../../lib/business-payment-preferences';
 import styles from './payments.module.css';
 
@@ -51,6 +52,26 @@ export default async function PaymentHubPage({
   const stripeReady = stripeConfigured &&
     Boolean(connection?.connectedAccountId && Number(connection.chargesEnabled) && Number(connection.payoutsEnabled));
 
+  const squareIsSelected = preferredProvider === 'SQUARE';
+  const selectedReadiness = paymentHubReadiness(squareIsSelected ? {
+    selected: 'SQUARE',
+    platformReady: squareConfigured,
+    accountConnected: Boolean(squareConnection && squareConnection.mode === squareMode),
+    merchantReady: squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode,
+    locationReady: Boolean(squareConnection?.locationId),
+    checkoutEnabled: squareCheckoutEnabled(),
+    recurringEnabled: false,
+    productionMode: squareMode === 'production',
+  } : {
+    selected: 'STRIPE',
+    platformReady: stripeConfigured,
+    accountConnected: Boolean(connection?.connectedAccountId),
+    merchantReady: stripeReady,
+    locationReady: true,
+    checkoutEnabled: stripeConfigured,
+    recurringEnabled: true,
+  });
+
   return (
     <main className={styles.shell}>
       <Link className={styles.back} href="/workspace">← Workspace</Link>
@@ -93,6 +114,38 @@ export default async function PaymentHubPage({
         <p>This setting determines how your business collects membership dues and event fees. It does not change your ICA Unified subscription.</p>
         {params.selected === '1' && <p role="status">Business checkout provider updated.</p>}
         {params.selected === 'unavailable' && <p className={styles.error} role="alert">That processor cannot be selected until its merchant account and checkout are ready.</p>}
+      </section>
+
+
+      <section className={styles.readinessPanel} aria-labelledby="payment-readiness-title">
+        <div className={styles.readinessHeader}>
+          <div>
+            <span className={styles.eyebrow}>AUTOMATIC PAYMENT SETUP CHECK</span>
+            <h2 id="payment-readiness-title">{selectedReadiness.headline}</h2>
+            <p>These checks show what's ready and what you can fix yourself. They don't create charges or access your customers' card details.</p>
+          </div>
+          <span className={selectedReadiness.readyForOneTime ? styles.ready : styles.pending}>
+            {selectedReadiness.readyForOneTime ? 'Configuration ready' : 'Setup needs attention'}
+          </span>
+        </div>
+        <ol className={styles.readinessList}>
+          {selectedReadiness.steps.map((step) => (
+            <li key={step.id}>
+              <span aria-hidden="true" className={step.state === 'complete' ? styles.doneIcon : styles.waitIcon}>
+                {step.state === 'complete' ? '✓' : '•'}
+              </span>
+              <div>
+                <strong>{step.label}</strong>
+                <p>{step.guidance}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        {!selectedReadiness.readyForOneTime && (
+          <p className={styles.readinessHelp}>
+            Use the connection controls below to complete setup. If a connection stops working, reconnect it here—no API keys or webhook configuration required.
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="providers-title">
