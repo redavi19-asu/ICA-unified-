@@ -40,4 +40,8 @@ jobs:
             exit 0
           fi
           git commit -m "Apply approved ICA Unified two-desk artwork to all platform icons"
-          git push
+          # Branding UI files may be updated while this conversion job runs.
+          # Replay only this generated icon commit on top of the latest branch.
+          git fetch origin "$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
