@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { confirmWorkflowPayment } from '../../../../lib/member-payments';
+import { confirmSquareWorkflowCheckout } from '../../../../lib/square-workflow-checkout';
 import styles from '../public-workflow.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ export default async function WorkflowPaymentCompletePage({
   searchParams,
 }: {
   params: Promise<{ workflowId: string }>;
-  searchParams: Promise<{ session_id?: string; submission?: string }>;
+  searchParams: Promise<{ session_id?: string; submission?: string; square?: string }>;
 }) {
   const { workflowId } = await params;
   const query = await searchParams;
@@ -21,14 +22,14 @@ export default async function WorkflowPaymentCompletePage({
   let activationUrl: string | null = null;
   let message = 'ICA could not verify this payment return.';
 
-  if (sessionId && submissionId) {
+  const square = query.square === '1';
+  if (submissionId && (square || sessionId)) {
     try {
-      const result = await confirmWorkflowPayment({
-        workflowId,
-        submissionId,
-        sessionId,
-        origin: String(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || '').trim() || 'https://unified.icomputeranything.com',
-      });
+      const origin = String(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || '').trim() || 'https://unified.icomputeranything.com';
+      // Return URLs are not proof of payment. Each provider call verifies server-to-server.
+      const result = square
+        ? await confirmSquareWorkflowCheckout({ workflowId, submissionId, origin })
+        : await confirmWorkflowPayment({ workflowId, submissionId, sessionId, origin });
 
       if (result.paid) {
         state = 'SUCCESS';
@@ -38,7 +39,7 @@ export default async function WorkflowPaymentCompletePage({
       } else {
         state = 'PROCESSING';
         status = result.status;
-        message = 'Stripe returned successfully, but payment is still processing. ICA has not granted paid access yet.';
+        message = 'The payment is still being processed or verified. ICA has not granted paid access yet.';
       }
     } catch (error) {
       console.error('ICA_WORKFLOW_PAYMENT_CONFIRM_ERROR', error);
