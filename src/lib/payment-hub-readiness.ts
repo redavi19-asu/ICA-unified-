@@ -17,7 +17,7 @@ export type PaymentHubState = {
 };
 
 export function paymentHubReadiness(input: {
-  selected: 'STRIPE' | 'SQUARE';
+  selected: 'STRIPE' | 'SQUARE' | 'PAYPAL';
   platformReady: boolean;
   accountConnected: boolean;
   merchantReady: boolean;
@@ -51,7 +51,9 @@ export function paymentHubReadiness(input: {
         ? 'Your merchant account is configured to collect payments.'
         : input.selected === 'SQUARE'
           ? 'Choose a Square location that can accept card payments, or reconnect your account.'
-          : 'Finish your Stripe onboarding and activate charges and payouts.',
+          : input.selected === 'PAYPAL'
+            ? 'Finish PayPal business authorization and confirm your merchant account with PayPal.'
+            : 'Finish your Stripe onboarding and activate charges and payouts.',
     },
     {
       id: 'checkout',
