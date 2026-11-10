@@ -253,3 +253,11 @@ export async function reconcilePayPalWebhookOrder(orderId: string, origin: strin
   const result = await verifyCapturedPayPalCheckout(rows[0], origin, false);
   return { found: true, paid: result.paid };
 }
+
+export async function findPayPalRefundSource(organizationId: string, workflowId: string, submissionId: string) {
+  await ensureTable();
+  const rows = await paymentRow(organizationId, workflowId, submissionId);
+  const row = rows[0];
+  if (!row || row.status !== 'PAID' || !row.captureId) return null;
+  return { provider: 'PAYPAL' as const, merchantId: row.merchantId, paymentId: row.captureId, amountCents: row.amountCents };
+}
