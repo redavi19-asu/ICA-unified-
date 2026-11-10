@@ -10,7 +10,7 @@
 - The existing Stripe Connect Express onboarding and connected-account checkout for paid membership and event workflows remain in place.
 - The Payment Hub exposes a clear Stripe status and onboarding route. Paid status must not be shown until the provider verifies a payment.
 - **Square merchant authorization is implemented as a guarded beta**: it uses server-side OAuth state, the Square-hosted consent page, encrypted token storage, refresh token rotation, organization isolation, and a verified location picker for businesses with more than one location.
-- **Square payments are NOT enabled**: hosted checkout, payment status reconciliation, signature-verified Square webhooks, refunds and Square subscriptions remain launch gates. An authorized Square account must NOT be labeled as capable of collecting payments until these are tested and approved.
+- **Square checkout and server-side one-time payment verification are now implemented behind a disabled-by-default feature flag**. This is not a live release: Square sandbox merchant onboarding, webhooks, refund lifecycle, Square subscription-plan billing, and production reconciliation must be tested before the feature is enabled for customers. An authorized Square account must NOT be labeled as capable of collecting payments until these are tested and approved.
 - PayPal, Authorize.net, Braintree and Adyen are still in the extension catalog as **not available**. They must not be selectable for live payment processing.
 - No production payment secrets, account settings, transactions or billing plans are changed by this change.
 
@@ -47,6 +47,26 @@ In the intended ICA Unified Cloudflare Worker environment, set these private con
 
 **Safeguards:** The customer cannot view OAuth tokens. Do not use a personal access token in place of merchant consent. Restrict access to organization OWNER/ADMIN accounts. When the Square application is not configured, the UI must show an unavailable setup message rather than pretending the business can collect through Square.
 
-**Verification:** The new automated tests check authorize URL scopes, AES-256-GCM encryption/tamper detection, merchant isolation, replay rejection and location selection using local fixtures. These are not live Square API confirmations or payment transactions.
+**Verification:** Automated tests cover OAuth URL scopes, AES-256-GCM encryption/tamper detection, merchant isolation, replay rejection, location selection, one-time hosted payment-link payloads, signed Square webhook validation, server-side order/payment/amount verification, replay-safe finalization and tenant mismatches using isolated local fixtures. These are not actual Square sandbox or live transactions.
 
 **PayPal onboarding:** PayPal Partner Referrals onboarding requires partner approval and a supported partner configuration. Do not collect businesses' PayPal passwords or raw API secrets in ICA to bypass that process.
+
+
+## Checkout feature gates and API callbacks (engineering)
+
+- ICA platform subscription remains on Stripe and is unaffected by any business provider selection.
+- A business selects its **own** preferred checkout provider in Payment Hub; preferences are organization-scoped.
+- Square payment links are created from the existing paid membership/event workflow. Callback path: `/flow/{workflowId}/complete?square=1&submission={submissionId}`. Square always redirects to the configured ICA application origin.
+- Square payment notifications must be sent to `/api/payments/square/webhook`, using `SQUARE_WEBHOOK_SIGNATURE_KEY` and an exact `SQUARE_WEBHOOK_NOTIFICATION_URL` managed secret/configuration pair. The HMAC is checked against the raw body before any provider reconciliation.
+- Square payment verification fetches the actual Square Order and Payment under the merchant OAuth token. It requires the saved organization, location, order ID, exact amount/currency and payment status `COMPLETED` to match before updating an ICA submission.
+- Square currently supports only one-time event fees and one-time memberships. Monthly/yearly membership dues on Square are explicitly blocked **before** a payable application is created. Square's Catalog/Subscription plan-variation onboarding and recurring lifecycle are outstanding.
+- `SQUARE_CUSTOMER_CHECKOUT_ENABLED=true` is **off by default** and must only be set after sandbox completion and approval; merely connecting a Square merchant account does not enable this feature.
+- The Square merchant-authorization beta may be enabled separately from checkout, but must not be described as ready to collect funds.
+
+## Unfinished processor implementations
+
+PayPal needs a valid partner/merchant onboarding arrangement, per-merchant authorization, Orders/Capture verification and webhook validation. Authorize.net requires secure per-merchant API credentials or an approved partner flow, Accept Hosted checkout and transaction verification. Braintree and Adyen require separate merchant onboarding and transaction lifecycle implementations. The labels in Payment Hub are **not** functional payment connectors yet.
+
+## Release acceptance
+
+Run isolated test-mode workflows for each provider: merchant authorization, wrong merchant/tenant, wrong amount, one-time charge, recurring subscription renewal/cancel (where supported), webhook replay, refunds/disputes, failed payments, expired tokens, reconnection and payout status. Only enable payment-taking providers after their individual matrix passes. Never perform production test charges without explicit approval.
