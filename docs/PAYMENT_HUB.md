@@ -63,9 +63,22 @@ In the intended ICA Unified Cloudflare Worker environment, set these private con
 - `SQUARE_CUSTOMER_CHECKOUT_ENABLED=true` is **off by default** and must only be set after sandbox completion and approval; merely connecting a Square merchant account does not enable this feature.
 - The Square merchant-authorization beta may be enabled separately from checkout, but must not be described as ready to collect funds.
 
+
+## PayPal partner onboarding and one-time checkout (draft)
+
+- PayPal merchant consent uses PayPal's hosted Partner Referrals flow. ICA must be an approved PayPal partner for this integration; merchants never enter PayPal passwords or merchant API secrets into Unified.
+- Server routes: `POST /api/payments/paypal/connect` and `GET /api/payments/paypal/callback`. Callback state is short-lived and bound to the authenticated organization and initiating owner/admin. An ICA-provided merchant ID is verified against PayPal's own merchant integration status.
+- `POST /api/payments/paypal/check` is a one-click self-service connection status check. A revoked/incomplete connection cannot be selected for live checkout.
+- One-time EVENT and MEMBERSHIP workflows can create merchant-scoped PayPal Orders v2 hosted approval, execute idempotent Capture after the buyer approves, retrieve the completed order and verify exact seller, order, submission, USD amount and completed capture status before granting access.
+- `POST /api/payments/paypal/webhook` verifies the signature with PayPal's official verification API, then rechecks merchant/order/capture from PayPal; a browser return or notification alone never grants paid status.
+- Recurring PayPal memberships are blocked before payable submission and are not enabled until a separate plan/subscription, renewal/failure and cancellation integration passes sandbox QC.
+- PayPal checkout is disabled by default. Setting `PAYPAL_CUSTOMER_CHECKOUT_ENABLED=true` requires all partner credentials, `PAYPAL_WEBHOOK_ID` and operator approval. A production runtime also requires `PAYPAL_PRODUCTION_CHECKOUT_APPROVED=true`. Production must not run against sandbox provider credentials.
+- Operator-owned settings/secrets: `PAYPAL_ENVIRONMENT`, `PAYPAL_PARTNER_CLIENT_ID`, `PAYPAL_PARTNER_CLIENT_SECRET`, `PAYPAL_PARTNER_MERCHANT_ID`, `PAYPAL_PARTNER_ATTRIBUTION_ID`, `PAYPAL_PARTNER_APPROVED`, `PAYPAL_MERCHANT_RETURN_URL`, `PAYPAL_WEBHOOK_ID`, and the gated checkout flags. Never store partner client secrets in source code.
+- This code is a prepared sandbox implementation, NOT proof of live PayPal partnership, authorized merchant accounts, test charges, refunds or successful subscription collection.
+
 ## Unfinished processor implementations
 
-PayPal needs a valid partner/merchant onboarding arrangement, per-merchant authorization, Orders/Capture verification and webhook validation. Authorize.net requires secure per-merchant API credentials or an approved partner flow, Accept Hosted checkout and transaction verification. Braintree and Adyen require separate merchant onboarding and transaction lifecycle implementations. The labels in Payment Hub are **not** functional payment connectors yet.
+PayPal onboarding and merchant-scoped one-time Orders/Capture verification are implemented behind strict partner-and-webhook flags, but require approved partner sandbox access, transaction testing, refund/reversal lifecycle, and recurring subscriptions before a real launch. Authorize.net requires secure per-merchant API credentials or an approved partner flow, Accept Hosted checkout and transaction verification. Braintree and Adyen require separate merchant onboarding and transaction lifecycle implementations. The labels in Payment Hub are **not** functional payment connectors yet.
 
 ## Release acceptance
 
