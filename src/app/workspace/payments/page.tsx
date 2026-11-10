@@ -131,9 +131,15 @@ export default async function PaymentHubPage({
       )}
 
 
-      {(params.paypal === 'error' || params.paypal === 'cancelled' || params.paypal === 'connected' || params.paypal === 'action-required') && (
+      {(params.paypal === 'error' || params.paypal === 'cancelled' || params.paypal === 'connected' || params.paypal === 'action-required' || params.paypal === 'check-ok' || params.paypal === 'reconnect' || params.paypal === 'unavailable') && (
         <p className={params.paypal === 'error' ? styles.error : styles.notice} role="status">
-          {params.paypal === 'connected'
+          {params.paypal === 'check-ok'
+            ? 'PayPal verified your current merchant permissions. Payment collection still requires supported checkout activation.'
+            : params.paypal === 'reconnect'
+              ? 'PayPal could not validate your current connection. Choose Reconnect PayPal below.'
+              : params.paypal === 'unavailable'
+                ? 'ICA is preparing PayPal business account connections. No action is needed in your account.'
+                : params.paypal === 'connected'
             ? 'Your PayPal merchant authorization was verified. Checkout is not enabled yet.'
             : params.paypal === 'action-required'
               ? 'PayPal needs an account-verification step before this business can collect payments.'
@@ -303,6 +309,11 @@ export default async function PaymentHubPage({
                     )}
                     {paypalCollectionReady && preferredProvider === 'PAYPAL' && (
                       <p className={styles.connection}>Selected for customer checkouts</p>
+                    )}
+                    {paypalConfig.configured && paypalStatus.merchantId && (
+                      <form action="/api/payments/paypal/check" method="post">
+                        <button className={styles.secondaryButton} type="submit">Check PayPal connection</button>
+                      </form>
                     )}
                     <p className={styles.unavailable}>
                       {paypalCollectionReady
