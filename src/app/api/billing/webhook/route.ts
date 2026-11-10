@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       data?: { object?: unknown };
     };
 
-    if (event.type === 'refund.updated' || event.type === 'refund.created') {
+    if (event.type === 'charge.refund.updated' || event.type === 'refund.created' || event.type === 'refund.updated') {
       const refund = event.data?.object as { id?: string } | undefined;
       if (refund?.id) {
         await reconcileBusinessRefundFromProviderEvent({
