@@ -136,7 +136,9 @@ export async function createSquareWorkflowCheckout(input: {
     return { checkoutUrl: existing.checkoutUrl, sessionId: existing.orderId, provider: 'SQUARE' as const };
   }
 
-  const origin = new URL(input.origin);
+  // Square redirects only to our configured app origin, never a caller-supplied Host header.
+  const origin = new URL((process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL ||
+    'https://unified.icomputeranything.com').trim());
   if (origin.protocol !== 'https:') throw new Error('SQUARE_RETURN_MUST_BE_HTTPS');
   const returnUrl = new URL('/flow/' + encodeURIComponent(input.workflow.id) + '/complete', origin);
   returnUrl.searchParams.set('square', '1');
@@ -199,8 +201,8 @@ async function verifySquareCheckoutRecord(checkout: CheckoutRecord, origin: stri
     throw new Error('SQUARE_SUBMISSION_AMOUNT_MISMATCH');
   }
   const merchant = await getSquareMerchantStatus(checkout.organizationId);
-  if (!merchant || merchant.mode !== squareConfig().mode || merchant.merchantId !== checkout.merchantId ||
-      merchant.locationId !== checkout.locationId) {
+  // Location may change later: compare transaction against the location saved at checkout, not today's default.
+  if (!merchant || merchant.mode !== squareConfig().mode || merchant.merchantId !== checkout.merchantId) {
     throw new Error('SQUARE_MERCHANT_MISMATCH');
   }
   if (submission.paymentStatus === 'PAID' && checkout.status === 'PAID') {
