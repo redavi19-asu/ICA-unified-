@@ -11,13 +11,14 @@ import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfig
 import { paymentHubReadiness } from '../../../lib/payment-hub-readiness';
 import { getPayPalMerchantStatus, paypalPartnerConfig } from '../../../lib/paypal-connect';
 import { paypalCheckoutEnabled } from '../../../lib/paypal-workflow-checkout';
+import { authorizeNetPartnerConfig, getAuthorizeNetMerchantStatus } from '../../../lib/authorize-net-connect';
 import { preferredBusinessCheckoutProvider, businessCheckoutReady } from '../../../lib/business-payment-preferences';
 import styles from './payments.module.css';
 
 export default async function PaymentHubPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connect?: string; square?: string; selected?: string; paypal?: string }>;
+  searchParams: Promise<{ connect?: string; square?: string; selected?: string; paypal?: string; authnet?: string }>;
 }) {
   const { membership } = await requireSession();
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
@@ -35,6 +36,8 @@ export default async function PaymentHubPage({
     }
   }
 
+  const authNetConfig = authorizeNetPartnerConfig();
+  const authNetStatus = await getAuthorizeNetMerchantStatus(membership.organizationId);
   const paypalConfig = paypalPartnerConfig();
   const paypalStatus = await getPayPalMerchantStatus(membership.organizationId);
   const squareConfigured = squareOauthConfigured();
@@ -149,6 +152,16 @@ export default async function PaymentHubPage({
         </p>
       )}
       
+      {(params.authnet === 'error' || params.authnet === 'cancelled' || params.authnet === 'connected') && (
+        <p className={params.authnet === 'error' ? styles.error : styles.notice} role="status">
+          {params.authnet === 'connected'
+            ? 'Authorize.net verified your business account. Customer checkout is not enabled until ICA completes payment verification.'
+            : params.authnet === 'cancelled'
+              ? 'Authorize.net connection was cancelled. No account changes were made.'
+              : 'Authorize.net could not verify your connection. Please try again after partner setup is available.'}
+        </p>
+      )}
+
       <section className={styles.notice} aria-label="Selected business payment processor">
         <strong>Customer checkout processor: {preferredProvider === 'STRIPE' ? 'Stripe' : preferredProvider === 'SQUARE' ? 'Square' : 'PayPal'}</strong>
         <p>This setting determines how your business collects membership dues and event fees. It does not change your ICA Unified subscription.</p>
@@ -200,7 +213,7 @@ export default async function PaymentHubPage({
                 <div className={styles.cardHeader}>
                   <h3>{provider.name}</h3>
                   <span className={active ? styles.ready : styles.pending}>
-                    {active ? 'Ready to collect' : provider.id === 'SQUARE' ? squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode ? 'Authorized · checkout pending' : 'Connection beta' : provider.id === 'PAYPAL' ? paypalStatus.connectionStatus === 'CONNECTED' ? 'Authorized · checkout pending' : 'Connection beta' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
+                    {active ? 'Ready to collect' : provider.id === 'SQUARE' ? squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode ? 'Authorized · checkout pending' : 'Connection beta' : provider.id === 'PAYPAL' ? paypalStatus.connectionStatus === 'CONNECTED' ? 'Authorized · checkout pending' : 'Connection beta' : provider.id === 'AUTHORIZE_NET' ? authNetStatus.connected ? 'Authorized · checkout pending' : 'Connection beta' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
                   </span>
                 </div>
                 <p>{provider.summary}</p>
@@ -320,6 +333,20 @@ export default async function PaymentHubPage({
                         ? 'PayPal one-time checkout is explicitly enabled for this environment. Complete merchant sandbox QC before release.'
                         : 'PayPal partner authorization and checkout remain unavailable until ICA completes provider approval and testing.'}
                     </p>
+                  </div>
+                ) : provider.id === 'AUTHORIZE_NET' ? (
+                  <div className={styles.actions}>
+                    {authNetStatus.connected && <p className={styles.connection}>Merchant account authorization verified</p>}
+                    {authNetConfig.ready ? (
+                      <form action="/api/payments/authorize-net/connect" method="post">
+                        <button type="submit">{authNetStatus.connected ? 'Reconnect Authorize.net' : 'Connect Authorize.net account'}</button>
+                      </form>
+                    ) : (
+                      <p className={styles.unavailable}>
+                        ICA is preparing Authorize.net partner setup. You do not need to provide API keys.
+                      </p>
+                    )}
+                    <p className={styles.unavailable}>Merchant authorization is being prepared. Authorize.net customer checkouts are not available yet.</p>
                   </div>
                 ) : (
                   <p className={styles.unavailable}>
