@@ -2,30 +2,15 @@ import { organizationFreeAccess } from '../../../lib/master-free-access';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { ensureBillingProfile, PROFESSIONAL_PRICE_CENTS } from '../../../lib/organization-ops';
-import { getOrganizationPaymentAccount, refreshOrganizationPaymentAccount, stripeConnectConfigured } from '../../../lib/member-payments';
 import styles from './billing.module.css';
 
-export default async function BillingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ connect?: string }>;
-}) {
+export default async function BillingPage() {
   const { membership } = await requireSession();
   const freeAccess = await organizationFreeAccess(membership.organizationId, membership.user.email);
-  const params = await searchParams;
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
   const profile = await ensureBillingProfile(membership.organizationId);
-  let memberPayments = await getOrganizationPaymentAccount(membership.organizationId);
-  if (params.connect === 'return' && stripeConnectConfigured()) {
-    try {
-      memberPayments = await refreshOrganizationPaymentAccount(membership.organizationId);
-    } catch (error) {
-      console.error('ICA_CONNECT_REFRESH_ERROR', error);
-    }
-  }
   const billingPortalReady = Boolean((process.env.STRIPE_SECRET_KEY || '').trim() && profile?.providerCustomerId);
-  const connectReady = Boolean(memberPayments && Number(memberPayments.chargesEnabled) && Number(memberPayments.payoutsEnabled));
   const price = (PROFESSIONAL_PRICE_CENTS / 100).toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -79,43 +64,22 @@ export default async function BillingPage({
         </article>
 
         <article>
-          <p>MEMBER MONEY</p>
-          <h2>Dues + event payments</h2>
-          <p className={styles.copy}>Member dues and event fees stay separate from ICA&apos;s $299 SaaS revenue. Stripe Connect routes workflow payments directly through this organization&apos;s connected account.</p>
-          <div className={styles.flow}>MEMBER → ORGANIZATION STRIPE ACCOUNT</div>
-          <div className={styles.line}><span>Connect status</span><strong>{memberPayments?.onboardingStatus || 'NOT CONNECTED'}</strong></div>
-          <div className={styles.line}><span>Charges</span><strong>{connectReady ? 'ENABLED' : 'NOT READY'}</strong></div>
+          <p>BUSINESS CUSTOMER PAYMENTS</p>
+          <h2>Payment Hub</h2>
+          <p className={styles.copy}>Membership dues and event payments are collected by your business through its own connected provider. They are completely separate from the ICA Unified subscription on this page.</p>
           <div className={styles.billingActions}>
-            {stripeConnectConfigured() ? (
-              <>
-                <form action="/api/billing/connect" method="post">
-                  <input type="hidden" name="action" value="ONBOARD" />
-                  <button type="submit">{connectReady ? 'OPEN STRIPE ACCOUNT →' : memberPayments?.connectedAccountId ? 'CONTINUE STRIPE ONBOARDING →' : 'CONNECT STRIPE FOR MEMBER PAYMENTS →'}</button>
-                </form>
-                {memberPayments?.connectedAccountId && (
-                  <form action="/api/billing/connect" method="post">
-                    <input type="hidden" name="action" value="REFRESH" />
-                    <button type="submit">REFRESH CONNECT STATUS</button>
-                  </form>
-                )}
-              </>
-            ) : <span className={styles.disabledAction}>STRIPE CONNECT REQUIRES PLATFORM STRIPE CREDENTIALS</span>}
+            <a href="/workspace/payments">OPEN BUSINESS PAYMENT HUB →</a>
           </div>
-          {params.connect === 'unavailable' && <p className={styles.copy}>Stripe Connect is not configured on the ICA platform yet.</p>}
-          {params.connect === 'error' && <p className={styles.copy}>Stripe onboarding could not be opened. Try again or check the platform Stripe configuration.</p>}
         </article>
 
         <article className={styles.wide}>
-          <p>WHAT IS READY NOW</p>
-          <h2>The account-dependent parts have a place to plug in.</h2>
+          <p>ICA SUBSCRIPTION</p>
+          <h2>Your software subscription stays separate.</h2>
           <div className={styles.readiness}>
-            <span><b>✓</b> Organization plan + price record</span>
-            <span><b>✓</b> Trial / active organization state</span>
-            <span><b>✓</b> Provider customer/subscription ID fields</span>
-            <span><b>✓</b> Separate member-payment architecture</span>
-            <span><b>✓</b> Stripe Checkout path + subscription status sync</span>
-            <span><b>✓</b> Stripe Connect onboarding for organization dues/event payments</span>
-            <span><b>{connectReady ? '✓' : '→'}</b> {connectReady ? 'Organization member-payment account is ready' : 'Complete Stripe Connect onboarding to activate paid public workflows'}</span>
+            <span><b>✓</b> Organization plan and price record</span>
+            <span><b>✓</b> Trial and active organization status handling</span>
+            <span><b>✓</b> Stripe subscription checkout and cancellation portal routes</span>
+            <span><b>→</b> Actual subscription readiness depends on the live Stripe configuration</span>
           </div>
         </article>
 

@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { confirmWorkflowPayment } from '../../../../lib/member-payments';
+import { confirmSquareWorkflowCheckout } from '../../../../lib/square-workflow-checkout';
+import { confirmPayPalWorkflowCheckout } from '../../../../lib/paypal-workflow-checkout';
 import styles from '../public-workflow.module.css';
+import PaymentProcessingRefresh from './PaymentProcessingRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +12,7 @@ export default async function WorkflowPaymentCompletePage({
   searchParams,
 }: {
   params: Promise<{ workflowId: string }>;
-  searchParams: Promise<{ session_id?: string; submission?: string }>;
+  searchParams: Promise<{ session_id?: string; submission?: string; square?: string; paypal?: string; token?: string }>;
 }) {
   const { workflowId } = await params;
   const query = await searchParams;
@@ -21,14 +24,19 @@ export default async function WorkflowPaymentCompletePage({
   let activationUrl: string | null = null;
   let message = 'ICA could not verify this payment return.';
 
-  if (sessionId && submissionId) {
+  const square = query.square === '1';
+  const paypal = query.paypal === '1';
+  if (submissionId && (square || paypal || sessionId)) {
     try {
-      const result = await confirmWorkflowPayment({
-        workflowId,
-        submissionId,
-        sessionId,
-        origin: String(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || '').trim() || 'https://unified.icomputeranything.com',
-      });
+      const origin = String(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || '').trim() || 'https://unified.icomputeranything.com';
+      // Return URLs are not proof of payment. Each provider call verifies server-to-server.
+      const result = square
+        ? await confirmSquareWorkflowCheckout({ workflowId, submissionId, origin })
+        : paypal
+          ? await confirmPayPalWorkflowCheckout({
+              workflowId, submissionId, returnedOrderId: String(query.token || ''), origin,
+            })
+          : await confirmWorkflowPayment({ workflowId, submissionId, sessionId, origin });
 
       if (result.paid) {
         state = 'SUCCESS';
@@ -38,7 +46,7 @@ export default async function WorkflowPaymentCompletePage({
       } else {
         state = 'PROCESSING';
         status = result.status;
-        message = 'Stripe returned successfully, but payment is still processing. ICA has not granted paid access yet.';
+        message = 'The payment is still being processed or verified. ICA has not granted paid access yet.';
       }
     } catch (error) {
       console.error('ICA_WORKFLOW_PAYMENT_CONFIRM_ERROR', error);
@@ -53,9 +61,10 @@ export default async function WorkflowPaymentCompletePage({
         <div className={state === 'SUCCESS' ? styles.success : styles.error}>
           <p>{message}</p>
           {status && <p><strong>Status:</strong> {status.replaceAll('_', ' ')}</p>}
+          {state === 'PROCESSING' && <PaymentProcessingRefresh />}
         </div>
         {activationUrl && <a href={activationUrl} style={{display:'inline-block',marginTop:18,fontWeight:900}}>ACTIVATE ICA ACCOUNT →</a>}
-        {!activationUrl && <Link href={`/flow/${workflowId}`} style={{display:'inline-block',marginTop:18,fontWeight:900}}>RETURN TO WORKFLOW →</Link>}
+        {state === 'ERROR' && !activationUrl && <Link href={`/flow/${workflowId}`} style={{display:'inline-block',marginTop:18,fontWeight:900}}>RETURN TO WORKFLOW →</Link>}
       </section>
     </main>
   );
