@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { paypalAccessToken, paypalApiRoot, paypalPartnerConfig } from '../../../../../lib/paypal-connect';
 import { paypalCheckoutEnabled, reconcilePayPalWebhookOrder } from '../../../../../lib/paypal-workflow-checkout';
+import { reconcileBusinessRefundFromProviderEvent } from '../../../../../lib/business-refunds';
 
 export async function POST(request: Request) {
   const cfg = paypalPartnerConfig();
@@ -50,6 +51,11 @@ export async function POST(request: Request) {
     const result = await verification.json() as { verification_status?: string };
     if (result.verification_status !== 'SUCCESS') {
       return NextResponse.json({ error: 'Invalid PayPal signature.' }, { status: 401 });
+    }
+    if (event.event_type === 'PAYMENT.CAPTURE.REFUNDED') {
+      const refundId = String(event.resource?.id || '');
+      if (refundId) await reconcileBusinessRefundFromProviderEvent({ provider: 'PAYPAL', refundId });
+      return NextResponse.json({ received: true });
     }
     if (event.event_type !== 'PAYMENT.CAPTURE.COMPLETED') {
       return NextResponse.json({ received: true });
