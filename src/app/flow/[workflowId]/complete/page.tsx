@@ -58,7 +58,7 @@ export default async function WorkflowPaymentCompletePage({
           {state === 'PROCESSING' && <PaymentProcessingRefresh />}
         </div>
         {activationUrl && <a href={activationUrl} style={{display:'inline-block',marginTop:18,fontWeight:900}}>ACTIVATE ICA ACCOUNT →</a>}
-        {!activationUrl && <Link href={`/flow/${workflowId}`} style={{display:'inline-block',marginTop:18,fontWeight:900}}>RETURN TO WORKFLOW →</Link>}
+        {state === 'ERROR' && !activationUrl && <Link href={`/flow/${workflowId}`} style={{display:'inline-block',marginTop:18,fontWeight:900}}>RETURN TO WORKFLOW →</Link>}
       </section>
     </main>
   );
