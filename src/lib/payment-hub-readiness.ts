@@ -79,7 +79,9 @@ export function paymentHubReadiness(input: {
     readyForOneTime,
     readyForRecurring,
     headline: readyForOneTime
-      ? (input.productionMode ? 'Ready for supported customer checkouts' : 'Ready in the test environment only')
+      ? (input.productionMode === false
+          ? 'Payment setup is ready in the test environment only'
+          : 'Payment connection configured — verify with a test checkout')
       : 'A few steps remain before your business can collect payments',
     steps,
   };
