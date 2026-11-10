@@ -4,6 +4,7 @@ import {
   verifySquareWebhookSignature,
 } from '../../../../../lib/square-workflow-checkout';
 import { squareCheckoutEnabled } from '../../../../../lib/square-connect';
+import { reconcileBusinessRefundFromProviderEvent } from '../../../../../lib/business-refunds';
 
 /**
  * Square's notification body is verified before any database lookup.
@@ -24,8 +25,17 @@ export async function POST(request: Request) {
     const event = JSON.parse(rawBody) as {
       type?: string;
       merchant_id?: string;
-      data?: { object?: { payment?: { order_id?: string } } };
+      data?: { object?: { payment?: { order_id?: string }; refund?: { id?: string } } };
     };
+    if (event.type === 'refund.updated' || event.type === 'refund.created') {
+      const refundId = String(event.data?.object?.refund?.id || '');
+      if (refundId && event.merchant_id) {
+        await reconcileBusinessRefundFromProviderEvent({
+          provider: 'SQUARE', refundId, merchantId: String(event.merchant_id),
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
     if (event.type !== 'payment.updated' && event.type !== 'payment.created') {
       return NextResponse.json({ received: true });
     }
