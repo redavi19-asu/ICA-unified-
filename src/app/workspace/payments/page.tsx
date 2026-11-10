@@ -8,12 +8,13 @@ import {
 } from '../../../lib/member-payments';
 import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '../../../lib/business-payment-providers';
 import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig } from '../../../lib/square-connect';
+import { preferredBusinessCheckoutProvider, businessCheckoutReady } from '../../../lib/business-payment-preferences';
 import styles from './payments.module.css';
 
 export default async function PaymentHubPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connect?: string; square?: string }>;
+  searchParams: Promise<{ connect?: string; square?: string; selected?: string }>;
 }) {
   const { membership } = await requireSession();
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
@@ -42,6 +43,9 @@ export default async function PaymentHubPage({
       console.error('ICA_PAYMENT_HUB_SQUARE_LOCATIONS_ERROR', error instanceof Error ? error.message : 'Unable to retrieve locations');
     }
   }
+
+  const preferredProvider = await preferredBusinessCheckoutProvider(membership.organizationId);
+  const squareCollectionReady = await businessCheckoutReady(membership.organizationId, 'SQUARE');
 
   const stripeConfigured = stripeConnectConfigured();
   const stripeReady = stripeConfigured &&
@@ -83,6 +87,14 @@ export default async function PaymentHubPage({
         </p>
       )}
 
+
+      <section className={styles.notice} aria-label="Selected business payment processor">
+        <strong>Customer checkout processor: {preferredProvider === 'STRIPE' ? 'Stripe' : 'Square'}</strong>
+        <p>This setting determines how your business collects membership dues and event fees. It does not change your ICA Unified subscription.</p>
+        {params.selected === '1' && <p role="status">Business checkout provider updated.</p>}
+        {params.selected === 'unavailable' && <p className={styles.error} role="alert">That processor cannot be selected until its merchant account and checkout are ready.</p>}
+      </section>
+
       <section aria-labelledby="providers-title">
         <h2 id="providers-title">Your payment providers</h2>
         <p className={styles.subheading}>Only a connected, verified processor can accept payments. More providers will appear here as their integrations are completed.</p>
@@ -119,6 +131,13 @@ export default async function PaymentHubPage({
                             <button className={styles.secondaryButton} type="submit">Check connection status</button>
                           </form>
                         )}
+                        {stripeReady && preferredProvider !== 'STRIPE' && (
+                          <form action="/api/payments/provider" method="post">
+                            <input type="hidden" name="provider" value="STRIPE" />
+                            <button type="submit">Use Stripe for customer checkouts</button>
+                          </form>
+                        )}
+                        {stripeReady && preferredProvider === 'STRIPE' && <p className={styles.connection}>Selected for customer checkouts</p>}
                       </>
                     ) : (
                       <p className={styles.unavailable}>Stripe setup is temporarily unavailable. Contact ICA support.</p>
@@ -152,7 +171,20 @@ export default async function PaymentHubPage({
                         <button type="submit">Save payment location</button>
                       </form>
                     )}
-                    <p className={styles.unavailable}>Account authorization is available where ICA Square credentials are configured. Square customer checkouts are not enabled yet.</p>
+                    {squareCollectionReady && preferredProvider !== 'SQUARE' && (
+                      <form action="/api/payments/provider" method="post">
+                        <input type="hidden" name="provider" value="SQUARE" />
+                        <button type="submit">Use Square for customer checkouts</button>
+                      </form>
+                    )}
+                    {squareCollectionReady && preferredProvider === 'SQUARE' && (
+                      <p className={styles.connection}>Selected for customer checkouts</p>
+                    )}
+                    <p className={styles.unavailable}>
+                      {squareCollectionReady
+                        ? 'Square hosted checkout is explicitly enabled for this environment. Verify sandbox and live reconciliation before release.'
+                        : 'Square account authorization is a beta. Customer checkout remains disabled until payment verification is approved.'}
+                    </p>
                   </div>
                 ) : (
                   <p className={styles.unavailable}>
