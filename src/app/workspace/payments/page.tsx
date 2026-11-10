@@ -9,13 +9,14 @@ import {
 import { BUSINESS_PAYMENT_PROVIDERS, providerCanAcceptUnifiedPayments } from '../../../lib/business-payment-providers';
 import { getSquareMerchantStatus, listSquareMerchantLocations, squareOauthConfigured, squareConfig, squareCheckoutEnabled } from '../../../lib/square-connect';
 import { paymentHubReadiness } from '../../../lib/payment-hub-readiness';
+import { getPayPalMerchantStatus, paypalPartnerConfig } from '../../../lib/paypal-connect';
 import { preferredBusinessCheckoutProvider, businessCheckoutReady } from '../../../lib/business-payment-preferences';
 import styles from './payments.module.css';
 
 export default async function PaymentHubPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connect?: string; square?: string; selected?: string }>;
+  searchParams: Promise<{ connect?: string; square?: string; selected?: string; paypal?: string }>;
 }) {
   const { membership } = await requireSession();
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
@@ -33,6 +34,8 @@ export default async function PaymentHubPage({
     }
   }
 
+  const paypalConfig = paypalPartnerConfig();
+  const paypalStatus = await getPayPalMerchantStatus(membership.organizationId);
   const squareConfigured = squareOauthConfigured();
   const squareConnection = await getSquareMerchantStatus(membership.organizationId);
   const squareMode = squareConfig().mode;
@@ -117,6 +120,18 @@ export default async function PaymentHubPage({
       )}
 
 
+      {(params.paypal === 'error' || params.paypal === 'cancelled' || params.paypal === 'connected' || params.paypal === 'action-required') && (
+        <p className={params.paypal === 'error' ? styles.error : styles.notice} role="status">
+          {params.paypal === 'connected'
+            ? 'Your PayPal merchant authorization was verified. Checkout is not enabled yet.'
+            : params.paypal === 'action-required'
+              ? 'PayPal needs an account-verification step before this business can collect payments.'
+              : params.paypal === 'cancelled'
+                ? 'PayPal connection was not completed. Your other payment connections were not changed.'
+                : 'PayPal could not verify the merchant connection. Please retry once partner onboarding is available.'}
+        </p>
+      )}
+      
       <section className={styles.notice} aria-label="Selected business payment processor">
         <strong>Customer checkout processor: {preferredProvider === 'STRIPE' ? 'Stripe' : 'Square'}</strong>
         <p>This setting determines how your business collects membership dues and event fees. It does not change your ICA Unified subscription.</p>
@@ -168,7 +183,7 @@ export default async function PaymentHubPage({
                 <div className={styles.cardHeader}>
                   <h3>{provider.name}</h3>
                   <span className={active ? styles.ready : styles.pending}>
-                    {active ? 'Ready to collect' : provider.id === 'SQUARE' ? squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode ? 'Authorized · checkout pending' : 'Connection beta' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
+                    {active ? 'Ready to collect' : provider.id === 'SQUARE' ? squareConnection?.status === 'CONNECTED' && squareConnection.mode === squareMode ? 'Authorized · checkout pending' : 'Connection beta' : provider.id === 'PAYPAL' ? paypalStatus.connectionStatus === 'CONNECTED' ? 'Authorized · checkout pending' : 'Connection beta' : provider.integrationStatus === 'PLANNED' ? 'Not available yet' : 'Not connected'}
                   </span>
                 </div>
                 <p>{provider.summary}</p>
@@ -250,6 +265,27 @@ export default async function PaymentHubPage({
                       {squareCollectionReady
                         ? 'Square hosted checkout is explicitly enabled for this environment. Verify sandbox and live reconciliation before release.'
                         : 'Square account authorization is a beta. Customer checkout remains disabled until payment verification is approved.'}
+                    </p>
+                  </div>
+                ) : provider.id === 'PAYPAL' ? (
+                  <div className={styles.actions}>
+                    {paypalStatus.connectionStatus !== 'NOT_CONNECTED' && (
+                      <p className={styles.connection}>
+                        Merchant account: <strong>{paypalStatus.connectionStatus.replaceAll('_', ' ')}</strong>
+                        {' · '}{paypalStatus.environment === 'sandbox' ? 'Sandbox' : 'Production'}
+                      </p>
+                    )}
+                    {paypalConfig.configured ? (
+                      <form action="/api/payments/paypal/connect" method="post">
+                        <button type="submit">{paypalStatus.connectionStatus === 'CONNECTED' ? 'Reconnect PayPal business account' : 'Connect PayPal business account'}</button>
+                      </form>
+                    ) : (
+                      <p className={styles.unavailable}>
+                        ICA is completing the PayPal partner integration. You do not need to change your PayPal account.
+                      </p>
+                    )}
+                    <p className={styles.unavailable}>
+                      Business authorization is being prepared. PayPal customer checkouts cannot be selected yet.
                     </p>
                   </div>
                 ) : (
