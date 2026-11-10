@@ -107,7 +107,7 @@ export async function createPayPalWorkflowCheckout(input: {
   }
   const orgId = input.workflow.organizationId;
   const submission = await getWorkflowSubmission(orgId, input.workflow.id, input.submissionId);
-  if (!submission || submission.amountCents <= 0 || submission.paymentStatus === 'PAID' ||
+  if (!submission || submission.amountCents <= 0 || submission.paymentStatus !== 'PENDING' ||
       submission.amountCents > 100_000_000) {
     throw new Error('PAYPAL_SUBMISSION_NOT_ELIGIBLE');
   }
