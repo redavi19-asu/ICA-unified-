@@ -385,7 +385,7 @@ export async function getMemberComplianceSummary(organizationId: string, userId:
   }]));
 
   const eligibleCourseIds = rules
-    .filter((row) => gapCategories.has(normalizeCategory(row.category)) && !completed.has(row.courseId))
+    .filter((row) => gapCategories.has(normalizeCategory(row.category)) && incomplete.has(row.courseId) && !completed.has(row.courseId))
     .map((row) => row.courseId);
 
   const courses = eligibleCourseIds.length
