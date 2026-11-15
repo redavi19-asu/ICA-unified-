@@ -14,7 +14,7 @@ export function formatOperationalTimestamp(value: Date | string) {
 
 // Legacy raw D1 writes can expose epoch milliseconds as TEXT.
 export function parseStoredDate(value: string | number | Date): Date | null {
-  const normalized = typeof value === 'string' && /^\d{12,13}$/.test(value.trim())
+  const normalized = typeof value === 'string' && /^\d{12,13}(?:\.0+)?$/.test(value.trim())
     ? Number(value) : value;
   const date = new Date(normalized);
   return Number.isFinite(date.getTime()) ? date : null;

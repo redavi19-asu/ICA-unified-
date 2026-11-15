@@ -20,6 +20,7 @@ test('operational dates and timestamps retain the same UTC day across runtime ti
 test('legacy D1 date text and new ISO writes yield a valid member year', () => {
   const epoch = Date.UTC(2026, 10, 15);
   assert.equal(parseStoredDate(String(epoch))?.getUTCFullYear(), 2026);
+  assert.equal(parseStoredDate(`${epoch}.0`)?.getUTCFullYear(), 2026);
   assert.equal(parseStoredDate(new Date(epoch).toISOString())?.getUTCFullYear(), 2026);
   assert.equal(parseStoredDate(new Date(NaN)), null);
   assert.equal(parseStoredDate('invalid'), null);
