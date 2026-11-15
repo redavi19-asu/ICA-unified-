@@ -1,5 +1,7 @@
 'use client';
 
+import { formatOperationalDate } from '../../../lib/display-time';
+
 import { FormEvent, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
@@ -120,7 +122,7 @@ export default function ComplianceCenterClient({
               <strong>{item.name}</strong>
               <span>{item.category}</span>
               <span>{item.requiredCredits} credits</span>
-              <span>{item.renewalDate ? new Date(item.renewalDate).toLocaleDateString() : 'No fixed date'}</span>
+              <span>{item.renewalDate ? formatOperationalDate(item.renewalDate) : 'No fixed date'}</span>
             </article>
           ))}
         </div>

@@ -9,6 +9,7 @@ test('operational dates and timestamps retain the same UTC day across runtime ti
       process.env.TZ = zone;
       const instant = '2026-11-15T00:30:00.000Z';
       assert.equal(formatOperationalDate(instant), 'Nov 15, 2026');
+      assert.equal(formatOperationalDate('2026-12-15'), 'Dec 15, 2026', 'calendar renewal dates must not shift to the previous day');
       assert.equal(formatOperationalTimestamp(instant), 'Nov 15, 2026, 12:30 AM UTC');
     }
   } finally {

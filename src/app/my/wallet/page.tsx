@@ -1,3 +1,4 @@
+import { formatOperationalDate } from '../../../lib/display-time';
 import { readMembershipJoinDate } from '../../../lib/membership-dates';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
@@ -50,7 +51,7 @@ export default async function CredentialWalletPage() {
           return (
             <article key={item.id} className={styles.requirement}>
               <div className={styles.requirementTop}><strong>{item.name}</strong><span className={item.met ? styles.ready : styles.needed}>{item.met ? 'READY' : `${item.gap.toFixed(1)} NEEDED`}</span></div>
-              <div className={styles.requirementMeta}><span>{item.category} · {item.earnedCredits.toFixed(1)} / {item.requiredCredits.toFixed(1)} credits</span><span>{item.renewalDate ? `Renews ${new Date(item.renewalDate).toLocaleDateString()}` : item.source === 'MEMBERSHIP' ? 'Membership renewal rule' : 'Ongoing requirement'}</span></div>
+              <div className={styles.requirementMeta}><span>{item.category} · {item.earnedCredits.toFixed(1)} / {item.requiredCredits.toFixed(1)} credits</span><span>{item.renewalDate ? `Renews ${formatOperationalDate(item.renewalDate)}` : item.source === 'MEMBERSHIP' ? 'Membership renewal rule' : 'Ongoing requirement'}</span></div>
               <div className={styles.progress}><div style={{width:`${percent}%`}} /></div>
             </article>
           );
