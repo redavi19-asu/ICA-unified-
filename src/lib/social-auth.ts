@@ -449,12 +449,12 @@ export async function completeSocialRegistration(ticket: string, organizationNam
   const organizationId = randomUUID();
   const membershipId = randomUUID();
   const userId = existingUser?.id || randomUUID();
-  const now = Date.now();
+  const now = new Date().toISOString();
   await db.batch([
     db.prepare(`INSERT INTO User(id,email,name,passwordHash,createdAt,updatedAt) VALUES (?,?,?,?,?,?) ON CONFLICT(email) DO NOTHING`)
       .bind(userId, profile.email, profile.displayName, existingUser?.passwordHash || generatedPasswordHash!, now, now),
     db.prepare(`INSERT INTO Organization(id,name,slug,status,plan,trialEndsAt,createdAt,updatedAt) VALUES (?,?,?,'TRIAL','trial',?,?,?)`)
-      .bind(organizationId, safeOrganizationName, companyId, trialEndsAt.getTime(), now, now),
+      .bind(organizationId, safeOrganizationName, companyId, trialEndsAt.toISOString(), now, now),
     db.prepare(`INSERT INTO Membership(id,userId,organizationId,role,status,jobTitle,joinedAt)
       SELECT ?,id,?,'OWNER','ACTIVE','Organization Owner',? FROM User WHERE email=?`)
       .bind(membershipId, organizationId, now, profile.email),

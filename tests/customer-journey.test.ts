@@ -15,7 +15,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
     readFileSync(
       new URL("./fixtures/application-schema.sql", import.meta.url),
       "utf8",
-    ).replace('"joinedAt" DATETIME', '"joinedAt" TEXT'),
+    ).replace(/"(joinedAt|createdAt|updatedAt|trialEndsAt)" DATETIME/g, '"$1" TEXT'),
   );
 
   const wrap = (sql: string, values: any[] = []): any => ({
@@ -140,6 +140,8 @@ test("customer signs in, integrates members, completes learning, and stays isola
     const org = await prisma.organization.findFirstOrThrow({
       where: { name: "QC Association" },
     });
+    assert.ok(Number.isFinite(org.createdAt.getTime()), 'new organization creation date must parse');
+    assert.ok(org.trialEndsAt && Number.isFinite(org.trialEndsAt.getTime()), 'new organization trial expiry must parse');
     response = await call(login.POST, {
       email: "owner@qc.example",
       password,
