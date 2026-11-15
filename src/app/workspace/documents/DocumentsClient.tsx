@@ -85,7 +85,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
 
   return (
     <main className={styles.shell}>
-      <button className={styles.back} onClick={() => router.push('/workspace')}>← CONTROL PLANE</button>
+      <button className={styles.back} onClick={() => router.push('/workspace')}>← BACK TO WORKSPACE</button>
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>{organizationName.toUpperCase()} / RECORD CONTROL</p>

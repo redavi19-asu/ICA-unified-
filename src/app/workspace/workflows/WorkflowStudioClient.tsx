@@ -1,5 +1,7 @@
 'use client';
 
+import { formatOperationalTimestamp } from '../../../lib/display-time';
+
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './workflows.module.css';
@@ -367,7 +369,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
             <article key={workflow.id}>
               <div><small>{workflow.kind}</small><strong>{workflow.name}</strong></div>
               <span className={workflow.status === 'ACTIVE' ? styles.live : styles.draft}>{workflow.status}</span>
-              <time>{new Date(workflow.updatedAt).toLocaleString()}</time>
+              <time>{formatOperationalTimestamp(workflow.updatedAt)}</time>
               <div className={styles.workflowActions}>
                 {workflow.status === 'ACTIVE' && <a href={`/flow/${workflow.id}`} target="_blank" rel="noreferrer">OPEN PUBLIC FLOW ↗</a>}
                 <button type="button" onClick={() => editWorkflow(workflow)}>EDIT</button>
@@ -398,7 +400,7 @@ export default function WorkflowStudioClient({ organizationName, role }: Props) 
               {submissions.map((submission) => (
                 <article key={submission.id} className={styles.submissionRow}>
                   <div>
-                    <small>{new Date(submission.createdAt).toLocaleString()}</small>
+                    <small>{formatOperationalTimestamp(submission.createdAt)}</small>
                     <strong>{submission.name}</strong>
                     <span>{submission.email}{submission.phone ? ` · ${submission.phone}` : ''}{submission.company ? ` · ${submission.company}` : ''}</span>
                     {submission.notes && <p>{submission.notes}</p>}

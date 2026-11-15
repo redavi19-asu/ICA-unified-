@@ -1,3 +1,4 @@
+import { formatOperationalDate, formatOperationalTimestamp } from '../../../lib/display-time';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
@@ -49,7 +50,7 @@ export default async function ReportsPage() {
         <div>
           <p className={styles.eyebrow}>{membership.organization.name.toUpperCase()} / REPORT FIELD</p>
           <h1>COMPLIANCE<br />SNAPSHOT</h1>
-          <p className={styles.sub}>A print-ready operational report generated from this organization only.</p>
+          <p className={styles.sub}>A print-ready operational report generated from this organization only. All dates and times are shown in UTC.</p>
         </div>
         <div className={styles.actions}>
           <a href="/workspace">← WORKSPACE</a>
@@ -73,7 +74,7 @@ export default async function ReportsPage() {
               <div><strong>{item.user.name}</strong><span>{item.course.title}</span></div>
               <div><small>STATUS</small><b>{item.status.replaceAll('_', ' ')}</b></div>
               <div><small>PROGRESS</small><b>{item.progress}%</b></div>
-              <div><small>DUE</small><b>{item.dueAt?.toLocaleDateString() ?? '—'}</b></div>
+              <div><small>DUE</small><b>{item.dueAt ? formatOperationalDate(item.dueAt) : '—'}</b></div>
             </div>
           ))}
         </div>
@@ -83,7 +84,7 @@ export default async function ReportsPage() {
         <div className={styles.section}>
           <div className={styles.sectionHead}><p className={styles.eyebrow}>CREDENTIAL WATCH</p><span>{credentials.length} records</span></div>
           {credentials.length === 0 ? <p className={styles.empty}>No credentials issued yet.</p> : credentials.slice(0, 12).map((item) => (
-            <div className={styles.miniRow} key={item.id}><div><strong>{item.user.name}</strong><span>{item.name}</span></div><b>{item.expiresAt?.toLocaleDateString() ?? 'NO EXPIRATION'}</b></div>
+            <div className={styles.miniRow} key={item.id}><div><strong>{item.user.name}</strong><span>{item.name}</span></div><b>{item.expiresAt ? formatOperationalDate(item.expiresAt) : 'NO EXPIRATION'}</b></div>
           ))}
         </div>
 
@@ -96,7 +97,7 @@ export default async function ReportsPage() {
         </div>
       </section>
 
-      <footer className={styles.footer}>Generated {now.toLocaleString()} · ICA Unified · {membership.organization.name}</footer>
+      <footer className={styles.footer}>Generated {formatOperationalTimestamp(now)} · ICA Unified · {membership.organization.name}</footer>
     </main>
   );
 }

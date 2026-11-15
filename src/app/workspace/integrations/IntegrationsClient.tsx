@@ -275,7 +275,7 @@ export default function IntegrationsClient({
           </div>
           <div className={styles.statusLine}>
             <span>PROVIDER</span>
-            <strong>{email?.readyToSend ? email.provider : 'NOT CONNECTED YET'}</strong>
+            <strong>{email?.readyToSend ? (email.provider?.trim() || 'CONFIGURED PROVIDER') : 'NOT CONNECTED YET'}</strong>
           </div>
           <form className={styles.stackForm} onSubmit={queueTestEmail}>
             <input name="recipient" type="email" placeholder="test@example.org" required />
