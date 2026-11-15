@@ -28,7 +28,8 @@ export default function DocumentsClient({ organizationName, role, documents: ini
 
   async function createDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const bodyText = String(form.get('bodyText') || '').trim();
     const selectedFile = form.get('file');
     const hasFile = selectedFile instanceof File && selectedFile.size > 0;
@@ -80,7 +81,7 @@ export default function DocumentsClient({ organizationName, role, documents: ini
     }, ...current]);
     setOpen(false);
     if (!fileName) setMessage(`${data.document.title} added to controlled documents.`);
-    event.currentTarget.reset();
+    formElement.reset();
   }
 
   return (

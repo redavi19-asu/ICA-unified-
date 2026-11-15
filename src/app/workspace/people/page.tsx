@@ -1,3 +1,4 @@
+import { parseStoredDate } from '../../../lib/display-time';
 import PeopleClient from './PeopleClient';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
@@ -43,7 +44,7 @@ export default async function PeoplePage() {
         jobTitle: item.jobTitle,
         role: normalizeRole(item.role),
         status: normalizeStatus(item.status),
-        joinedAt: item.joinedAt.toISOString(),
+        joinedAt: parseStoredDate(item.joinedAt)?.toISOString() || '',
       }))}
       invitations={invitations.map((item) => ({
         id: item.id,

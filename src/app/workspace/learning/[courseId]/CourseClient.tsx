@@ -135,7 +135,8 @@ export default function CourseClient({ organizationName, currentRole, course, en
 
   async function addLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const options = [1, 2, 3, 4].map((n) => String(form.get(`option${n}`) || '')).filter(Boolean);
     const response = await fetch(`/api/learning/courses/${course.id}/lessons`, {
       method: 'POST',
@@ -153,7 +154,7 @@ export default function CourseClient({ organizationName, currentRole, course, en
     const data = await response.json();
     if (!response.ok) return setMessage(data.error || 'Unable to add lesson.');
     setMessage('Lesson added.');
-    event.currentTarget.reset();
+    formElement.reset();
     setMediaUrl('');
     router.refresh();
   }

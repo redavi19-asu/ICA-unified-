@@ -15,7 +15,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
     readFileSync(
       new URL("./fixtures/application-schema.sql", import.meta.url),
       "utf8",
-    ),
+    ).replace('"joinedAt" DATETIME', '"joinedAt" TEXT'),
   );
 
   const wrap = (sql: string, values: any[] = []): any => ({
@@ -206,6 +206,8 @@ test("customer signs in, integrates members, completes learning, and stays isola
     const learner = await prisma.user.findUniqueOrThrow({
       where: { email: "learner@qc.example" },
     });
+    const joinedMembership = await prisma.membership.findFirstOrThrow({ where: { userId: learner.id } });
+    assert.ok(Number.isFinite(joinedMembership.joinedAt.getTime()), 'invitation join date must be readable by Prisma/D1');
     response = await call(courses.POST, { title: "QC Safety Course" });
     assert.equal(response.status, 200);
     const course = (await response.json()).course;

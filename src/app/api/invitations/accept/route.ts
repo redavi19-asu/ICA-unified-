@@ -113,6 +113,7 @@ export async function POST(request: Request) {
   const userId = existingUser?.id || randomUUID();
   const expectedHash = existingUser?.passwordHash || passwordHash!;
   const now = Date.now();
+  const storedNow = new Date(now).toISOString();
   await db.batch([
     db
       .prepare(
@@ -125,8 +126,8 @@ export async function POST(request: Request) {
         invitation.email,
         invitation.name,
         expectedHash,
-        now,
-        now,
+        storedNow,
+        storedNow,
         invitation.id,
         now,
       ),
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
         targetRole,
         targetStatus,
         targetJobTitle,
-        now,
+        storedNow,
         invitation.id,
         claimId,
       ),
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
         randomUUID(),
         invitation.organizationId,
         invitation.name + " joined " + invitation.organization.name + ".",
-        now,
+        storedNow,
         invitation.id,
         claimId,
       ),
@@ -171,7 +172,7 @@ export async function POST(request: Request) {
         `UPDATE Invitation SET status='ACCEPTED',acceptedAt=? WHERE id=? AND EXISTS
       (SELECT 1 FROM InvitationAcceptance WHERE invitationId=? AND claimId=?)`,
       )
-      .bind(now, invitation.id, invitation.id, claimId),
+      .bind(storedNow, invitation.id, invitation.id, claimId),
   ]);
   const claim = await db
     .prepare(

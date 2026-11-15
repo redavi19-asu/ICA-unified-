@@ -1,3 +1,4 @@
+import { parseStoredDate } from '../../../lib/display-time';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 import { getMemberComplianceSummary } from '../../../lib/compliance';
@@ -16,6 +17,14 @@ export default async function CredentialWalletPage() {
     }),
   ]);
 
+  let joinedAt = parseStoredDate(membership.joinedAt);
+  if (!joinedAt) {
+    const rows = await prisma.$queryRawUnsafe<Array<{ joinedAt: string }>>(
+      'SELECT CAST(joinedAt AS TEXT) AS joinedAt FROM Membership WHERE id = ?', membership.id,
+    );
+    joinedAt = rows[0] ? parseStoredDate(rows[0].joinedAt) : null;
+  }
+
   return (
     <main className={styles.shell}>
       <a href="/my" className={styles.back}>← MY WORKSPACE</a>
@@ -29,7 +38,7 @@ export default async function CredentialWalletPage() {
           <p className={styles.eyebrow}>DIGITAL MEMBER CARD</p>
           <strong className={styles.memberName}>{membership.user.name}</strong>
           <span className={styles.muted}>{membership.user.email}</span>
-          <span className={styles.memberMeta}>{membership.role} · MEMBER SINCE {membership.joinedAt.getFullYear()}</span>
+          <span className={styles.memberMeta}>{membership.role} · {joinedAt ? `MEMBER SINCE ${joinedAt.getUTCFullYear()}` : 'JOIN DATE UNAVAILABLE'}</span>
         </div>
       </header>
 

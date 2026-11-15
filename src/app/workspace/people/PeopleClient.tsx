@@ -65,7 +65,8 @@ export default function PeopleClient({
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload = {
       name: String(form.get('name') || ''),
       email: String(form.get('email') || ''),
@@ -91,7 +92,7 @@ export default function PeopleClient({
       jobTitle: payload.jobTitle || null,
       expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
     }, ...current]);
-    event.currentTarget.reset();
+    formElement.reset();
     setMessage(data.emailStatus === 'FAILED' ? `Invite link created for ${payload.name}, but email delivery could not be queued. Copy the invite link manually.` : `Invitation ready for ${payload.name}. Email status: ${data.emailStatus || 'QUEUED'}.`);
   }
 
