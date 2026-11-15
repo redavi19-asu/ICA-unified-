@@ -1,4 +1,4 @@
-import { parseStoredDate } from '../../../lib/display-time';
+import { readMembershipJoinDate } from '../../../lib/membership-dates';
 import { requireSession } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 import { getMemberComplianceSummary } from '../../../lib/compliance';
@@ -17,13 +17,7 @@ export default async function CredentialWalletPage() {
     }),
   ]);
 
-  let joinedAt = parseStoredDate(membership.joinedAt);
-  if (!joinedAt) {
-    const rows = await prisma.$queryRawUnsafe<Array<{ joinedAt: string }>>(
-      'SELECT CAST(joinedAt AS TEXT) AS joinedAt FROM Membership WHERE id = ?', membership.id,
-    );
-    joinedAt = rows[0] ? parseStoredDate(rows[0].joinedAt) : null;
-  }
+  const joinedAt = await readMembershipJoinDate(membership);
 
   return (
     <main className={styles.shell}>

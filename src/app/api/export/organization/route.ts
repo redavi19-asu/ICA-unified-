@@ -1,3 +1,4 @@
+import { readMembershipJoinDate } from '../../../../lib/membership-dates';
 import { NextResponse } from 'next/server';
 import { requireSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
@@ -11,11 +12,15 @@ export async function GET(request: Request) {
   const organizationId = membership.organizationId;
   const format = new URL(request.url).searchParams.get('format') || 'json';
 
-  const members = await prisma.membership.findMany({
+  const fetchedMembers = await prisma.membership.findMany({
     where: { organizationId },
     include: { user: { select: { name: true, email: true, createdAt: true } } },
     orderBy: { joinedAt: 'asc' },
   });
+
+  const members = await Promise.all(fetchedMembers.map(async (item) => ({
+    ...item, joinedAt: await readMembershipJoinDate(item),
+  })));
 
   if (format === 'members-csv') {
     const rows = [
@@ -26,7 +31,7 @@ export async function GET(request: Request) {
         item.jobTitle || '',
         item.role,
         item.status,
-        item.joinedAt.toISOString(),
+        item.joinedAt?.toISOString() || '',
       ]),
     ];
     const csv = rows.map((row) => row.map(csvCell).join(',')).join('\r\n');

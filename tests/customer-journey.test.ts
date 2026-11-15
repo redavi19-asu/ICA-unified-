@@ -208,6 +208,15 @@ test("customer signs in, integrates members, completes learning, and stays isola
     });
     const joinedMembership = await prisma.membership.findFirstOrThrow({ where: { userId: learner.id } });
     assert.ok(Number.isFinite(joinedMembership.joinedAt.getTime()), 'invitation join date must be readable by Prisma/D1');
+    // D1 historically stored epoch values as decimal TEXT. Exports must recover them.
+    const legacyJoinDate = new Date('2026-11-15T00:30:00Z');
+    sqlite.prepare('UPDATE Membership SET joinedAt=? WHERE id=?').run(`${legacyJoinDate.getTime()}.0`, joinedMembership.id);
+    const exportRoute = await import('../src/app/api/export/organization/route');
+    const exportResponse = await call((request: Request) => exportRoute.GET(new Request(request.url + '?format=members-csv', {headers: request.headers})));
+    assert.equal(exportResponse.status, 200);
+    const exportedCsv = await exportResponse.text();
+    assert.ok(exportedCsv.includes(legacyJoinDate.toISOString()));
+    assert.ok(exportedCsv.includes('learner@qc.example'));
     response = await call(courses.POST, { title: "QC Safety Course" });
     assert.equal(response.status, 200);
     const course = (await response.json()).course;
