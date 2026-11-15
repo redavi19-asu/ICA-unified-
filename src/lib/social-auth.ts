@@ -8,6 +8,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { prisma } from './prisma';
 import { createSession, sessionCookie } from './auth';
 import { createPlatformSession } from './platform-auth';
+import { createMasterWorkspaceSession } from './master-workspace';
 import { findIcaMasterOwnerByEmail } from './ica-master-auth';
 import { markUserEmailVerified } from './security';
 
@@ -350,7 +351,9 @@ export async function finishSocialCallback(request: Request, provider: SocialPro
       platformAdminId: admin.id,
       role: 'MASTER',
     });
-    return { kind: 'platform' as const, token };
+    const workspaceToken = await createMasterWorkspaceSession(email, String(row.organizationSlug || ''));
+    if (row.organizationSlug && !workspaceToken) throw new Error('No active ICA Unified workspace was found for this Company ID.');
+    return { kind: 'platform' as const, token, workspaceToken };
   }
 
   if (row.purpose === 'register') {
