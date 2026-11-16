@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: 'ICA Unified | AMS + LMS Business Platform',
   description: 'One company, one database, one login, one member record. ICA Unified combines AMS, LMS, credentials, documents, compliance, reporting, and website integrations in one cloud platform by I Computer Anything.',
   icons: {
-    icon: 'https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png',
-    shortcut: 'https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png',
-    apple: 'https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png',
+    icon: '/ica-unified-icon.png',
+    shortcut: '/ica-unified-icon.png',
+    apple: '/ica-unified-icon.png',
   },
 };
 
