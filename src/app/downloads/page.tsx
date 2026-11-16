@@ -40,7 +40,7 @@ export default async function DownloadsPage({
   return (
     <main className={styles.shell}>
       <header className={styles.nav}>
-        <Link href="/" className={styles.brand}><img src="/ica-unified-icon.png" alt="" aria-hidden="true" style={{width:38,height:38,borderRadius:10,background:'transparent',padding:0,objectFit:'contain',verticalAlign:'middle',marginRight:9}} />ICA <span>UNIFIED</span></Link>
+        <Link href="/" className={styles.brand}><img src="https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png" alt="" aria-hidden="true" style={{width:38,height:38,borderRadius:10,background:'transparent',padding:0,objectFit:'contain',verticalAlign:'middle',marginRight:9}} />ICA <span>UNIFIED</span></Link>
         <div>
           <a href="/workspace">Workspace</a>
           {['OWNER', 'ADMIN'].includes(membership.role) && <a href="/workspace/billing">Billing</a>}
