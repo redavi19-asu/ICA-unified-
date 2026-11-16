@@ -278,7 +278,7 @@ export default async function Home() {
       <header className={styles.nav}>
         <Link className={styles.brand} href="/">
           <img
-            src="/ica-unified-icon.png"
+            src="https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png"
             alt="ICA Unified icon"
             width={48}
             height={48}
@@ -319,7 +319,7 @@ export default async function Home() {
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
           <img
-            src="/ica-unified-icon.png"
+            src="https://raw.githubusercontent.com/redavi19-asu/ICA-unified-/main/Daylight%20Global%20News%20LMS%20AMS%20Icon.png"
             alt=""
             aria-hidden="true"
             width={132}
