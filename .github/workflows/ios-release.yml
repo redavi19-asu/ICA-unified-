@@ -15,7 +15,29 @@ concurrency:
   group: ica-unified-ios-archive
   cancel-in-progress: false
 jobs:
+  credentials-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      UPLOAD: ${{ inputs.upload == true || (github.event_name == 'push' && contains(github.event.head_commit.message, '[testflight-upload]')) }}
+    steps:
+      - name: Check Unified signing requirements before macOS build
+        if: env.UPLOAD == 'true'
+        env:
+          IOS_DISTRIBUTION_CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_PRIVATE_KEY: ${{ secrets.APP_STORE_PRIVATE_KEY }}
+        run: |
+          missing=0
+          for name in IOS_DISTRIBUTION_CERTIFICATE IOS_DISTRIBUTION_CERTIFICATE_PASSWORD IOS_PROVISIONING_PROFILE APP_STORE_KEY_ID APP_STORE_ISSUER_ID APP_STORE_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then echo "::error::Missing ${name}"; missing=1; fi
+          done
+          exit "$missing"
   archive:
+    needs: credentials-check
     runs-on: macos-26
     timeout-minutes: 60
     defaults:
