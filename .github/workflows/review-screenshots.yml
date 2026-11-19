@@ -30,7 +30,13 @@ jobs:
           p.write_text(source.replace('useState<MeData | null>(null)', 'useState<MeData | null>('+demo+')', 1)
               .replace('useState<string | null>(null)', "useState<string | null>('screenshot-only')", 1))
           PY
+      - uses: actions/cache@v4
+        id: simulator-build
+        with:
+          path: ${{ runner.temp }}/unified-simulator/Build/Products/Release-iphonesimulator/ICAUnified.app
+          key: unified-review-simulator-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mobile/App.tsx','mobile/app.json','mobile/package-lock.json','mobile/src/**') }}
       - name: Build the actual Unified screens for iOS Simulator
+        if: steps.simulator-build.outputs.cache-hit != 'true'
         run: |
           npx expo prebuild --platform ios
           xcodebuild -workspace ios/ICAUnified.xcworkspace -scheme ICAUnified -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/unified-simulator" CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/unified-simulator-build.log" 2>&1 || (tail -100 "$RUNNER_TEMP/unified-simulator-build.log"; exit 1)
@@ -53,7 +59,7 @@ jobs:
           while read -r device label; do
             xcrun simctl boot "$device"
             xcrun simctl bootstatus "$device" -b
-            xcrun simctl status_bar "$device" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState unplugged --batteryLevel 100
+            xcrun simctl status_bar "$device" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState discharging --batteryLevel 100 || true
             xcrun simctl ui "$device" appearance light
             xcrun simctl install "$device" "$RUNNER_TEMP/unified-simulator/Build/Products/Release-iphonesimulator/ICAUnified.app"
             xcrun simctl launch "$device" com.icomputeranything.icaunified
@@ -62,6 +68,7 @@ jobs:
             xcrun simctl shutdown "$device"
           done < "$RUNNER_TEMP/chosen-sims"
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: Unified-App-Store-screenshots
           path: ${{ runner.temp }}/unified-screenshots/*.png
