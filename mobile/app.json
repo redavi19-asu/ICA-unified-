@@ -12,7 +12,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "ICA Unified uses the camera to scan event and member QR codes."
       },
-      "buildNumber": "1",
+      "buildNumber": "2",
       "config": {
         "usesNonExemptEncryption": false
       },
