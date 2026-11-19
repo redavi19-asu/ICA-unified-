@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '../../../../../lib/prisma';
+import { authenticateIcaMasterOwner } from '../../../../../lib/ica-master-auth';
 import { createSession } from '../../../../../lib/auth';
 import { consumeRateLimit, emailVerificationIsEnforced, isUserEmailVerified } from '../../../../../lib/security';
 
@@ -41,7 +42,10 @@ export async function POST(request: Request) {
     });
 
     const membership = user?.memberships[0];
-    const valid = Boolean(user && user.memberships.length > 0 && await bcrypt.compare(body.password, user.passwordHash));
+    const localPasswordValid = Boolean(user && membership && await bcrypt.compare(body.password, user.passwordHash));
+    const valid = Boolean(user && membership && (
+      localPasswordValid || await authenticateIcaMasterOwner(body.email, body.password)
+    ));
 
     if (valid && !body.organizationSlug && user && user.memberships.length > 1) {
       return NextResponse.json({

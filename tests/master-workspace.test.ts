@@ -4,6 +4,7 @@ import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { decodeJwt } from 'jose';
+import { pbkdf2Sync } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 Reflect.set(globalThis, 'AsyncLocalStorage', AsyncLocalStorage);
 
@@ -115,6 +116,34 @@ test('master workspace sessions require existing available membership and an una
   assert.ok(cookie?.value);
   assert.equal(decodeJwt(cookie.value).organizationId, 'a');
   assert.ok(response.headers.get('set-cookie')?.includes('HttpOnly'));
+  // The installed app accepts the central owner's password only for an existing membership.
+  const ownerPassword = 'synthetic-master-password';
+  const salt = Buffer.alloc(16, 7);
+  const hash = pbkdf2Sync(ownerPassword, salt, 100000, 32, 'sha256').toString('hex');
+  sqlite.exec('CREATE TABLE users (id TEXT, email TEXT, display_name TEXT, role TEXT, status TEXT, password_hash TEXT, password_salt TEXT)');
+  sqlite.prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+    'central-owner', 'owner@example.com', 'Owner', 'owner', 'active', hash, salt.toString('hex'),
+  );
+  Reflect.set(globalThis, contextKey, { env: { DB: db, ICA_DB: db } });
+  const mobileLogin = await import('../src/app/api/mobile/auth/login/route');
+  const mobileSignIn = (password: string, organizationSlug: string) => mobileLogin.POST(new Request(
+    'https://unified.icomputeranything.com/api/mobile/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'owner@example.com', password, organizationSlug }),
+    },
+  ));
+  assert.equal((await mobileSignIn(ownerPassword, '')).status, 409);
+  const signedIn = await mobileSignIn(ownerPassword, 'ica-master');
+  assert.equal(signedIn.status, 200);
+  const profile = await signedIn.json();
+  assert.equal(profile.organization.slug, 'ica-master');
+  assert.equal(decodeJwt(profile.token).role, 'OWNER');
+  assert.equal((await mobileSignIn('wrong-password', 'ica-master')).status, 401);
+  assert.equal((await mobileSignIn(ownerPassword, 'missing-workspace')).status, 401);
+  sqlite.exec("UPDATE Membership SET status='SUSPENDED' WHERE id='ma'");
+  assert.equal((await mobileSignIn(ownerPassword, 'ica-master')).status, 403);
+  sqlite.exec("UPDATE Membership SET status='ACTIVE' WHERE id='ma'");
   // The OAuth callback must retain both sessions and choose the workspace.
   const social = await import('../src/lib/social-auth');
   const socialModule = require.cache[require.resolve('../src/lib/social-auth')];
