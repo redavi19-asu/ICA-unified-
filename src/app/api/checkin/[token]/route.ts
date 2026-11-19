@@ -91,7 +91,7 @@ export async function POST(
       organizationId: membership.organizationId,
       actorId: membership.userId,
       type: 'event.checked_in',
-      message: `${membership.user.name} checked in to ${event.eventName}${credits > 0 ? ` and earned ${credits} ${category} credit(s)` : ''}.`,
+      message: `${membership.user.name} checked in to ${event.eventName}${credits > 0 ? ` (${credits} ${category} credit(s) recorded for this event)` : ''}.`,
     },
   });
 
@@ -102,7 +102,7 @@ export async function POST(
     category,
     credentialCode,
     message: credits > 0
-      ? `Checked in. ${credits} ${category} credit(s) were added to your record.`
+      ? `Checked in. Your record includes ${credits} ${category} credit(s) for this event.`
       : 'Checked in successfully.',
   });
 }

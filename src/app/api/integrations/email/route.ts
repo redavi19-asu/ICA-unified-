@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireSession } from '../../../../lib/auth';
 import { listEmailOutbox, queueEmail, retryEmailOutbox } from '../../../../lib/organization-ops';
-import { emailDeliveryConfigured } from '../../../../lib/email-delivery';
+import { emailDeliveryConfigured, emailProvider } from '../../../../lib/email-delivery';
 
 const previewSchema = z.object({
   recipient: z.string().email(),
@@ -20,7 +20,7 @@ export async function GET() {
   const failed = messages.filter((message) => message.status === 'FAILED').length;
 
   return NextResponse.json({
-    provider: process.env.EMAIL_PROVIDER || null,
+    provider: emailProvider(),
     readyToSend: emailDeliveryConfigured(),
     counts: { queued, sent, failed },
     messages,

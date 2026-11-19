@@ -22,9 +22,13 @@ async function handle(request: Request, context: { params: Promise<{ provider: s
     }
 
     if (result.kind === 'platform') {
-      const response = socialCallbackRedirect(origin + '/platform');
+      const response = socialCallbackRedirect(origin + (result.workspaceToken ? '/workspace' : '/platform'));
       response.cookies.set(platformSessionCookie.name, result.token, platformSessionCookie.options);
-      response.cookies.delete(sessionCookie.name);
+      if (result.workspaceToken) {
+        response.cookies.set(sessionCookie.name, result.workspaceToken, sessionCookie.options);
+      } else {
+        response.cookies.delete(sessionCookie.name);
+      }
       return response;
     }
 

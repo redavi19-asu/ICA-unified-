@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     const organizationId = randomUUID(),
       userId = randomUUID(),
       membershipId = randomUUID();
-    const now = Date.now();
+    const now = new Date().toISOString();
     await database.batch([
       database
         .prepare(
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
           organizationId,
           body.organizationName,
           companyId,
-          trialEndsAt.getTime(),
+          trialEndsAt.toISOString(),
           now,
           now,
         ),

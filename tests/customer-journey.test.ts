@@ -15,7 +15,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
     readFileSync(
       new URL("./fixtures/application-schema.sql", import.meta.url),
       "utf8",
-    ),
+    ).replace(/"(joinedAt|createdAt|updatedAt|trialEndsAt)" DATETIME/g, '"$1" TEXT'),
   );
 
   const wrap = (sql: string, values: any[] = []): any => ({
@@ -91,7 +91,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
     "../src/app/api/public/workflows/[workflowId]/submit/route"
   );
   const checkin = await import("../src/app/api/checkin/[token]/route");
-  const { createEventCheckinToken } = await import("../src/lib/compliance");
+  const { createEventCheckinToken, addComplianceRequirement, setCourseCreditRule, getMemberComplianceSummary } = await import("../src/lib/compliance");
   const { createSession } = await import("../src/lib/auth");
   const { createWebhook, emitOrganizationEvent } = await import(
     "../src/lib/organization-ops"
@@ -140,6 +140,8 @@ test("customer signs in, integrates members, completes learning, and stays isola
     const org = await prisma.organization.findFirstOrThrow({
       where: { name: "QC Association" },
     });
+    assert.ok(Number.isFinite(org.createdAt.getTime()), 'new organization creation date must parse');
+    assert.ok(org.trialEndsAt && Number.isFinite(org.trialEndsAt.getTime()), 'new organization trial expiry must parse');
     response = await call(login.POST, {
       email: "owner@qc.example",
       password,
@@ -206,6 +208,46 @@ test("customer signs in, integrates members, completes learning, and stays isola
     const learner = await prisma.user.findUniqueOrThrow({
       where: { email: "learner@qc.example" },
     });
+    const joinedMembership = await prisma.membership.findFirstOrThrow({ where: { userId: learner.id } });
+    assert.ok(Number.isFinite(joinedMembership.joinedAt.getTime()), 'invitation join date must be readable by Prisma/D1');
+    // D1 historically stored epoch values as decimal TEXT. Exports must recover them.
+    const legacyJoinDate = new Date('2026-11-15T00:30:00Z');
+    sqlite.prepare('UPDATE Membership SET joinedAt=? WHERE id=?').run(`${legacyJoinDate.getTime()}.0`, joinedMembership.id);
+    const exportRoute = await import('../src/app/api/export/organization/route');
+    const exportResponse = await call((request: Request) => exportRoute.GET(new Request(request.url + '?format=members-csv', {headers: request.headers})));
+    assert.equal(exportResponse.status, 200);
+    const exportedCsv = await exportResponse.text();
+    assert.ok(exportedCsv.includes(legacyJoinDate.toISOString()));
+    assert.ok(exportedCsv.includes('learner@qc.example'));
+    // Exercise actual route authorization with each role, not just UI visibility.
+    const peopleInvite = await import('../src/app/api/people/invite/route');
+    const peopleUpdate = await import('../src/app/api/people/[membershipId]/route');
+    const ownerMembership = await prisma.membership.findFirstOrThrow({ where: { organizationId: org.id, role: 'OWNER' } });
+    for (const auditRole of ['MEMBER', 'MANAGER', 'ADMIN']) {
+      await prisma.membership.update({ where: { id: joinedMembership.id }, data: { role: auditRole } });
+      cookie = `ica_unified_session=${await createSession({userId: learner.id, organizationId: org.id, organizationSlug: org.slug, role: auditRole})}`;
+      const keyResponse = await call(keys.POST, {name: `QC ${auditRole}`, scopes: ['members:read']});
+      assert.equal(keyResponse.status, auditRole === 'ADMIN' ? 201 : 403, `${auditRole} API key authorization`);
+      const courseResponse = await call(courses.POST, {title: `QC ${auditRole} authoring`});
+      assert.equal(courseResponse.status, auditRole === 'MEMBER' ? 403 : 200, `${auditRole} authoring authorization`);
+      const inviteResponse = await call(peopleInvite.POST, {name: 'QC Role Invite', email: `role-${auditRole.toLowerCase()}@qc.example`, role: 'MEMBER'});
+      assert.equal(inviteResponse.status, auditRole === 'ADMIN' ? 201 : 403, `${auditRole} invitation authorization`);
+      const update = (request: Request, params: unknown) => peopleUpdate.PATCH(request, params as {params: Promise<{membershipId: string}>});
+      const ownUpdate = await call(update, {jobTitle: 'QC role authorization'}, {params: Promise.resolve({membershipId: joinedMembership.id})});
+      assert.equal(ownUpdate.status, auditRole === 'ADMIN' ? 200 : 403, `${auditRole} People update authorization`);
+      const selfSuspend = await call(update, {status: 'SUSPENDED'}, {params: Promise.resolve({membershipId: joinedMembership.id})});
+      assert.equal(selfSuspend.status, auditRole === 'ADMIN' ? 400 : 403, `${auditRole} cannot suspend its own account`);
+      const ownerUpdate = await call(update, {role: 'MEMBER'}, {params: Promise.resolve({membershipId: ownerMembership.id})});
+      assert.equal(ownerUpdate.status, 403, `${auditRole} cannot demote organization owner`);
+    }
+    // Changing a role invalidates the old organization-scoped role claim.
+    await prisma.membership.update({ where: {id: joinedMembership.id}, data: {role: 'MEMBER'} });
+    await assert.rejects(call(courses.POST, {title: 'Must not use stale ADMIN role'}), /NEXT_REDIRECT/);
+    cookie = `ica_unified_session=${await createSession({userId: learner.id, organizationId: org.id, organizationSlug: org.slug, role: 'MEMBER'})}`;
+    await prisma.membership.update({ where: {id: joinedMembership.id}, data: {status: 'SUSPENDED'} });
+    await assert.rejects(call(exportRoute.GET), /NEXT_REDIRECT/);
+    await prisma.membership.update({ where: {id: joinedMembership.id}, data: {status: joinedMembership.status, jobTitle: joinedMembership.jobTitle} });
+    cookie = ownerCookie;
     response = await call(courses.POST, { title: "QC Safety Course" });
     assert.equal(response.status, 200);
     const course = (await response.json()).course;
@@ -216,11 +258,19 @@ test("customer signs in, integrates members, completes learning, and stays isola
     );
     assert.equal(response.status, 200);
     const lesson = (await response.json()).lesson;
+    await addComplianceRequirement(org.id, {name: 'QC renewal', category: 'QA_CE', requiredCredits: 3, renewalDate: '2026-12-15'});
+    await setCourseCreditRule(org.id, course.id, 'QA_CE', 2);
+    const unassignedSummary = await getMemberComplianceSummary(org.id, learner.id);
+    assert.equal(unassignedSummary.recommendations.length, 0, 'member must not be recommended an inaccessible unassigned course');
     response = await call(assign.POST, {
       courseId: course.id,
       userIds: [learner.id],
     });
     assert.equal(response.status, 200);
+    const assignedSummary = await getMemberComplianceSummary(org.id, learner.id);
+    assert.equal(assignedSummary.recommendations[0]?.courseId, course.id);
+    assert.equal(assignedSummary.outstandingTotal, 3);
+    assert.equal(assignedSummary.requirements[0].renewalDate, '2026-12-15');
     cookie = `ica_unified_session=${await createSession({ userId: learner.id, organizationId: org.id, organizationSlug: org.slug, role: "MEMBER" })}`;
     assert.equal((await call(keys.POST, { name: "Forbidden" })).status, 403);
     assert.equal(
@@ -266,6 +316,11 @@ test("customer signs in, integrates members, completes learning, and stays isola
       await prisma.credential.count({ where: { userId: learner.id } }),
       1,
     );
+    const courseCreditSummary = await getMemberComplianceSummary(org.id, learner.id);
+    assert.equal(courseCreditSummary.earnedTotal, 2, 'repeated completion must not duplicate credits');
+    assert.equal(courseCreditSummary.outstandingTotal, 1);
+    assert.equal(courseCreditSummary.ready, false);
+    assert.equal(courseCreditSummary.ledger.length, 1);
     cookie = ownerCookie;
     response = await call(workflows.POST, {
       kind: "EVENT",
@@ -276,7 +331,7 @@ test("customer signs in, integrates members, completes learning, and stays isola
         capacity: 10,
         checkinMode: "SELF_SCAN",
         ceuCredits: 1,
-        creditCategory: "GENERAL",
+        creditCategory: "QA_CE",
         certificateRule: "ATTENDANCE",
       },
     });
@@ -324,6 +379,11 @@ test("customer signs in, integrates members, completes learning, and stays isola
       await prisma.credential.count({ where: { userId: learner.id } }),
       credentialsAfterCheckin,
     );
+    const completeCreditSummary = await getMemberComplianceSummary(org.id, learner.id);
+    assert.equal(completeCreditSummary.earnedTotal, 3, 'repeated attendance must not duplicate credits');
+    assert.equal(completeCreditSummary.outstandingTotal, 0);
+    assert.equal(completeCreditSummary.ready, true);
+    assert.equal(completeCreditSummary.ledger.length, 2);
     const other = await prisma.organization.create({
       data: {
         name: "Other QC",

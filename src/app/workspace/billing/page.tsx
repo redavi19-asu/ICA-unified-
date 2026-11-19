@@ -6,6 +6,7 @@ import styles from './billing.module.css';
 
 export default async function BillingPage() {
   const { membership } = await requireSession();
+  const internalWorkspace = membership.organization.plan === 'internal' || membership.organization.slug === 'ica-master';
   const freeAccess = await organizationFreeAccess(membership.organizationId, membership.user.email);
   if (!['OWNER', 'ADMIN'].includes(membership.role)) redirect('/workspace');
 
@@ -20,7 +21,8 @@ export default async function BillingPage() {
   return (
     <main className={styles.shell}>
       <a href="/workspace" className={styles.back}>← WORKSPACE</a>
-      {freeAccess && <p role="status">Comped — no payment required{freeAccess.expires_at ? ` until ${new Date(freeAccess.expires_at).toLocaleDateString()}` : ''}. Existing paid subscriptions can still be managed below.</p>}
+      {internalWorkspace && <p role="status">Internal workspace — no platform subscription payment required. Member dues and event payment processing are configured separately.</p>}
+      {!internalWorkspace && freeAccess && <p role="status">Comped — no payment required{freeAccess.expires_at ? ` until ${new Date(freeAccess.expires_at).toLocaleDateString()}` : ''}. Existing paid subscriptions can still be managed below.</p>}
       <header className={styles.header}>
         <div>
           <p>ICA UNIFIED / COMPANY SUBSCRIPTION</p>
@@ -28,30 +30,30 @@ export default async function BillingPage() {
           <span>{membership.organization.name}</span>
         </div>
         <div className={styles.price}>
-          <small>PROFESSIONAL</small>
-          <strong>{price}</strong>
-          <span>per month · platform subscription</span>
+          <small>{internalWorkspace ? 'INTERNAL WORKSPACE' : 'PROFESSIONAL'}</small>
+          <strong>{internalWorkspace ? '$0' : price}</strong>
+          <span>{internalWorkspace ? 'no platform subscription required' : 'per month · platform subscription'}</span>
         </div>
       </header>
 
       <section className={styles.statusGrid}>
         <div><span>WORKSPACE STATUS</span><strong>{membership.organization.status}</strong></div>
-        <div><span>ICA PLAN</span><strong>{profile?.plan?.toUpperCase() || 'PROFESSIONAL'}</strong></div>
+        <div><span>ICA PLAN</span><strong>{internalWorkspace ? 'INTERNAL' : profile?.plan?.toUpperCase() || 'PROFESSIONAL'}</strong></div>
         <div><span>PROCESSOR</span><strong>{profile?.provider || 'STRIPE'}</strong></div>
-        <div><span>SUBSCRIPTION CONNECTION</span><strong>{profile?.subscriptionStatus || 'NOT CONNECTED'}</strong></div>
+        <div><span>SUBSCRIPTION CONNECTION</span><strong>{profile?.providerSubscriptionId ? profile.subscriptionStatus : internalWorkspace ? 'NOT REQUIRED' : profile?.subscriptionStatus || 'NOT CONNECTED'}</strong></div>
       </section>
 
       <section className={styles.grid}>
         <article className={styles.primary}>
           <p>PRICING FOUNDATION</p>
-          <h2>$299 is now the system price.</h2>
+          <h2>{internalWorkspace ? 'Internal workspace access is included.' : '$299 is now the system price.'}</h2>
           <p className={styles.copy}>
-            ICA Unified uses Stripe for the organization&apos;s $299/month Professional subscription.
-            Trial, active, past-due, and cancellation status are stored against this organization so access
-            follows the company account instead of any single device.
+            {internalWorkspace
+              ? 'This ICA internal workspace does not require a paid Professional subscription. Customer organizations use the standard Professional plan. Existing subscriptions, if any, can still be managed below.'
+              : "ICA Unified uses Stripe for the organization's $299/month Professional subscription. Trial, active, past-due, and cancellation status are stored against this organization so access follows the company account instead of any single device."}
           </p>
-          <div className={styles.line}><span>Monthly platform price</span><strong>{price}</strong></div>
-          <div className={styles.line}><span>Billing cadence</span><strong>MONTHLY</strong></div>
+          <div className={styles.line}><span>Monthly platform price</span><strong>{internalWorkspace ? '$0' : price}</strong></div>
+          <div className={styles.line}><span>Billing cadence</span><strong>{internalWorkspace ? 'NOT REQUIRED' : 'MONTHLY'}</strong></div>
           <div className={styles.line}><span>Currency</span><strong>USD</strong></div>
           <div className={styles.line}><span>Processor design</span><strong>STRIPE SUBSCRIPTIONS</strong></div>
         </article>
@@ -59,8 +61,8 @@ export default async function BillingPage() {
         <article>
           <p>SEPARATE MONEY FLOW</p>
           <h2>Company subscription</h2>
-          <p className={styles.copy}>This is the organization paying I Computer Anything for ICA Unified.</p>
-          <div className={styles.flow}>COMPANY → $299/MO → ICA UNIFIED</div>
+          <p className={styles.copy}>{internalWorkspace ? 'No company subscription payment is required for this internal workspace.' : 'This is the organization paying I Computer Anything for ICA Unified.'}</p>
+          <div className={styles.flow}>{internalWorkspace ? 'INTERNAL WORKSPACE · NO PLATFORM FEE' : 'COMPANY → $299/MO → ICA UNIFIED'}</div>
         </article>
 
         <article>
@@ -86,11 +88,11 @@ export default async function BillingPage() {
         <article className={styles.wide}>
           <p>ACCOUNT ACCESS</p>
           <h2>Subscription + installation controls.</h2>
-          <p className={styles.copy}>Company owners and admins can manage or cancel the ICA Unified subscription here. During the 14-day trial, cancel before the trial ends to avoid the first charge. After billing begins, use the same control to cancel the subscription in Stripe.</p>
+          <p className={styles.copy}>{internalWorkspace ? 'This internal workspace requires no platform subscription. Any existing paid subscription can still be managed below.' : 'Company owners and admins can manage or cancel the ICA Unified subscription here. During the 14-day trial, cancel before the trial ends to avoid the first charge. After billing begins, use the same control to cancel the subscription in Stripe.'}</p>
           <div className={styles.billingActions}>
             {billingPortalReady
               ? <form action="/api/billing/portal" method="post"><button type="submit">MANAGE OR CANCEL SUBSCRIPTION →</button></form>
-              : <span className={styles.disabledAction}>STRIPE CUSTOMER NOT CONNECTED</span>}
+              : <span className={styles.disabledAction}>{internalWorkspace ? 'NO PLATFORM SUBSCRIPTION REQUIRED' : 'STRIPE CUSTOMER NOT CONNECTED'}</span>}
             <a href="/downloads">OPEN ICA ACCESS CENTER →</a>
           </div>
         </article>

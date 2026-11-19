@@ -1,3 +1,4 @@
+import { readMembershipJoinDate } from '../../../lib/membership-dates';
 import PeopleClient from './PeopleClient';
 import { redirect } from 'next/navigation';
 import { requireSession } from '../../../lib/auth';
@@ -32,18 +33,22 @@ export default async function PeoplePage() {
     }),
   ]);
 
+  const datedMemberships = await Promise.all(memberships.map(async (item) => ({
+    ...item, joinedAt: await readMembershipJoinDate(item),
+  })));
+
   return (
     <PeopleClient
       organizationName={membership.organization.name}
       currentRole={normalizeRole(membership.role)}
-      people={memberships.map((item) => ({
+      people={datedMemberships.map((item) => ({
         id: item.id,
         name: item.user.name,
         email: item.user.email,
         jobTitle: item.jobTitle,
         role: normalizeRole(item.role),
         status: normalizeStatus(item.status),
-        joinedAt: item.joinedAt.toISOString(),
+        joinedAt: item.joinedAt?.toISOString() || '',
       }))}
       invitations={invitations.map((item) => ({
         id: item.id,

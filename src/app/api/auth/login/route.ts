@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '../../../../lib/prisma';
 import { createSession, sessionCookie } from '../../../../lib/auth';
 import { createPlatformSession, platformSessionCookie } from '../../../../lib/platform-auth';
+import { createMasterWorkspaceSession, WorkspaceSelectionRequired } from '../../../../lib/master-workspace';
 import { authenticateIcaMasterOwner } from '../../../../lib/ica-master-auth';
 import { verifyTurnstile } from '../../../../lib/turnstile';
 import { consumeRateLimit, emailVerificationIsEnforced, isUserEmailVerified } from '../../../../lib/security';
@@ -69,10 +70,14 @@ export async function POST(request: Request) {
         platformAdminId: admin.id,
         role: 'MASTER',
       });
+      const workspaceToken = await createMasterWorkspaceSession(master.email, body.organizationSlug);
+      if (body.organizationSlug && !workspaceToken) {
+        return NextResponse.json({ error: 'No active workspace was found for this Company ID.' }, { status: 403 });
+      }
       const response = NextResponse.json({
         ok: true,
         masterOwner: true,
-        platform: true,
+        platform: !workspaceToken,
         admin: {
           name: admin.name,
           email: admin.email,
@@ -84,7 +89,11 @@ export async function POST(request: Request) {
         token,
         platformSessionCookie.options
       );
-      response.cookies.delete(sessionCookie.name);
+      if (workspaceToken) {
+        response.cookies.set(sessionCookie.name, workspaceToken, sessionCookie.options);
+      } else {
+        response.cookies.delete(sessionCookie.name);
+      }
       return response;
     }
 
@@ -174,6 +183,9 @@ export async function POST(request: Request) {
     response.cookies.set(sessionCookie.name, token, sessionCookie.options);
     return response;
   } catch (error) {
+    if (error instanceof WorkspaceSelectionRequired) {
+      return NextResponse.json({ error: error.message, code: 'COMPANY_ID_REQUIRED' }, { status: 409 });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Enter a valid email and password. Company ID is optional for the ICA Master owner.' },

@@ -12,6 +12,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const BRACES_ADVISORY = 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm';
+const PICOMATCH_ADVISORY = 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf';
 
 function verifyBracesIsMetroToolingOnly() {
   const lockPath = path.join(process.cwd(), 'package-lock.json');
@@ -69,6 +70,61 @@ function verifyBracesIsMetroToolingOnly() {
   };
 }
 
+// As of November 18, 2026 picomatch has an unpatched ReDoS advisory.
+// Its current locked consumers here are Metro/Expo/React Native codegen and
+// Jest build tools. This exception fails closed if any package, version or
+// consumer path changes. It does NOT declare the advisory fixed.
+function verifyPicomatchIsBuildToolingOnly() {
+  const lock = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package-lock.json'), 'utf8'));
+  const packages = lock.packages || {};
+  const expectedVersions = {
+    'node_modules/picomatch': '2.3.2',
+    'node_modules/expo/node_modules/picomatch': '4.0.7',
+    'node_modules/tinyglobby/node_modules/picomatch': '4.0.7',
+  };
+  const installed = Object.entries(packages)
+    .filter(([packagePath]) => packagePath.endsWith('/picomatch'))
+    .map(([packagePath, entry]) => [packagePath, entry.version])
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  const expectedInstalled = Object.entries(expectedVersions).sort((a, b) => a[0].localeCompare(b[0]));
+  if (JSON.stringify(installed) !== JSON.stringify(expectedInstalled)) {
+    throw new Error('picomatch exception refused: installed package versions or paths changed.');
+  }
+  const directConsumers = Object.entries(packages)
+    .filter(([, entry]) => Object.prototype.hasOwnProperty.call(entry?.dependencies || {}, 'picomatch'))
+    .map(([name]) => name).sort();
+  const expectedDirectConsumers = [
+    'node_modules/expo/node_modules/@expo/cli',
+    'node_modules/expo/node_modules/@expo/metro-config',
+    'node_modules/jest-util',
+    'node_modules/micromatch',
+    'node_modules/tinyglobby',
+  ].sort();
+  if (JSON.stringify(directConsumers) !== JSON.stringify(expectedDirectConsumers)) {
+    throw new Error('picomatch exception refused: unexpected direct consumer, possibly a runtime path.');
+  }
+  const upstream = {
+    micromatch: ['node_modules/metro-file-map'],
+    'jest-util': ['node_modules/jest-worker'],
+    tinyglobby: [
+      'node_modules/@react-native/babel-plugin-codegen/node_modules/@react-native/codegen',
+      'node_modules/@react-native/codegen',
+      'node_modules/react-native',
+    ],
+    '@expo/cli': ['node_modules/expo'],
+    '@expo/metro-config': ['node_modules/expo', 'node_modules/expo/node_modules/@expo/cli'],
+  };
+  for (const [dependency, allowed] of Object.entries(upstream)) {
+    const actual = Object.entries(packages)
+      .filter(([, entry]) => Object.prototype.hasOwnProperty.call(entry?.dependencies || {}, dependency))
+      .map(([name]) => name).sort();
+    if (JSON.stringify(actual) !== JSON.stringify(allowed.sort())) {
+      throw new Error('picomatch exception refused: upstream dependency path changed for ' + dependency);
+    }
+  }
+  return { installed: expectedInstalled, consumers: directConsumers };
+}
+
 const check = spawnSync(process.execPath, ['--test', 'tests/forge-security.test.cjs'], {
   stdio: 'inherit',
 });
@@ -94,6 +150,18 @@ for (const item of Object.values(report.vulnerabilities || {})) {
 
 let failed = false;
 for (const [url, advisory] of findings) {
+  if (url === PICOMATCH_ADVISORY) {
+    try {
+      const proof = verifyPicomatchIsBuildToolingOnly();
+      console.warn('UNPATCHED build-tool advisory, narrowly scoped with a fail-closed lockfile guard: ' +
+        url + ' (' + proof.installed.map(([name, version]) => name + '@' + version).join(', ') + ')');
+    } catch (error) {
+      console.error(String(error && error.message ? error.message : error));
+      failed = true;
+    }
+    continue;
+  }
+
   if (url === BRACES_ADVISORY) {
     try {
       const proof = verifyBracesIsMetroToolingOnly();

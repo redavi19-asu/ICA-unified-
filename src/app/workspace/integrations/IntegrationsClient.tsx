@@ -106,7 +106,8 @@ export default function IntegrationsClient({
 
   async function createWebhook(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const eventTypes = String(form.get('events') || '*').split(',').map((value) => value.trim()).filter(Boolean);
     const response = await fetch('/api/integrations/webhooks', {
       method: 'POST',
@@ -117,7 +118,7 @@ export default function IntegrationsClient({
     if (!response.ok) return setMessage(data.error || 'Unable to create webhook.');
     setNewSecret(data.webhook.secret);
     setMessage('Webhook created. Copy the signing secret now.');
-    event.currentTarget.reset();
+    formElement.reset();
     await refresh();
   }
 
@@ -169,7 +170,8 @@ export default function IntegrationsClient({
 
   async function queueTestEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const response = await fetch('/api/integrations/email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -180,7 +182,7 @@ export default function IntegrationsClient({
     setMessage(data.status === 'DELIVERY_ATTEMPTED'
       ? 'Test email delivery attempted through the connected provider. Check the outbox counters for the result.'
       : 'Test email queued. Connect the managed email provider, then use Retry Queued / Failed Email to deliver it.');
-    event.currentTarget.reset();
+    formElement.reset();
     await refresh();
   }
 
@@ -275,7 +277,7 @@ export default function IntegrationsClient({
           </div>
           <div className={styles.statusLine}>
             <span>PROVIDER</span>
-            <strong>{email?.readyToSend ? email.provider : 'NOT CONNECTED YET'}</strong>
+            <strong>{email?.readyToSend ? (email.provider?.trim() || 'CONFIGURED PROVIDER') : 'NOT CONNECTED YET'}</strong>
           </div>
           <form className={styles.stackForm} onSubmit={queueTestEmail}>
             <input name="recipient" type="email" placeholder="test@example.org" required />

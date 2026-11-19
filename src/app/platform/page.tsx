@@ -26,7 +26,7 @@ export default async function PlatformPage() {
           <h1 style={{fontSize:'clamp(52px,8vw,110px)',lineHeight:.78,letterSpacing:'-.07em',margin:'14px 0 0'}}>CONTROL<br/>PLANE</h1>
         </div>
         <div style={{display:'grid',gap:10,justifyItems:'end'}}>
-          <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
+          <form action="/api/platform/workspace" method="post"><button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</button></form>
           <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role === 'MASTER' ? 'ICA MASTER' : admin.role.replaceAll('_', ' ')}</div>
         </div>
       </header>
@@ -66,7 +66,7 @@ export default async function PlatformPage() {
       </section>
 
       <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:34}}>
-        <Link href="/workspace" style={{...actionStyle,textDecoration:'none',borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</Link>
+        <form action="/api/platform/workspace" method="post"><button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</button></form>
         <form action="/api/platform/logout" method="post"><button style={actionStyle}>SIGN OUT OF PLATFORM</button></form>
       </div>
     </main>

@@ -40,12 +40,13 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setWorking(true);
     setMessage('');
     setSuccess(false);
     setActivationUrl('');
 
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const response = await fetch(`/api/public/workflows/${workflow.id}/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,7 +80,7 @@ export default function PublicWorkflowClient({ workflow }: { workflow: WorkflowP
     setWorking(false);
     setTurnstileToken('');
     setTurnstileReset((value) => value + 1);
-    event.currentTarget.reset();
+    formElement.reset();
   }
 
   return (
