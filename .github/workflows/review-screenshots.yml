@@ -1,0 +1,68 @@
+name: Capture Unified iOS review screenshots
+on:
+  push:
+    branches: [qa/app-store-screenshots]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: macos-26
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci --loglevel=error
+      - name: Set fictional sample data for the simulator capture only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('App.tsx')
+          source = p.read_text()
+          demo = "{user:{id:'sample',name:'Alex Morgan',email:'alex@example.com',role:'MEMBER',status:'ACTIVE'},organization:{id:'sample',name:'Summit Training Group',slug:'sample'}}"
+          assert 'useState<MeData | null>(null)' in source
+          p.write_text(source.replace('useState<MeData | null>(null)', 'useState<MeData | null>('+demo+')', 1)
+              .replace('useState<string | null>(null)', "useState<string | null>('screenshot-only')", 1))
+          PY
+      - name: Build the actual Unified screens for iOS Simulator
+        run: |
+          npx expo prebuild --platform ios
+          xcodebuild -workspace ios/ICAUnified.xcworkspace -scheme ICAUnified -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/unified-simulator" CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/unified-simulator-build.log" 2>&1 || (tail -100 "$RUNNER_TEMP/unified-simulator-build.log"; exit 1)
+      - name: Capture Event Mode on iPhone and iPad
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/unified-screenshots"
+          xcrun simctl list --json devices available > "$RUNNER_TEMP/available-sims.json"
+          python3 - <<'PY' > "$RUNNER_TEMP/chosen-sims"
+          import json,os,re
+          with open(os.environ['RUNNER_TEMP']+'/available-sims.json') as f:
+              devices=[d for runtime, available in json.load(f)['devices'].items() if 'iOS' in runtime for d in available]
+          for pattern, label in [(r'^iPhone (17|16) Pro$', 'iPhone'), (r'^iPad Pro (13-inch|13 inch)', 'iPad')]:
+              selected=next((d for d in reversed(devices) if re.search(pattern,d['name'])),None)
+              if not selected:
+                  print([d['name'] for d in devices],file=__import__('sys').stderr)
+                  raise SystemExit('Missing '+label+' simulator')
+              print(selected['udid'],label)
+          PY
+          while read -r device label; do
+            xcrun simctl boot "$device"
+            xcrun simctl bootstatus "$device" -b
+            xcrun simctl status_bar "$device" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState unplugged --batteryLevel 100
+            xcrun simctl ui "$device" appearance light
+            xcrun simctl install "$device" "$RUNNER_TEMP/unified-simulator/Build/Products/Release-iphonesimulator/ICAUnified.app"
+            xcrun simctl launch "$device" com.icomputeranything.icaunified
+            sleep 6
+            xcrun simctl io "$device" screenshot "$RUNNER_TEMP/unified-screenshots/$label-Event-Mode.png"
+            xcrun simctl shutdown "$device"
+          done < "$RUNNER_TEMP/chosen-sims"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Unified-App-Store-screenshots
+          path: ${{ runner.temp }}/unified-screenshots/*.png
+          if-no-files-found: error
