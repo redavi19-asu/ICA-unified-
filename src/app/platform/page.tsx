@@ -20,13 +20,14 @@ export default async function PlatformPage() {
 
   return (
     <main style={{minHeight:'100vh',background:'#090a0c',color:'#f2efe8',padding:'clamp(24px,5vw,70px)'}}>
-      <header style={{display:'flex',justifyContent:'space-between',gap:24,borderBottom:'1px solid #2d3035',paddingBottom:28,alignItems:'flex-end'}}>
+      <header style={{display:'flex',justifyContent:'space-between',gap:24,borderBottom:'1px solid #2d3035',paddingBottom:28,alignItems:'flex-end',flexWrap:'wrap'}}>
         <div>
           <p style={{fontSize:10,letterSpacing:'.2em',color:'#7e8489'}}>ICA UNIFIED / PLATFORM LAYER</p>
           <h1 style={{fontSize:'clamp(52px,8vw,110px)',lineHeight:.78,letterSpacing:'-.07em',margin:'14px 0 0'}}>CONTROL<br/>PLANE</h1>
         </div>
         <div style={{display:'grid',gap:10,justifyItems:'end'}}>
-          <form action="/api/platform/workspace" method="post"><button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</button></form>
+          <Link href="https://icomputeranything.com/master/?view=admin" style={{ ...actionStyle, textDecoration: 'none' }}>← Back to ICA Master</Link>
+          <form action="/api/platform/workspace" method="post"><button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>To company workspace →</button></form>
           <div style={{textAlign:'right',fontSize:12,color:'#8c9196'}}><strong style={{display:'block',color:'#eeeae2'}}>{admin.name}</strong>{admin.role === 'MASTER' ? 'ICA MASTER' : admin.role.replaceAll('_', ' ')}</div>
         </div>
       </header>
@@ -66,7 +67,6 @@ export default async function PlatformPage() {
       </section>
 
       <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:34}}>
-        <form action="/api/platform/workspace" method="post"><button style={{...actionStyle,borderColor:'#2a8bc1',color:'#bfe8ff'}}>← BACK TO COMPANY WORKSPACE</button></form>
         <form action="/api/platform/logout" method="post"><button style={actionStyle}>SIGN OUT OF PLATFORM</button></form>
       </div>
     </main>
