@@ -107,7 +107,8 @@ export default function WorkspaceClient({ userName, role, organizationName, plat
             <>
               <button className="tools-nav-button" onClick={() => router.push('/workspace/tools')}>⚙ <span>Tools</span></button>
               <button onClick={() => router.push('/workspace/integrations')}>⌁ <span>Integrations</span></button>
-              <button onClick={() => router.push('/workspace/billing')}>▣ <span>Billing</span></button>
+              <button onClick={() => router.push('/workspace/payments')}>▣ <span>Payment Hub</span></button>
+              <button onClick={() => router.push('/workspace/billing')}>▣ <span>Unified Billing</span></button>
             </>
           )}
           {platformRole && (

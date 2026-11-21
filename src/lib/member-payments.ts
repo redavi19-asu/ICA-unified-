@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { stripeBusinessCheckoutPaid } from './business-checkout-verification';
 import {
   createMembershipActivation,
   ensureWorkflowExecutionTables,
@@ -22,7 +23,53 @@ type CheckoutSession = {
   mode?: string;
   metadata?: Record<string, string>;
   amount_total?: number | null;
+  currency?: string | null;
+  payment_intent?: string | { id?: string } | null;
 };
+
+let stripeReceiptTableReady: Promise<void> | null = null;
+async function ensureStripeReceiptTable() {
+  if (!stripeReceiptTableReady) {
+    stripeReceiptTableReady = prisma.$executeRawUnsafe(
+      "CREATE TABLE IF NOT EXISTS StripeBusinessCheckoutReceipt (" +
+      "submissionId TEXT PRIMARY KEY NOT NULL, organizationId TEXT NOT NULL, workflowId TEXT NOT NULL, " +
+      "sessionId TEXT NOT NULL UNIQUE, connectedAccountId TEXT NOT NULL, paymentIntentId TEXT NOT NULL, " +
+      "amountCents INTEGER NOT NULL, createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+    ).then(() => undefined).catch((error) => { stripeReceiptTableReady = null; throw error; });
+  }
+  return stripeReceiptTableReady;
+}
+
+async function recordStripeBusinessReceipt(
+  session: CheckoutSession,
+  connectedAccountId: string,
+  input: { organizationId: string; workflowId: string; submissionId: string; amountCents: number },
+) {
+  // Recurring invoices have their own charge lifecycle. This table records
+  // refundable one-time captures only, never a subscription's Checkout receipt.
+  if (session.mode !== 'payment') return;
+  const intent = typeof session.payment_intent === 'string'
+    ? session.payment_intent : session.payment_intent?.id;
+  if (!session.id || !intent) throw new Error('STRIPE_PAYMENT_INTENT_NOT_RECORDED');
+  await ensureStripeReceiptTable();
+  await prisma.$executeRawUnsafe(
+    'INSERT INTO StripeBusinessCheckoutReceipt ' +
+    '(submissionId, organizationId, workflowId, sessionId, connectedAccountId, paymentIntentId, amountCents) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(submissionId) DO NOTHING',
+    input.submissionId, input.organizationId, input.workflowId, session.id,
+    connectedAccountId, intent, input.amountCents,
+  );
+  const rows = await prisma.$queryRawUnsafe<Array<{ sessionId: string; connectedAccountId: string; paymentIntentId: string; amountCents: number }>>(
+    'SELECT sessionId, connectedAccountId, paymentIntentId, amountCents FROM StripeBusinessCheckoutReceipt ' +
+    'WHERE organizationId = ? AND workflowId = ? AND submissionId = ? LIMIT 1',
+    input.organizationId, input.workflowId, input.submissionId
+  );
+  const saved = rows[0];
+  if (!saved || saved.sessionId !== session.id || saved.connectedAccountId !== connectedAccountId ||
+      saved.paymentIntentId !== intent || saved.amountCents !== input.amountCents) {
+    throw new Error('STRIPE_RECEIPT_RECORD_MISMATCH');
+  }
+}
 
 export type OrganizationPaymentAccountRecord = {
   organizationId: string;
@@ -179,8 +226,8 @@ export async function createOrganizationPaymentOnboarding(input: {
 
   const links = new URLSearchParams();
   links.set('account', accountId);
-  links.set('refresh_url', `${input.origin}/workspace/billing?connect=refresh`);
-  links.set('return_url', `${input.origin}/workspace/billing?connect=return`);
+  links.set('refresh_url', `${input.origin}/workspace/payments?connect=refresh`);
+  links.set('return_url', `${input.origin}/workspace/payments?connect=return`);
   links.set('type', 'account_onboarding');
 
   const link = await stripeRequest<{ url: string }>('/v1/account_links', {
@@ -246,7 +293,7 @@ export async function createWorkflowPaymentCheckout(input: {
   );
   if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
   if (submission.amountCents <= 0) throw new Error('PAYMENT_NOT_REQUIRED');
-  if (submission.paymentStatus === 'PAID') throw new Error('PAYMENT_ALREADY_COMPLETE');
+  if (submission.paymentStatus !== 'PENDING') throw new Error('PAYMENT_NOT_ELIGIBLE_FOR_NEW_CHECKOUT');
 
   const paymentEligibleStatus =
     workflow.kind === 'EVENT'
@@ -255,6 +302,17 @@ export async function createWorkflowPaymentCheckout(input: {
 
   if (!paymentEligibleStatus) {
     throw new Error('SUBMISSION_NOT_ELIGIBLE_FOR_PAYMENT');
+  }
+
+  const { preferredBusinessCheckoutProvider } = await import('./business-payment-preferences');
+  const provider = await preferredBusinessCheckoutProvider(workflow.organizationId);
+  if (provider === 'SQUARE') {
+    const { createSquareWorkflowCheckout } = await import('./square-workflow-checkout');
+    return createSquareWorkflowCheckout({ workflow, submissionId: submission.id, origin: input.origin });
+  }
+  if (provider === 'PAYPAL') {
+    const { createPayPalWorkflowCheckout } = await import('./paypal-workflow-checkout');
+    return createPayPalWorkflowCheckout({ workflow, submissionId: submission.id, origin: input.origin });
   }
 
   const account = await refreshOrganizationPaymentAccount(workflow.organizationId);
@@ -323,11 +381,12 @@ async function finalizePaidWorkflow(input: {
   const { workflow, submission } = input;
   if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
 
-  if (
-    submission.paymentStatus === 'PAID' &&
-    !['PAYMENT_PENDING', 'RECEIVED'].includes(submission.status)
-  ) {
+  if (submission.paymentStatus === 'PAID') {
     return { paid: true, status: submission.status, activationUrl: null };
+  }
+  // A paid-then-refunded registration cannot be reactivated by delayed webhooks.
+  if (submission.paymentStatus === 'REFUNDED') {
+    return { paid: false, status: submission.status, activationUrl: null };
   }
 
   let nextStatus = submission.status;
@@ -338,8 +397,31 @@ async function finalizePaidWorkflow(input: {
   } else {
     const approvalRequired = Boolean(workflow.config.approvalRequired);
     nextStatus = approvalRequired ? 'PENDING_REVIEW' : 'APPROVED';
+  }
 
-    if (!approvalRequired) {
+  await ensureWorkflowExecutionTables();
+  // The conditional update claims the paid transition exactly once. Parallel
+  // webhooks and browser returns must not generate duplicate activation links.
+  const changed = await prisma.$executeRawUnsafe(
+    `UPDATE WorkflowSubmission
+     SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
+     WHERE id = ? AND organizationId = ? AND workflowId = ?
+       AND paymentStatus = 'PENDING'`,
+    nextStatus,
+    submission.id,
+    workflow.organizationId,
+    workflow.id,
+  );
+  if (changed !== 1) {
+    const current = await getWorkflowSubmission(workflow.organizationId, workflow.id, submission.id);
+    if (current?.paymentStatus === 'PAID') {
+      return { paid: true, status: current.status, activationUrl: null };
+    }
+    throw new Error('WORKFLOW_PAYMENT_TRANSITION_FAILED');
+  }
+
+  if (workflow.kind === 'MEMBERSHIP' && !Boolean(workflow.config.approvalRequired)) {
+    try {
       const activation = await createMembershipActivation({
         organizationId: workflow.organizationId,
         organizationName: workflow.organizationName,
@@ -348,19 +430,11 @@ async function finalizePaidWorkflow(input: {
         origin: input.origin,
       });
       activationUrl = activation.inviteUrl;
+    } catch (error) {
+      // Payment is already verified and persisted; never charge again to retry onboarding.
+      console.error('ICA_PAID_MEMBERSHIP_ACTIVATION_REQUIRES_RETRY', error);
     }
   }
-
-  await ensureWorkflowExecutionTables();
-  await prisma.$executeRawUnsafe(
-    `UPDATE WorkflowSubmission
-     SET paymentStatus = 'PAID', status = ?, updatedAt = CURRENT_TIMESTAMP
-     WHERE id = ? AND organizationId = ? AND workflowId = ?`,
-    nextStatus,
-    submission.id,
-    workflow.organizationId,
-    workflow.id,
-  );
 
   try {
     await queueEmail({
@@ -396,6 +470,29 @@ async function finalizePaidWorkflow(input: {
   return { paid: true, status: nextStatus, activationUrl };
 }
 
+/**
+ * Invoked only after a processor's server-side payment proof is independently verified.
+ * This function is not a public route and may not trust a browser success redirect.
+ */
+export async function finalizeVerifiedBusinessWorkflowPayment(input: {
+  organizationId: string;
+  workflowId: string;
+  submissionId: string;
+  receiptId: string;
+  origin: string;
+}) {
+  const workflow = await getPaymentWorkflow(input.workflowId, input.organizationId);
+  if (!workflow) throw new Error('WORKFLOW_NOT_AVAILABLE');
+  const submission = await getWorkflowSubmission(input.organizationId, input.workflowId, input.submissionId);
+  if (!submission) throw new Error('SUBMISSION_NOT_FOUND');
+  return finalizePaidWorkflow({
+    workflow,
+    submission,
+    checkoutSessionId: input.receiptId,
+    origin: input.origin,
+  });
+}
+
 export async function confirmWorkflowPayment(input: {
   workflowId: string;
   submissionId: string;
@@ -421,29 +518,25 @@ export async function confirmWorkflowPayment(input: {
     account.connectedAccountId,
   );
 
-  if (
-    session.metadata?.icaFlowSubmissionId !== submission.id ||
-    session.metadata?.workflowId !== workflow.id ||
-    session.metadata?.organizationId !== workflow.organizationId
-  ) {
-    throw new Error('CHECKOUT_SESSION_MISMATCH');
-  }
-
-  if (
-    typeof session.amount_total === 'number' &&
-    session.amount_total !== submission.amountCents
-  ) {
-    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
-  }
-
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
+  // A checkout success URL alone never grants membership/event access.
+  // The provider's completed AND paid status, amount, currency and tenant
+  // metadata must all match, including recurring memberships.
+  const paid = stripeBusinessCheckoutPaid(session, {
+    organizationId: workflow.organizationId,
+    workflowId: workflow.id,
+    submissionId: submission.id,
+    amountCents: submission.amountCents,
+  });
 
   if (!paid) {
     return { paid: false, status: submission.status, activationUrl: null };
   }
+  await recordStripeBusinessReceipt(session, account.connectedAccountId, {
+    organizationId: workflow.organizationId,
+    workflowId: workflow.id,
+    submissionId: submission.id,
+    amountCents: submission.amountCents,
+  });
 
   return finalizePaidWorkflow({
     workflow,
@@ -484,23 +577,34 @@ export async function handleWorkflowPaymentWebhook(event: {
 
   const account = await getOrganizationPaymentAccount(organizationId);
   if (!account?.connectedAccountId) throw new Error('ORGANIZATION_PAYMENT_NOT_READY');
-  if (event.account && event.account !== account.connectedAccountId) {
+  // Business payments must originate on the exact connected account.
+  // A platform-level Stripe event is not a business-payment receipt.
+  if (!event.account || event.account !== account.connectedAccountId) {
     throw new Error('CONNECTED_ACCOUNT_MISMATCH');
   }
 
-  if (
-    typeof session.amount_total === 'number' &&
-    session.amount_total !== submission.amountCents
-  ) {
-    throw new Error('CHECKOUT_AMOUNT_MISMATCH');
-  }
-
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
+  const paid = stripeBusinessCheckoutPaid(session, {
+    organizationId,
+    workflowId,
+    submissionId,
+    amountCents: submission.amountCents,
+  });
 
   if (!paid) return true;
+  // Webhook payloads can omit expanded intent fields. Fetch the canonical
+  // Checkout Session when necessary to record a refundable one-time receipt.
+  const canonicalSession = session.mode === 'payment' && !session.payment_intent
+    ? await stripeRequest<CheckoutSession>(
+        '/v1/checkout/sessions/' + encodeURIComponent(session.id),
+        undefined, account.connectedAccountId,
+      )
+    : session;
+  if (!stripeBusinessCheckoutPaid(canonicalSession, {
+    organizationId, workflowId, submissionId, amountCents: submission.amountCents,
+  })) throw new Error('STRIPE_RECEIPT_VERIFICATION_FAILED');
+  await recordStripeBusinessReceipt(canonicalSession, account.connectedAccountId, {
+    organizationId, workflowId, submissionId, amountCents: submission.amountCents,
+  });
 
   await finalizePaidWorkflow({
     workflow,
@@ -514,4 +618,44 @@ export async function handleWorkflowPaymentWebhook(event: {
   });
 
   return true;
+}
+
+export async function findStripeRefundSource(organizationId: string, workflowId: string, submissionId: string) {
+  await ensureStripeReceiptTable();
+  const rows = await prisma.$queryRawUnsafe<Array<{
+    connectedAccountId: string; paymentIntentId: string; amountCents: number;
+  }>>(
+    'SELECT connectedAccountId, paymentIntentId, amountCents FROM StripeBusinessCheckoutReceipt ' +
+    'WHERE organizationId = ? AND workflowId = ? AND submissionId = ? LIMIT 1',
+    organizationId, workflowId, submissionId,
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return { provider: 'STRIPE' as const, merchantId: row.connectedAccountId,
+    paymentId: row.paymentIntentId, amountCents: row.amountCents };
+}
+
+export async function issueStripeBusinessRefund(input: {
+  connectedAccountId: string; paymentIntentId: string; idempotencyKey: string;
+}) {
+  const body = new URLSearchParams({ payment_intent: input.paymentIntentId });
+  const refund = await stripeRequest<{
+    id?: string; payment_intent?: string; status?: string; amount?: number; currency?: string;
+  }>('/v1/refunds', {
+    method: 'POST', body,
+    headers: { 'Idempotency-Key': input.idempotencyKey },
+  }, input.connectedAccountId);
+  if (!refund.id || refund.payment_intent !== input.paymentIntentId ||
+      refund.currency !== 'usd') throw new Error('STRIPE_REFUND_RESPONSE_INVALID');
+  return refund;
+}
+
+export async function readStripeBusinessRefund(input: {
+  connectedAccountId: string; refundId: string;
+}) {
+  return stripeRequest<{ id?: string; payment_intent?: string; status?: string;
+    amount?: number; currency?: string }>(
+    '/v1/refunds/' + encodeURIComponent(input.refundId),
+    undefined, input.connectedAccountId
+  );
 }

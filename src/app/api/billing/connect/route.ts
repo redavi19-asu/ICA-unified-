@@ -15,15 +15,18 @@ export async function POST(request: Request) {
   const origin = new URL(request.url).origin;
   const form = await request.formData().catch(() => null);
   const action = String(form?.get('action') || 'ONBOARD').toUpperCase();
+  if (action !== 'ONBOARD' && action !== 'REFRESH') {
+    return NextResponse.json({ error: 'Invalid payment connection action.' }, { status: 400 });
+  }
 
   if (!stripeConnectConfigured()) {
-    return NextResponse.redirect(`${origin}/workspace/billing?connect=unavailable`, 303);
+    return NextResponse.redirect(`${origin}/workspace/payments?connect=unavailable`, 303);
   }
 
   try {
     if (action === 'REFRESH') {
       await refreshOrganizationPaymentAccount(membership.organizationId);
-      return NextResponse.redirect(`${origin}/workspace/billing?connect=return`, 303);
+      return NextResponse.redirect(`${origin}/workspace/payments?connect=return`, 303);
     }
 
     const onboarding = await createOrganizationPaymentOnboarding({
@@ -34,6 +37,6 @@ export async function POST(request: Request) {
     return NextResponse.redirect(onboarding.url, 303);
   } catch (error) {
     console.error('ICA_STRIPE_CONNECT_ONBOARDING_ERROR', error);
-    return NextResponse.redirect(`${origin}/workspace/billing?connect=error`, 303);
+    return NextResponse.redirect(`${origin}/workspace/payments?connect=error`, 303);
   }
 }

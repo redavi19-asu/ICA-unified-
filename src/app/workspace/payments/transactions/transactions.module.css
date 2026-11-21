@@ -1,0 +1,22 @@
+.page{min-height:100vh;background:#f7fafc;color:#143044;padding:clamp(24px,5vw,64px);max-width:1150px;margin:0 auto}
+.back,.page footer a{color:#086ab0;font-weight:800;text-decoration:none}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:#1883cc;font-weight:900;margin:24px 0 8px}
+.page h1{font-size:clamp(30px,6vw,52px);letter-spacing:-.04em;margin:8px 0}
+.page header>p:last-child{color:#587386;line-height:1.6;max-width:770px}
+.notice{background:#e8f4ff;border:1px solid #bed8e7;padding:16px;border-radius:12px;margin:20px 0}
+.list{display:flex;flex-direction:column;gap:12px;margin:28px 0}
+.item{background:#fff;border:1px solid #dae6ee;border-radius:14px;padding:20px;display:flex;justify-content:space-between;gap:18px}
+.info,.actions{display:flex;flex-direction:column;gap:7px}
+.info span{color:#577385;font-size:13px;overflow-wrap:anywhere}
+.actions{text-align:right;align-items:flex-end;max-width:320px}
+.actions>strong{font-size:20px}
+.actions>span{font-size:12px;color:#516b7c}
+.actions details{max-width:320px}
+.actions summary{cursor:pointer;color:#0c70b8;font-weight:800;min-height:35px}
+.actions form{margin-top:10px;text-align:left;border-radius:12px;background:#f1f6fa;border:1px solid #d5e4ef;padding:14px}
+.actions form p,.actions label{font-size:13px;line-height:1.5}
+.actions label{display:flex;gap:9px;align-items:flex-start;margin:12px 0}
+.actions button{border:0;border-radius:9px;color:white;background:#116eae;padding:12px 16px;min-height:44px;cursor:pointer;font-weight:800}
+.actions input[type=checkbox]{width:18px;height:18px;flex-shrink:0}
+.empty{border:1px dashed #becfda;padding:40px;text-align:center;border-radius:14px;color:#668092}
+@media(max-width:620px){.item{flex-direction:column}.actions{align-items:flex-start;text-align:left;max-width:none}.actions details{max-width:none}.page{padding:22px}}

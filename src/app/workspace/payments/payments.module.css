@@ -1,0 +1,49 @@
+.shell{min-height:100vh;max-width:1250px;margin:0 auto;padding:clamp(24px,5vw,60px);color:#0d283a;background:#f7fafc}
+.back{color:#147fd1;text-decoration:none;font-weight:750;display:inline-block;margin-bottom:20px}
+.header{max-width:820px;margin-bottom:26px}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:#177ac3;font-weight:800}
+.header h1{font-size:clamp(35px,6vw,65px);letter-spacing:-.045em;margin:8px 0 12px}
+.header p,.notice p,.subheading{color:#506b7f;line-height:1.55;font-size:15px}
+.notice{padding:20px 24px;margin:20px 0 32px;background:#e8f4ff;border:1px solid #b9d9ef;border-radius:16px}
+.notice p{margin:7px 0 0}.notice a,.footerActions a{color:#076db6;font-weight:800}
+.error{border:1px solid #f0bbb7;background:#fff2f0;color:#8d2825;padding:15px;border-radius:10px}
+.subheading{max-width:760px;margin:6px 0 22px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{padding:24px;border:1px solid #d9e6ee;border-radius:16px;background:#fff;box-shadow:0 8px 26px rgba(0,35,60,.04);display:flex;flex-direction:column}
+.cardHeader{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.cardHeader h3{margin:0;font-size:22px}
+.ready,.pending{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.ready{background:#e1f6e8;color:#156239}.pending{background:#f0f3f5;color:#52636d}
+.card>p{color:#587082;line-height:1.5;font-size:14px}
+.actions{margin-top:auto}.actions form{margin:9px 0 0}
+.actions button{min-height:48px;width:100%;border:0;border-radius:10px;padding:12px 18px;background:#117fd0;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.actions .secondaryButton{background:#e9f4fb;color:#145d8d}
+.connection{color:#647988;font-size:13px}.unavailable{color:#697d89;font-size:13px;margin-top:auto}
+.footerActions{display:flex;flex-wrap:wrap;gap:18px;margin:30px 0 15px}
+:global(.workspace-theme-dark) .shell{background:#081019;color:#edf7ff}
+:global(.workspace-theme-dark) .card{background:#112332;color:#edf7ff;border-color:#29485c}
+:global(.workspace-theme-dark) .notice{background:#0b263a;border-color:#2a5974}
+:global(.workspace-theme-dark) .header p,:global(.workspace-theme-dark) .notice p,:global(.workspace-theme-dark) .subheading,:global(.workspace-theme-dark) .card>p{color:#b3c3ce}
+:global(.workspace-theme-dark) .cardHeader h3{color:#edf7ff}
+@media(max-width:730px){.grid{grid-template-columns:1fr}.card{padding:20px}.footerActions{flex-direction:column;gap:12px}.header h1{font-size:39px}}
+
+.actions label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px;color:inherit}
+.actions select{width:100%;min-height:45px;padding:10px;border:1px solid #bacfdc;border-radius:9px;background:#fff;color:#173247;font-size:14px}
+
+.readinessPanel{padding:24px;border:1px solid #c9dce8;border-radius:16px;background:#fff;margin:24px 0 34px}
+.readinessHeader{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.readinessHeader h2{font-size:24px;margin:7px 0}
+.readinessHeader p,.readinessHelp{color:#526d7e;font-size:14px;line-height:1.55}
+.readinessList{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.readinessList li{display:flex;align-items:flex-start;gap:10px;border:1px solid #e0eaf0;border-radius:12px;padding:14px}
+.readinessList li strong{font-size:14px}
+.readinessList li p{margin:6px 0 0;color:#5d7382;font-size:13px;line-height:1.45}
+.doneIcon,.waitIcon{display:inline-flex;flex:0 0 25px;justify-content:center;align-items:center;border-radius:50%;width:25px;height:25px;font-weight:900}
+.doneIcon{background:#dbf5e3;color:#17653f}
+.waitIcon{background:#fff0d7;color:#986317}
+.readinessHelp{margin:20px 0 0}
+:global(.workspace-theme-dark) .readinessPanel{background:#102231;border-color:#2c536a}
+:global(.workspace-theme-dark) .readinessList li{border-color:#2c536a}
+:global(.workspace-theme-dark) .readinessHeader p,:global(.workspace-theme-dark) .readinessHelp,
+:global(.workspace-theme-dark) .readinessList li p{color:#afc3d0}
+@media(max-width:730px){.readinessList{grid-template-columns:1fr}.readinessPanel{padding:17px}}

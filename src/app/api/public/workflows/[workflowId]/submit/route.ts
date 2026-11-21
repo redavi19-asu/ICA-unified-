@@ -9,6 +9,7 @@ import {
 } from '../../../../../../lib/workflow-execution';
 import { emitOrganizationEvent, queueEmail } from '../../../../../../lib/organization-ops';
 import { createWorkflowPaymentCheckout } from '../../../../../../lib/member-payments';
+import { preferredBusinessCheckoutProvider } from '../../../../../../lib/business-payment-preferences';
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -51,6 +52,18 @@ export async function POST(
     const challenge = await verifyTurnstile(parsed.data.turnstileToken, request, 'unified_workflow_submit');
     if (!challenge.success) {
       return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+    }
+
+    // Do not save a payable recurring application if the selected merchant
+    // processor cannot perform the recurring charge. Never bill once as a fallback.
+    const cadence = String(workflow.config.billingCadence || 'ONE_TIME').toUpperCase();
+    if (workflow.kind === 'MEMBERSHIP' && ['MONTHLY', 'YEARLY'].includes(cadence) &&
+        Number(workflow.config.price || 0) > 0 &&
+        await preferredBusinessCheckoutProvider(workflow.organizationId) !== 'STRIPE') {
+      return NextResponse.json(
+        { error: 'This business has not enabled recurring payment processing for this membership yet. Contact the organization before applying.' },
+        { status: 409 },
+      );
     }
 
     const result = await createWorkflowSubmission({

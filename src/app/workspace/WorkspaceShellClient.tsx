@@ -37,7 +37,8 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
     ];
     if (role === 'OWNER' || role === 'ADMIN') {
       base.push({ label: 'Integrations', path: '/workspace/integrations' });
-      base.push({ label: 'Billing', path: '/workspace/billing' });
+      base.push({ label: 'Payment Hub', path: '/workspace/payments' });
+      base.push({ label: 'Unified Billing', path: '/workspace/billing' });
       base.push({ label: 'Tools', path: '/workspace/tools' });
     }
     return base;
@@ -79,7 +80,7 @@ export default function WorkspaceShellClient({ children, role, platformRole }: P
           {
             title: 'People + Tools',
             body: role === 'OWNER' || role === 'ADMIN'
-              ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Billing manages the company subscription. Tools handles data migration and organization setup.'
+              ? 'People manages member records. Integrations handles API keys, webhooks, domains, email staging, and exports. Payment Hub connects payment processors for the business. Unified Billing manages the software subscription. Tools handles data migration and organization setup.'
               : 'People gives managers a read-only organization view. Owner/admin-only setup controls stay hidden.',
           },
         ];
