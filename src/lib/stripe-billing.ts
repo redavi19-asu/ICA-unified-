@@ -1,3 +1,4 @@
+import { handleDeveloperStripeEvent } from './developer-billing';
 import { createHmac } from 'crypto';
 import { prisma } from './prisma';
 import { ensureBillingProfile, PROFESSIONAL_PLAN } from './organization-ops';
@@ -241,6 +242,9 @@ export async function handleStripeSnapshotEvent(event: {
   const type = String(event.type || '');
   const object = event.data?.object as Record<string, unknown> | undefined;
   if (!object) return;
+  // Developer subscription events have their own customer, entitlement and quota.
+  // Handle them before the organization billing handler to prevent plan confusion.
+  if (await handleDeveloperStripeEvent(event)) return;
 
   if (type === 'checkout.session.completed') {
     const organizationId = String(

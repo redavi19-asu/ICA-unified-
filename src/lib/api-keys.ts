@@ -1,3 +1,4 @@
+import { consumeDeveloperCalls } from './developer-billing';
 import { createHash, randomBytes, randomUUID } from 'crypto';
 import { prisma } from './prisma';
 import { consumeRateLimit } from './security';
@@ -174,7 +175,7 @@ export type ApiKeyAuthResult =
     }
   | {
       ok: false;
-      status: 401 | 403 | 429;
+      status: 401 | 402 | 403 | 429;
       error: string;
       retryAfterSeconds?: number;
     };
@@ -201,6 +202,7 @@ export async function authenticateApiRequest(
     organizationId: string;
     name: string;
     active: number;
+    createdAt: string;
     scopesJson: string;
     expiresAt: number;
     requestsPerMinute: number;
@@ -210,6 +212,7 @@ export async function authenticateApiRequest(
        c.organizationId,
        c.name,
        c.active,
+       c.createdAt,
        p.scopesJson,
        p.expiresAt,
        p.requestsPerMinute
@@ -243,6 +246,21 @@ export async function authenticateApiRequest(
       status: 429,
       error: 'This ICA API key exceeded its request limit.',
       retryAfterSeconds: limit.retryAfterSeconds,
+    };
+  }
+
+  const rollout = Date.parse(process.env.ICA_DEVELOPER_BILLING_ENFORCE_FROM || '');
+  const createdAt = Date.parse(String(match.createdAt || '').replace(' ', 'T') + 'Z');
+  const grandfathered = !Number.isFinite(rollout) || (Number.isFinite(createdAt) && createdAt < rollout);
+  const developerAllowance = await consumeDeveloperCalls(match.organizationId, grandfathered);
+  if (!developerAllowance.allowed) {
+    return {
+      ok: false,
+      status: developerAllowance.status || 429,
+      error: developerAllowance.status === 402
+        ? 'The developer API subscription is inactive.'
+        : 'Developer API monthly allowance reached. No overage charge was made.',
+      ...(developerAllowance.status === 429 ? { retryAfterSeconds: 3600 } : {}),
     };
   }
 
