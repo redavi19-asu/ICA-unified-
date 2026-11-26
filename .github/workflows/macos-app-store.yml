@@ -1,0 +1,132 @@
+name: ICA Unified Mac App Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the validated package to App Store Connect
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ica-unified-mac-app-store
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      APP_IDENTIFIER: com.icomputeranything.icaunified
+      APPLE_TEAM_ID: 8RW4WF59X8
+      ASC_APP_ID: '6820198321'
+      UPLOAD: ${{ inputs.upload == true }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check App Store Connect credentials
+        env:
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_PRIVATE_KEY: ${{ secrets.APP_STORE_PRIVATE_KEY }}
+          IOS_DISTRIBUTION_CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in APP_STORE_KEY_ID APP_STORE_ISSUER_ID APP_STORE_PRIVATE_KEY IOS_DISTRIBUTION_CERTIFICATE IOS_DISTRIBUTION_CERTIFICATE_PASSWORD; do
+            test -n "${!name}" || { echo "::error::Missing $name"; exit 1; }
+          done
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Prepare temporary Apple signing account
+        env:
+          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_KEY_ID }}
+          APP_STORE_ISSUER_ID: ${{ secrets.APP_STORE_ISSUER_ID }}
+          APP_STORE_PRIVATE_KEY: ${{ secrets.APP_STORE_PRIVATE_KEY }}
+          IOS_DISTRIBUTION_CERTIFICATE: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> "$GITHUB_ENV"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified-mas.keychain-db"
+          security set-keychain-settings -lut 21600 "$RUNNER_TEMP/unified-mas.keychain-db"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified-mas.keychain-db"
+          security list-keychains -d user -s "$RUNNER_TEMP/unified-mas.keychain-db" login.keychain-db
+          printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/apple-distribution.p12"
+          security import "$RUNNER_TEMP/apple-distribution.p12" -k "$RUNNER_TEMP/unified-mas.keychain-db" -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/unified-mas.keychain-db"
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$APP_STORE_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_$APP_STORE_KEY_ID.p8"
+          jq -n --arg key_id "$APP_STORE_KEY_ID" --arg issuer_id "$APP_STORE_ISSUER_ID" --rawfile key "$RUNNER_TEMP/asc/AuthKey_$APP_STORE_KEY_ID.p8" \
+            '{key_id:$key_id,issuer_id:$issuer_id,key:$key,in_house:false}' > "$RUNNER_TEMP/asc/api-key.json"
+
+      - name: Create Mac App Store signing material
+        run: |
+          set -euo pipefail
+          gem install fastlane --no-document
+          fastlane cert --api_key_path "$RUNNER_TEMP/asc/api-key.json" --type mac_installer_distribution --platform macos \
+            --keychain_path "$RUNNER_TEMP/unified-mas.keychain-db" --keychain_password "$KEYCHAIN_PASSWORD"
+          fastlane sigh --api_key_path "$RUNNER_TEMP/asc/api-key.json" --app_identifier "$APP_IDENTIFIER" --platform macos \
+            --provisioning_name 'ICA Unified Mac App Store' --output_path "$RUNNER_TEMP/ICAUnified.provisionprofile" --force
+          security find-identity -v "$RUNNER_TEMP/unified-mas.keychain-db"
+
+      - name: Build universal ICA Unified app
+        working-directory: desktop
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm run build -- --target universal-apple-darwin --bundles app
+
+      - name: Sign and package for the Mac App Store
+        run: |
+          set -euo pipefail
+          APP="$(find desktop/src-tauri/target/universal-apple-darwin/release/bundle -type d -name '*.app' -print -quit)"
+          test -n "$APP"
+          cp "$RUNNER_TEMP/ICAUnified.provisionprofile" "$APP/Contents/embedded.provisionprofile"
+          APP_IDENTITY="$(security find-identity -v -p codesigning "$RUNNER_TEMP/unified-mas.keychain-db" | sed -n 's/.*"\(Apple Distribution:[^"]*\)".*/\1/p' | head -1)"
+          INSTALLER_IDENTITY="$(security find-identity -v "$RUNNER_TEMP/unified-mas.keychain-db" | sed -n 's/.*"\(Mac Installer Distribution:[^"]*\)".*/\1/p' | head -1)"
+          test -n "$APP_IDENTITY"
+          test -n "$INSTALLER_IDENTITY"
+          codesign --force --deep --options runtime --timestamp --entitlements desktop/src-tauri/Entitlements.mac-app-store.plist --sign "$APP_IDENTITY" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          PRODUCT_VERSION="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")"
+          BUILD_VERSION="${{ github.run_number }}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_VERSION" "$APP/Contents/Info.plist"
+          codesign --force --deep --options runtime --timestamp --entitlements desktop/src-tauri/Entitlements.mac-app-store.plist --sign "$APP_IDENTITY" "$APP"
+          productbuild --component "$APP" /Applications --sign "$INSTALLER_IDENTITY" "$RUNNER_TEMP/ICA-Unified-macOS.pkg"
+          pkgutil --check-signature "$RUNNER_TEMP/ICA-Unified-macOS.pkg"
+          xcrun altool --validate-app -f "$RUNNER_TEMP/ICA-Unified-macOS.pkg" -t macos \
+            --apiKey "${{ secrets.APP_STORE_KEY_ID }}" --apiIssuer "${{ secrets.APP_STORE_ISSUER_ID }}"
+          echo "PRODUCT_VERSION=$PRODUCT_VERSION" >> "$GITHUB_ENV"
+
+      - name: Upload to App Store Connect
+        if: env.UPLOAD == 'true'
+        run: |
+          xcrun altool --upload-app -f "$RUNNER_TEMP/ICA-Unified-macOS.pkg" -t macos \
+            --apiKey "${{ secrets.APP_STORE_KEY_ID }}" --apiIssuer "${{ secrets.APP_STORE_ISSUER_ID }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ICA-Unified-Mac-App-Store-${{ github.run_number }}
+          path: ${{ runner.temp }}/ICA-Unified-macOS.pkg
+          retention-days: 14
+
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/unified-mas.keychain-db" || true
