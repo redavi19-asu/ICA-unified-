@@ -84,7 +84,7 @@ jobs:
           set -euo pipefail
           gem install fastlane --no-document
           fastlane sigh --api_key_path "$RUNNER_TEMP/asc/api-key.json" --app_identifier "$APP_IDENTIFIER" --platform macos \
-            --provisioning_name 'ICA Unified Mac App Store' --output_path "$RUNNER_TEMP/ICAUnified.provisionprofile" --force
+            --provisioning_name 'ICA Unified Mac App Store' --output_path "$RUNNER_TEMP/ICAUnified.provisionprofile" --readonly
           security find-identity -v "$RUNNER_TEMP/unified-mas.keychain-db"
 
       - name: Build universal ICA Unified app
