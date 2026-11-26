@@ -18,8 +18,6 @@ type CheckoutSession = {
   id: string;
   url?: string | null;
   payment_status?: string;
-  status?: string;
-  mode?: string;
   metadata?: Record<string, string>;
   amount_total?: number | null;
 };
@@ -436,12 +434,7 @@ export async function confirmWorkflowPayment(input: {
     throw new Error('CHECKOUT_AMOUNT_MISMATCH');
   }
 
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
-
-  if (!paid) {
+  if (session.payment_status !== 'paid') {
     return { paid: false, status: submission.status, activationUrl: null };
   }
 
@@ -495,12 +488,7 @@ export async function handleWorkflowPaymentWebhook(event: {
     throw new Error('CHECKOUT_AMOUNT_MISMATCH');
   }
 
-  const paid =
-    session.mode === 'subscription'
-      ? session.status === 'complete'
-      : session.payment_status === 'paid';
-
-  if (!paid) return true;
+  if (session.payment_status !== 'paid') return true;
 
   await finalizePaidWorkflow({
     workflow,
