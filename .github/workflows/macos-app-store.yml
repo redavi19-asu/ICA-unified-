@@ -100,8 +100,10 @@ jobs:
         run: |
           set -euo pipefail
           APP="$(find desktop/src-tauri/target/universal-apple-darwin/release/bundle -type d -name '*.app' -print -quit)"
+          PROFILE="$(find "$RUNNER_TEMP/ICAUnified.provisionprofile" -type f -name '*.provisionprofile' -print -quit)"
           test -n "$APP"
-          cp "$RUNNER_TEMP/ICAUnified.provisionprofile" "$APP/Contents/embedded.provisionprofile"
+          test -n "$PROFILE"
+          cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
           APP_IDENTITY="$(security find-identity -v -p codesigning "$RUNNER_TEMP/unified-mas.keychain-db" | sed -n 's/.*"\(Apple Distribution:[^"]*\)".*/\1/p' | head -1)"
           INSTALLER_IDENTITY="$(security find-identity -v "$RUNNER_TEMP/unified-mas.keychain-db" | sed -n 's/.*"\(Mac Installer Distribution:[^"]*\)".*/\1/p' | head -1)"
           test -n "$APP_IDENTITY"
