@@ -215,8 +215,11 @@ function constantTimeHexEqual(a: string, b: string) {
   return mismatch === 0;
 }
 
-export function verifyStripeWebhookSignature(rawBody: string, signatureHeader: string) {
-  const secret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
+export function verifyStripeWebhookSignature(
+  rawBody: string,
+  signatureHeader: string,
+  secret = (process.env.STRIPE_WEBHOOK_SECRET || '').trim(),
+) {
   if (!secret) throw new Error('STRIPE_WEBHOOK_NOT_CONFIGURED');
 
   const parts = signatureHeader.split(',').map((part) => part.trim());
