@@ -5,17 +5,21 @@ export default function LegalPage({
   eyebrow,
   title,
   updated = 'October 1, 2026',
+  backHref = '/',
+  backLabel = 'ICA UNIFIED',
   children,
 }: {
   eyebrow: string;
   title: string;
   updated?: string;
+  backHref?: string;
+  backLabel?: string;
   children: ReactNode;
 }) {
   return (
     <main style={{minHeight:'100vh',background:'#f8fbfd',color:'#142b3d',padding:'clamp(28px,6vw,76px) 20px'}}>
       <article style={{maxWidth:900,margin:'0 auto',background:'#fff',border:'1px solid #d9e6ee',borderRadius:24,padding:'clamp(26px,5vw,58px)',boxShadow:'0 24px 70px rgba(31,69,96,.08)'}}>
-        <Link href="/" style={{display:'inline-block',marginBottom:34,color:'#147fd1',fontSize:11,fontWeight:900,letterSpacing:'.1em',textDecoration:'none'}}>← ICA UNIFIED</Link>
+        <Link href={backHref} style={{display:'inline-block',marginBottom:34,color:'#147fd1',fontSize:11,fontWeight:900,letterSpacing:'.1em',textDecoration:'none'}}>← {backLabel}</Link>
         <p style={{margin:0,color:'#147fd1',fontSize:10,fontWeight:900,letterSpacing:'.18em'}}>{eyebrow}</p>
         <h1 style={{fontSize:'clamp(44px,7vw,78px)',lineHeight:.94,letterSpacing:'-.05em',margin:'12px 0 14px'}}>{title}</h1>
         <p style={{margin:'0 0 38px',color:'#748a99',fontSize:12}}>Last updated {updated}</p>

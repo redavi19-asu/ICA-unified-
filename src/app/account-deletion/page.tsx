@@ -2,7 +2,12 @@ import LegalPage, { LegalSection } from '../LegalPage';
 
 export default function AccountDeletionPage() {
   return (
-    <LegalPage eyebrow="ICA UNIFIED / CUSTOMER POLICY" title="Account & Data Deletion">
+    <LegalPage
+      eyebrow="ICA UNIFIED / CUSTOMER POLICY"
+      title="Account & Data Deletion"
+      backHref="/workspace/account"
+      backLabel="ACCOUNT & PRIVACY"
+    >
       <LegalSection title="Individual accounts">
         <p>Open Account &amp; Privacy in Unified or its mobile app to request account removal. Confirm that the request covers all your Unified workspace memberships. Requests are reviewed; the private status link shows progress and completion even after login access has been removed. A sole workspace owner must transfer ownership or have the workspace&apos;s separate closure request reviewed first.</p>
       </LegalSection>
